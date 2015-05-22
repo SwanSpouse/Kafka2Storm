@@ -3,7 +3,7 @@ import com.order.util.TimeCacheStructures.TimeCacheList;
 /**
  * Created by LiMingji on 2015/5/21.
  */
-public class testTimeCacheList {
+public class TestTimeCacheList {
     public static TimeCacheList<String> timeCacheList = null;
     public static Thread thread = null;
     public static void main(String[] args) throws InterruptedException {

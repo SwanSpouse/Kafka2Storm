@@ -3,7 +3,7 @@ import com.order.util.TimeCacheStructures.TimeCacheMap;
 /**
  * Created by LiMingji on 2015/5/21.
  */
-public class testTimeCacheMap {
+public class TestTimeCacheMap {
     public static TimeCacheMap<String, String> timeCacheMap = null;
     public static Thread thread = null;
     public static void main(String[] args) throws InterruptedException {
