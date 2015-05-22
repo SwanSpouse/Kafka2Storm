@@ -1,15 +1,15 @@
-import com.order.util.TimeCacheStructures.TimeCacheList;
+import com.order.util.TimeCacheStructures.TimeCacheSet;
 
 /**
  * Created by LiMingji on 2015/5/21.
  */
-public class testTimeCacheList {
-    public static TimeCacheList<String> timeCacheList = null;
+public class testTimeCacheSet {
+    public static TimeCacheSet<String> timeCacheList = null;
     public static Thread thread = null;
     public static void main(String[] args) throws InterruptedException {
 
 
-        timeCacheList = new TimeCacheList<String>(10,new TimeCacheList.ExpiredCallback<String>() {
+        timeCacheList = new TimeCacheSet<String>(10,new TimeCacheSet.ExpiredCallback<String>() {
             @Override
             public void expire(String key) {
                 System.out.println("过期的数据:" + key );

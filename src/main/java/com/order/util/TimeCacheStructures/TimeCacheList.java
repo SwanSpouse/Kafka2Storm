@@ -1,4 +1,4 @@
-package com.order.util;
+package com.order.util.TimeCacheStructures;
 
 import org.apache.log4j.Logger;
 
@@ -14,9 +14,9 @@ import java.util.List;
 public class TimeCacheList<T> {
     protected static final int DEFAULT_NUM_BUCKETS = 3;
 
-    protected static Logger log = Logger.getLogger(TimeCacheList.class);
+    private static Logger log = Logger.getLogger(TimeCacheList.class);
 
-    protected static interface ExpiredCallback<T> {
+    public static interface ExpiredCallback<T> {
         public void expire(T value);
     }
 
@@ -69,12 +69,12 @@ public class TimeCacheList<T> {
         this(expirationSecs, DEFAULT_NUM_BUCKETS, expiredCallback);
     }
 
-    public TimeCacheList(int expirationSecs) {
-        this(expirationSecs, DEFAULT_NUM_BUCKETS);
-    }
-
     public TimeCacheList(int expirationSecs, int numBuckets) {
         this(expirationSecs, numBuckets, null);
+    }
+
+    public TimeCacheList(int expirationSecs) {
+        this(expirationSecs, DEFAULT_NUM_BUCKETS);
     }
 
     public boolean contains(T value) {
@@ -90,7 +90,6 @@ public class TimeCacheList<T> {
 
     public void put(T value) {
         synchronized (LOCK) {
-            this.remove(value);
             LinkedList<T> bucket = buckets.getLast();
             bucket.addLast(value);
         }

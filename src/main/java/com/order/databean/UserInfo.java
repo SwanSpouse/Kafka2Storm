@@ -1,30 +1,34 @@
 package com.order.databean;
 
 import com.order.constant.Constant;
-import com.order.util.TimeCacheList;
+import com.order.util.TimeCacheStructures.TimeCacheSet;
 
 /**
+ * UserInfo 用于存储用户信息并对规则8 9 10 进行检测
+ *
  * Created by LiMingji on 2015/5/21.
  */
 public class UserInfo {
 
-    //8、9、10规则对应的检测位
-    private final static int RULE_8 = 0;
-    private final static int RULE_9 = 1;
-    private final static int RULE_10 = 2;
+    //规则8、9、10对应的检测位
+    private final static int SESSION_CHECK_BIT = 0;
+    private final static int IP_CHECK_BIT = 1;
+    private final static int UA_CHECK_BIT = 2;
 
+    //用户ID
     private String msisdn;
     private long lastUpdateTime;
 
     //统计用户session信息。
-    private TimeCacheList<String> seesionInfos = new TimeCacheList<String>(Constant.FIVE_MINUTES);
+    private TimeCacheSet<String> seesionInfos = new TimeCacheSet<String>(Constant.FIVE_MINUTES);
 
     //统计用户ip信息。
-    private TimeCacheList<String> ipInfos = new TimeCacheList<String>(Constant.FIVE_MINUTES);
+    private TimeCacheSet<String> ipInfos = new TimeCacheSet<String>(Constant.FIVE_MINUTES);
 
     //统计用户终端信息。
-    private TimeCacheList<String> terminalInfos = new TimeCacheList<String>(Constant.FIVE_MINUTES);
+    private TimeCacheSet<String> terminalInfos = new TimeCacheSet<String>(Constant.FIVE_MINUTES);
 
+    //构造新用户。
     public UserInfo(String misidn, long currentTime, String sessionInfo, String ipInfo, String terminalInfo) {
         this.msisdn = misidn;
         this.lastUpdateTime = currentTime;
@@ -33,6 +37,7 @@ public class UserInfo {
         this.terminalInfos.put(terminalInfo);
     }
 
+    //更新已存在用户的信息
     public void upDateUserInfo(long currentTime, String sessionInfo, String ipInfo, String terminalInfo) {
         this.lastUpdateTime = currentTime;
         if (sessionInfo != null && !sessionInfo.trim().equals("")) {
@@ -50,21 +55,21 @@ public class UserInfo {
     public boolean[] isObeyRules() {
         boolean[] checkMarkBit = new boolean[3];
         if (seesionInfos.size() >= Constant.SESSION_CHANGE_THRESHOLD) {
-            checkMarkBit[RULE_8] = false;
+            checkMarkBit[SESSION_CHECK_BIT] = false;
         } else {
-            checkMarkBit[RULE_8] = true;
+            checkMarkBit[SESSION_CHECK_BIT] = true;
         }
 
         if (ipInfos.size() >= Constant.IP_CHANGE_THRESHOLD) {
-            checkMarkBit[RULE_9] = false;
+            checkMarkBit[IP_CHECK_BIT] = false;
         } else {
-            checkMarkBit[RULE_9] = true;
+            checkMarkBit[IP_CHECK_BIT] = true;
         }
 
         if (terminalInfos.size() >= Constant.UA_CHANGE_THRESHOLD) {
-            checkMarkBit[RULE_10] = false;
+            checkMarkBit[UA_CHECK_BIT] = false;
         } else {
-            checkMarkBit[RULE_10] = true;
+            checkMarkBit[UA_CHECK_BIT] = true;
         }
         return checkMarkBit;
     }

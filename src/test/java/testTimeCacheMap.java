@@ -1,4 +1,4 @@
-import com.order.util.TimeCacheMap;
+import com.order.util.TimeCacheStructures.TimeCacheMap;
 
 /**
  * Created by LiMingji on 2015/5/21.
