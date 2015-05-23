@@ -1,4 +1,4 @@
-package com.order.util.TimeCacheStructures;
+package com.order.databean.TimeCacheStructures;
 
 import org.apache.log4j.Logger;
 
@@ -86,14 +86,14 @@ public class RealTimeCacheList<T> {
     }
 
     public void put(T value) {
-        this.put(value, new Date());
+        this.put(value, (new Date()).getTime());
     }
 
-    public void put(T value, Date date) {
+    public void put(T value, Long date) {
         synchronized (LOCK) {
             long currentTime;
             if (date == null) {
-                currentTime = date.getTime();
+                currentTime = date;
             } else {
                 currentTime = System.currentTimeMillis();
             }

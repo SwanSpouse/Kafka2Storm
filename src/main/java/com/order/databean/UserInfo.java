@@ -1,7 +1,7 @@
 package com.order.databean;
 
 import com.order.constant.Constant;
-import com.order.util.TimeCacheStructures.RealTimeCacheList;
+import com.order.databean.TimeCacheStructures.RealTimeCacheList;
 
 /**
  * UserInfo 用于存储用户信息并对规则8 9 10 进行检测
@@ -14,6 +14,9 @@ public class UserInfo {
     private final static int SESSION_CHECK_BIT = 0;
     private final static int IP_CHECK_BIT = 1;
     private final static int UA_CHECK_BIT = 2;
+
+    //是否为异常用户
+    private boolean isNormalUser = true;
 
     //用户ID
     private String msisdn;
@@ -32,22 +35,22 @@ public class UserInfo {
     public UserInfo(String misidn, long currentTime, String sessionInfo, String ipInfo, String terminalInfo) {
         this.msisdn = misidn;
         this.lastUpdateTime = currentTime;
-        this.seesionInfos.put(sessionInfo);
-        this.ipInfos.put(ipInfo);
-        this.terminalInfos.put(terminalInfo);
+        this.seesionInfos.put(sessionInfo, lastUpdateTime);
+        this.ipInfos.put(ipInfo, lastUpdateTime);
+        this.terminalInfos.put(terminalInfo, lastUpdateTime);
     }
 
     //更新已存在用户的信息
     public void upDateUserInfo(long currentTime, String sessionInfo, String ipInfo, String terminalInfo) {
         this.lastUpdateTime = currentTime;
         if (sessionInfo != null && !sessionInfo.trim().equals("")) {
-            this.seesionInfos.put(sessionInfo);
+            this.seesionInfos.put(sessionInfo, lastUpdateTime);
         }
         if (ipInfo != null && !ipInfo.trim().equals("")) {
-            this.ipInfos.put(ipInfo);
+            this.ipInfos.put(ipInfo, lastUpdateTime);
         }
         if (terminalInfo != null && !terminalInfo.trim().equals("")) {
-            this.terminalInfos.put(terminalInfo);
+            this.terminalInfos.put(terminalInfo, lastUpdateTime);
         }
     }
 
@@ -72,5 +75,19 @@ public class UserInfo {
             checkMarkBit[UA_CHECK_BIT] = true;
         }
         return checkMarkBit;
+    }
+
+    public void setAbnormalUser(boolean isNormalUser) {
+        this.isNormalUser = isNormalUser;
+    }
+
+    public boolean isNormalUser() {
+        return isNormalUser;
+    }
+
+    //三个容器内均无有效数据且不是异常用户。则用户超时。
+    public boolean isTimeout() {
+        return seesionInfos.size() == 0 && ipInfos.size() == 0
+                && terminalInfos.size() == 0 && isNormalUser == true;
     }
 }

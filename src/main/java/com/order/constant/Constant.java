@@ -14,8 +14,18 @@ public final class Constant {
     private static final String filePath = "rulesParams.properties";
     private static Map<String, String> conf = StormConf.readPropery(filePath);
 
+    //OrderType中对应的信息
+    public static final int ORDERTYPE_FREE = 0;
+    public static final int ORDERTYPE_BOOK = 1;
+    public static final int ORDERTYPE_CHAPTER = 2;
+    public static final int ORDERTYPE_WORD = 3;
+    public static final int ORDERTYPE_PROMOTION = 4;
+    public static final int ORDERTYPE_VOLUME = 5;
+
     //5分钟。用于定时清空sessionInfo ipInfo terminalInfo的数据
     public final static int FIVE_MINUTES = 5 * 60;
+    //65分钟，用于定时清空bookreadpv的数据
+    public final static int SIXTYFIVE_MINUTES = 65 * 60;
 
     //规则8 session 变化阈值
     public final static int SESSION_CHANGE_THRESHOLD = Integer.parseInt(conf.get("SESSION_CHANGE_THRESHOLD"));
