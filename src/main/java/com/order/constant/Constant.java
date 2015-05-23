@@ -27,11 +27,22 @@ public final class Constant {
     //65分钟，用于定时清空bookreadpv的数据
     public final static int SIXTYFIVE_MINUTES = 65 * 60;
 
+    //规则1、2pv 变化阈值
+    public final static int READPV_THREASHOLD = Integer.parseInt(conf.get("READPV_THREASHOLD"));
+    //规则3 扣费二级渠道 变化阈值
+    public final static int CHANNEL_THRESHOLD = Integer.parseInt(conf.get("CHANNEL_THRESHOLD"));
+    //规则4 日渠道ID按本扣费 变化阈值
+    public final static int ORDER_FEE_THRESHOLD = Integer.parseInt(conf.get("ORDER_FEE_THRESHOLD"));
+    //规则5 包月订购次数 变化阈值
+    public final static int ORDER_BY_MONTH_THRESHOLD = Integer.parseInt(conf.get("ORDER_BY_MONTH_THRESHOLD"));
+    //规则6 图书订购或批量订购 变化阈值
+    public final static int ORDER_TIMES_THRESHOLD = Integer.parseInt(conf.get("ORDER_TIMES_THRESHOLD"));
+    //规则7 连载图书订购章数 变化阈值
+    public final static int ORDER_CHAPTER_TIMES_THRESHOLD = Integer.parseInt(conf.get("ORDER_CHAPTER_TIMES_THRESHOLD"));
     //规则8 session 变化阈值
     public final static int SESSION_CHANGE_THRESHOLD = Integer.parseInt(conf.get("SESSION_CHANGE_THRESHOLD"));
     //规则9 IP变化阈值
     public final static int IP_CHANGE_THRESHOLD = Integer.parseInt(conf.get("IP_CHANGE_THRESHOLD"));
-
     //规则10 UA信息变化阈值
     public final static int UA_CHANGE_THRESHOLD = Integer.parseInt(conf.get("UA_CHANGE_THRESHOLD"));
 

@@ -99,7 +99,7 @@ public class SessionInfo {
             public void run() {
                 try {
                     rules12Checker.sleep(Constant.FIVE_MINUTES);
-                    if (bookChapterOrderPv.size() <= 5) {
+                    if (bookChapterOrderPv.size() <= Constant.READPV_THREASHOLD) {
                         if (orderType == Constant.ORDERTYPE_BOOK) {
                             callback.hanleData(msisdn, sessionId, lastUpdateTime, realInfoFee, channelId, promotionId, 1, true);
                         }else if (orderType == Constant.ORDERTYPE_PROMOTION) {
