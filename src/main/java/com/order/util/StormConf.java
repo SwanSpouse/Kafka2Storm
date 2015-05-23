@@ -30,7 +30,7 @@ public class StormConf {
 	public static final String ZKROOT = conf.get("zkRoot");
 	public static final String ID = conf.get("id");
 	
-	private static Map<String, String> readPropery(String filePath) {
+	public static Map<String, String> readPropery(String filePath) {
 		Properties props = new Properties();
 		Map<String, String> parameters = new HashMap<String, String>();
 		InputStream in;
@@ -52,6 +52,5 @@ public class StormConf {
 		}
 		return parameters;
 	}
-
 }
 
