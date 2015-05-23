@@ -12,7 +12,7 @@ public class RealTimeCacheList<T> {
     private static Logger log = Logger.getLogger(RealTimeCacheList.class);
 
     public static interface TimeOutCallback<T> {
-        public void expire(T value, LinkedList<Long> values);
+        public void expire(T value, LinkedList<Long> pvTimes);
     }
 
     private Map<T, LinkedList<Long>> oldList;
@@ -101,6 +101,9 @@ public class RealTimeCacheList<T> {
 
     //对某个id下的过期数据进行清楚。
     private void removeExpiredData(T value, long currentTime) {
+        if ( !oldList.containsKey(value)) {
+            return ;
+        }
         long timeOutThreshold = currentTime - expiratonSecs * 1000L;
         synchronized (LOCK) {
             Iterator<Long> it = oldList.get(value).iterator();
