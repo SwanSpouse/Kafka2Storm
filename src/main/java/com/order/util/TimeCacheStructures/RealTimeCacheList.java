@@ -5,6 +5,19 @@ import org.apache.log4j.Logger;
 import java.util.*;
 
 /**
+ * reference: https://github.com/HQebupt/TimeCacheMap
+ *
+ * 实时过期List :
+ *      expirationSecs: List中数据过期时间。
+ *      TimeOutCallBack: 对过期的数据如何进行处理。（可以选择进行持久化操作。）
+ *
+ * 清理操作：
+ *      1. 定时清理：每隔expirationSecs进行一次清理。
+ *      2. 数据插入时清理：插入对于同一key下的过期数据进行清理。
+ *
+ * 说明：
+ *      List中key唯一。相同的key会根据访问时间合并到key所对应的List中。
+ *
  * Created by LiMingji on 2015/5/22.
  */
 public class RealTimeCacheList<T> {
@@ -22,6 +35,10 @@ public class RealTimeCacheList<T> {
     protected Thread cleaner = null;
     protected TimeOutCallback timeOutCallback = null;
     protected int expiratonSecs = 0;
+
+    public RealTimeCacheList(int expiratonSecs) {
+        this(expiratonSecs, null);
+    }
 
     public RealTimeCacheList(int expirationSecs, final TimeOutCallback timeOutCallback) {
         oldList = new LinkedHashMap<T, LinkedList<Long>>();
@@ -101,11 +118,11 @@ public class RealTimeCacheList<T> {
 
     //对某个id下的过期数据进行清楚。
     private void removeExpiredData(T value, long currentTime) {
-        if ( !oldList.containsKey(value)) {
-            return ;
-        }
-        long timeOutThreshold = currentTime - expiratonSecs * 1000L;
         synchronized (LOCK) {
+            if (!oldList.containsKey(value)) {
+                return;
+            }
+            long timeOutThreshold = currentTime - expiratonSecs * 1000L;
             Iterator<Long> it = oldList.get(value).iterator();
             while (it.hasNext()) {
                 Long time = it.next();

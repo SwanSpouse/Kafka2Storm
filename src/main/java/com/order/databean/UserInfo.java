@@ -1,7 +1,7 @@
 package com.order.databean;
 
 import com.order.constant.Constant;
-import com.order.util.TimeCacheStructures.TimeCacheSet;
+import com.order.util.TimeCacheStructures.RealTimeCacheList;
 
 /**
  * UserInfo 用于存储用户信息并对规则8 9 10 进行检测
@@ -20,13 +20,13 @@ public class UserInfo {
     private long lastUpdateTime;
 
     //统计用户session信息。
-    private TimeCacheSet<String> seesionInfos = new TimeCacheSet<String>(Constant.FIVE_MINUTES);
+    private RealTimeCacheList<String> seesionInfos = new RealTimeCacheList<String>(Constant.FIVE_MINUTES);
 
     //统计用户ip信息。
-    private TimeCacheSet<String> ipInfos = new TimeCacheSet<String>(Constant.FIVE_MINUTES);
+    private RealTimeCacheList<String> ipInfos = new RealTimeCacheList<String>(Constant.FIVE_MINUTES);
 
     //统计用户终端信息。
-    private TimeCacheSet<String> terminalInfos = new TimeCacheSet<String>(Constant.FIVE_MINUTES);
+    private RealTimeCacheList<String> terminalInfos = new RealTimeCacheList<String>(Constant.FIVE_MINUTES);
 
     //构造新用户。
     public UserInfo(String misidn, long currentTime, String sessionInfo, String ipInfo, String terminalInfo) {
