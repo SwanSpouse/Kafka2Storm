@@ -61,11 +61,6 @@ public class RealTimeCacheList<T> {
                                 timeOutCallback.expire(key, oldList.get(key));
                             }
                         }
-                        Iterator<T> it = currentList.keySet().iterator();
-                        while (it.hasNext()) {
-                            T value = it.next();
-                            removeExpiredData(value, System.currentTimeMillis());
-                        }
                         oldList.clear();
                         oldList.putAll(currentList);
                         currentList.clear();
