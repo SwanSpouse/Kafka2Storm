@@ -19,7 +19,7 @@ public class UserInfo {
     private boolean isNormalUser = true;
 
     //用户ID
-    private String msisdn;
+    private String msisdnId;
     private long lastUpdateTime;
 
     //统计用户session信息。
@@ -32,8 +32,8 @@ public class UserInfo {
     private RealTimeCacheList<String> terminalInfos = new RealTimeCacheList<String>(Constant.FIVE_MINUTES);
 
     //构造新用户。
-    public UserInfo(String misidn, long currentTime, String sessionInfo, String ipInfo, String terminalInfo) {
-        this.msisdn = misidn;
+    public UserInfo(String msisdnId, long currentTime, String sessionInfo, String ipInfo, String terminalInfo) {
+        this.msisdnId = msisdnId;
         this.lastUpdateTime = currentTime;
         this.seesionInfos.put(sessionInfo, lastUpdateTime);
         this.ipInfos.put(ipInfo, lastUpdateTime);
@@ -54,7 +54,13 @@ public class UserInfo {
         }
     }
 
-    //检测规则8、9、10是否符合规则。如果符合规则，则返回true，反之返回false
+    /**
+     * 检测规则8、9、10是否符合规则。如果符合规则，则返回true，反之返回false
+     * 规则八： 一个订购用户一个小时内的session变化 >=3 次
+     * 规则九： 一小时内用户订购IP地址变化 >= 3 次
+     * 规则十： 一个小时内用户订购UA信息变化次数 >= 2次。
+     * @return
+     */
     public boolean[] isObeyRules() {
         boolean[] checkMarkBit = new boolean[3];
         if (seesionInfos.size() >= Constant.SESSION_CHANGE_THRESHOLD) {
@@ -77,10 +83,12 @@ public class UserInfo {
         return checkMarkBit;
     }
 
+    //将用户设置为异常用户
     public void setAbnormalUser(boolean isNormalUser) {
         this.isNormalUser = isNormalUser;
     }
 
+    //判断用户是否为异常用户
     public boolean isNormalUser() {
         return isNormalUser;
     }

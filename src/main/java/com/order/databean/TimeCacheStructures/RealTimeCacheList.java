@@ -81,8 +81,48 @@ public class RealTimeCacheList<T> {
 
     public int size() {
         synchronized (LOCK) {
-            return currentList.size() + oldList.size();
+            if (currentList != null && oldList != null) {
+                return currentList.size() + oldList.size();
+            } else {
+                return 0;
+            }
         }
+    }
+
+    public int sizeById(String id) {
+        synchronized (LOCK) {
+            int countSize = 0;
+            if (oldList.containsKey(id)) {
+                countSize += oldList.get(id).size();
+            }
+            if (currentList.containsKey(id)) {
+                countSize += currentList.get(id).size();
+            }
+            return countSize;
+        }
+    }
+
+    public int sizeWithTimeThreshold(String id, Long currentTime, int thresholdInSeconds) {
+        synchronized (LOCK) {
+            Long timeThreshold = currentTime - thresholdInSeconds * 1000L;
+            return getSizeWithTimeThreshold(id, timeThreshold, oldList) +
+                    getSizeWithTimeThreshold(id, timeThreshold, currentList);
+        }
+    }
+
+    private int getSizeWithTimeThreshold(String id, Long timeThreshold, Map<T, LinkedList<Long>> map) {
+        int countSize = 0;
+        if (map.containsKey(id)) {
+            LinkedList<Long> clickTimes = map.get(id);
+            for (int i = clickTimes.size() - 1; i >= 0; i--) {
+                if (clickTimes.get(i) > timeThreshold) {
+                    countSize++;
+                } else {
+                    break;
+                }
+            }
+        }
+        return countSize;
     }
 
     public void put(T value) {
@@ -132,6 +172,19 @@ public class RealTimeCacheList<T> {
                     return;
                 }
             }
+        }
+    }
+
+    public Set<T> keySet() {
+        synchronized (LOCK) {
+            HashSet<T> set = new HashSet<T>();
+            for (T key : oldList.keySet()) {
+                set.add(key);
+            }
+            for (T key : currentList.keySet()) {
+                set.add(key);
+            }
+            return set;
         }
     }
 

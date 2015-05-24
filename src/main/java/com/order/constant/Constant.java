@@ -22,6 +22,8 @@ public final class Constant {
     public static final int ORDERTYPE_PROMOTION = 4;
     public static final int ORDERTYPE_VOLUME = 5;
 
+    //3分钟。用于统计规则5中的订购次数
+    public final static int THREEO_MINUTES = 3 * 60;
     //5分钟。用于定时清空sessionInfo ipInfo terminalInfo的数据
     public final static int FIVE_MINUTES = 5 * 60;
     //65分钟，用于定时清空bookreadpv的数据
