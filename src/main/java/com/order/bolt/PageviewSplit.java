@@ -29,11 +29,12 @@ import backtype.storm.tuple.Values;
  *
  * 需要获取的字段：（发射消息）
  *  0. remoteIp      |   对端IP地址
- *  2. recordTime    |   记录时间
+ *  2. recordTime    |   记录时间 格式:yyMMddhhmmss
  *  6. sessionId     |   会话ID
  * 12. userAgent     |   用户原始UA信息
  * 15. pageType      |   页面类型
  * 27. msisdn        |   阅读号
+ * 33. channelCode   |   渠道代码
  * 47. bookId        |   BookID在扩展字段 1
  * 48. chapterId     |   ChapterId在扩展字段2
  *
