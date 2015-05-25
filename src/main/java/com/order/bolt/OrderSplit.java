@@ -14,7 +14,31 @@ import backtype.storm.topology.base.BaseBasicBolt;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
-
+/**
+ * 订购话单Topic
+ *
+ * 话单格式：（接受消息）
+ * {"body":{"cdr":"42000012018|20150505165523||1|4|10928||140021346||0000|140021344|
+ * 140021346||140021346|150|150|0|0|42000012018|3|||250|25|127.0.0.1|4|1||||||13776640821
+ * ||||1|||||221.226.57.202|||||13776640821||13776640821|"},"seqid":"1","tags":["ireadcharge11"],
+ * "topic":"report.cdr","type":"report.cdr"}
+ *
+ * 需要获取的字段：（发射消息）
+ *  0. msisdn      |   发起人身份ID
+ *  1. recordTime  |   记录时间
+ *  2. terminal    |   终端名称
+ *  4. OrderType   |   订购类型 1-按本  2-按章 4-包月 5-促销包
+ *  5. ProductID   |   产品ID
+ *  7. BookID      |   图书ID
+ *  8. ChapterID   |   章节ID
+ *  9. ChannelCode |   渠道ID
+ * 14. RealInfoFee |   真实信息费
+ * 24. WapIp       |   终端或网关IP
+ * 39. SessionId   |   会话ID
+ * 40. PromotionId |   促销活动ID
+ *
+ * Created by HuangQiang on 2015/5/19.
+ */
 public class OrderSplit extends BaseBasicBolt {
 
 	private static final long serialVersionUID = 1L;

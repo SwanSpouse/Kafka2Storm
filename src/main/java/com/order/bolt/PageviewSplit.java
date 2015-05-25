@@ -15,6 +15,30 @@ import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
 
+
+/**
+ * 页面阅读Topic
+ *
+ * 话单格式：（接受消息）
+ * 221.226.57.202|192.168.12.201|20150319201306|868||200|8DE75A03811CB989B44AD60F77AA9230.4fxCXN8E0.2.0
+ * |1|14|2|http://211.140.7.183:19804/r/798287619/index.htm;jsessionid=8DE75A03811CB989B44AD60F77AA9230.4fxCXN8E0.2.0?nid=798287166&page=1&purl=%2Fr%2Fl%2Fn.jsp%3Fnid%3D798287166%26purl%3D%252Fr%252Fp%252Fbaoyue.jsp%253FsqId%253DL2%2526amp%253BdataSrcId%253D30534679%26sqId%3DL5%26dataSrcId%3D2674444&srsc=1&vt=2&ln=2219_173197__0_
+ * |http://211.140.7.183:19804/r/l/r.jsp?bid=798287619&cid=798287622&
+ * |SAMSUNG_GT-I7680_TD||readbook.jsp|3|99|798287166|31|127|174231|1_31_174231_36155148_4_ML2
+ * |1|||||42000091134|1|0|44338d481d504e56840767a9f023318b|571|575|0000|1|null_null|240||UC
+ * |2.0|19216801220119804201503192013064690000000040|0||15968578881||||798287619|798287622|0|0|1|1||0||
+ *
+ * 需要获取的字段：（发射消息）
+ *  0. remoteIp      |   对端IP地址
+ *  2. recordTime    |   记录时间
+ *  6. sessionId     |   会话ID
+ * 12. userAgent     |   用户原始UA信息
+ * 15. pageType      |   页面类型
+ * 27. msisdn        |   阅读号
+ * 47. bookId        |   BookID在扩展字段 1
+ * 48. chapterId     |   ChapterId在扩展字段2
+ *
+ * Created by HuangQiang on 2015/5/19.
+ */
 public class PageviewSplit extends BaseBasicBolt {
 
 	private static final long serialVersionUID = 1L;
