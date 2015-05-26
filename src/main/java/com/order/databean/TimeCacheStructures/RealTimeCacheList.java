@@ -151,6 +151,12 @@ public class RealTimeCacheList<T> {
         }
     }
 
+    public boolean contains(T value) {
+        synchronized (LOCK) {
+            return oldList.containsKey(value) || currentList.containsKey(value);
+        }
+    }
+
     //对某个id下的过期数据进行清楚。
     private void removeExpiredData(T value, long currentTime) {
         synchronized (LOCK) {

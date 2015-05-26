@@ -28,6 +28,8 @@ public final class Constant {
     public final static int FIVE_MINUTES = 5 * 60;
     //65分钟，用于定时清空bookreadpv的数据
     public final static int SIXTYFIVE_MINUTES = 65 * 60;
+    //一天
+    public final static int ONE_DAY = 24 * 60 * 60;
 
     //规则1、2pv 变化阈值
     public final static int READPV_THREASHOLD = Integer.parseInt(conf.get("READPV_THREASHOLD"));
@@ -55,6 +57,5 @@ public final class Constant {
         System.out.println(SESSION_CHANGE_THRESHOLD);
         System.out.println(IP_CHANGE_THRESHOLD);
         System.out.println(UA_CHANGE_THRESHOLD);
-
     }
 }
