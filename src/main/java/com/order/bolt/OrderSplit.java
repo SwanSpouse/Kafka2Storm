@@ -56,31 +56,33 @@ public class OrderSplit extends BaseBasicBolt {
 		if (words.length >= 49) {
 			String msisdn = words[0]; // msisdnID Varchar2(20)
 			String recordTime = words[1]; // Recordtime Varchar2(14)
-			String sessionId = words[39];// sessionId Varchar2(255)
-			String wapIp = words[24]; // IP地址 Varchar2(40)
-			String terminal = words[2];// UA Varchar2(255)
-			String channelCode = words[9];// 渠道ID Varchar2(8)
-			String cost = words[14]; // 费用 Number(12,4)
-			String orderType = words[4]; // 订购类型  number(2)
-			String productID = words[5];// 产品ID Varchar2(32)
-			String bookID = words[7]; // 图书ID Number(19)
-			String chapterID = words[8]; // 章节ID Varchar2(32)
-			String promotionid = words[40]; // 营销参数 Number(19)
-			collector.emit(StreamId.ORDERDATA.name(), new Values(msisdn,
-					recordTime, sessionId, wapIp, terminal, channelCode, cost,
-					orderType, productID, bookID, chapterID, promotionid));
+            String terminal = words[2];// UA Varchar2(255)
+            String orderType = words[4]; // 订购类型  number(2)
+            String productID = words[5];// 产品ID Varchar2(32)
+            String bookID = words[7]; // 图书ID Number(19)
+            String chapterID = words[8]; // 章节ID Varchar2(32)
+            String channelCode = words[9];// 渠道ID Varchar2(8)
+            String cost = words[14]; // 费用 Number(12,4)
+            String wapIp = words[24]; // IP地址 Varchar2(40)
+            String sessionId = words[39];// sessionId Varchar2(255)
+            String promotionid = words[40]; // 营销参数 Number(19)
+
+            collector.emit(StreamId.ORDERDATA.name(), new Values(msisdn,
+                    recordTime, terminal, orderType, productID, bookID, chapterID,
+                    channelCode, cost, wapIp, sessionId, promotionid));
 		} else {
 			log.info("Error data: " + line);
 		}
 	}
 
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
-		declarer.declareStream(StreamId.ORDERDATA.name(),
-				new Fields(FName.MSISDN.name(), FName.RECORDTIME.name(),
-						FName.SESSIONID.name(), FName.WAPIP.name(),
-						FName.TERMINAL.name(), FName.CHANNELCODE.name(),
-						FName.COST.name(), FName.ORDERTYPE.name(),
-						FName.PRODUCTID.name(), FName.BOOKID.name(),
-						FName.CHAPTERID.name(), FName.PROMOTIONID.name()));
-	}
+
+        declarer.declareStream(StreamId.ORDERDATA.name(),
+                new Fields(FName.MSISDN.name(), FName.RECORDTIME.name(),
+                        FName.TERMINAL.name(), FName.ORDERTYPE.name(),
+                        FName.PRODUCTID.name(), FName.BOOKID.name(),
+                        FName.CHAPTERID.name(), FName.CHANNELCODE.name(),
+                        FName.COST.name(), FName.WAPIP.name(),
+                        FName.SESSIONID.name(), FName.PROMOTIONID.name()));
+    }
 }

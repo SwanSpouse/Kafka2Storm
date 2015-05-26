@@ -57,24 +57,27 @@ public class PageviewSplit extends BaseBasicBolt {
 		if (words.length >= 57) {
 			String remoteIp = words[0]; // remoteIp Varchar2(40)
 			String recordTime = words[2]; // Recordtime Varchar2(20)
-			String sessionId = words[39];// sessionId Varchar2(255)
-			String userAgent = words[24]; // userAgent Varchar2(255)
-			String pageType = words[2];// pageType Varchar2(8)
-			String msisdn = words[9];// msisdn Varchar2(20)
-			String channelCode = words[14]; // channelCode Varchar2(8)
-			collector.emit(StreamId.ORDERDATA.name(), new Values(remoteIp,
+			String sessionId = words[6];// sessionId Varchar2(255)
+			String userAgent = words[12]; // userAgent Varchar2(255)
+			String pageType = words[15];// pageType Varchar2(8)
+			String msisdn = words[27];// msisdn Varchar2(20)
+			String channelCode = words[33]; // channelCode Varchar2(8)
+            String bookId = words[47]; //exColumn1 扩展字段1 Varchar2(255)
+            String chapterId = words[48]; //exColumn2 扩展字段2
+
+            collector.emit(StreamId.BROWSEDATA.name(), new Values(remoteIp,
 					recordTime, sessionId, userAgent, pageType, msisdn,
-					channelCode));
+					channelCode, bookId, chapterId));
 		} else {
 			log.info("Error data: " + line);
 		}
 	}
 
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
-		declarer.declareStream(StreamId.ORDERDATA.name(),
-				new Fields(FName.REMOTEIP.name(), FName.RECORDTIME.name(),
-						FName.SESSIONID.name(), FName.USERAGENT.name(),
-						FName.PAGETYPE.name(), FName.MSISDN.name(),
-						FName.CHANNELCODE.name()));
-	}
+        declarer.declareStream(StreamId.BROWSEDATA.name(),
+                new Fields(FName.REMOTEIP.name(), FName.RECORDTIME.name(),
+                        FName.SESSIONID.name(), FName.USERAGENT.name(),
+                        FName.PAGETYPE.name(), FName.MSISDN.name(),
+                        FName.CHANNELCODE.name(), FName.BOOKID.name(), FName.CHAPTERID.name()));
+    }
 }
