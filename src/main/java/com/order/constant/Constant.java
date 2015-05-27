@@ -14,16 +14,8 @@ public final class Constant {
     private static final String filePath = "rulesParams.properties";
     private static Map<String, String> conf = StormConf.readPropery(filePath);
 
-    //OrderType中对应的信息
-    public static final int ORDERTYPE_FREE = 0;
-    public static final int ORDERTYPE_BOOK = 1;
-    public static final int ORDERTYPE_CHAPTER = 2;
-    public static final int ORDERTYPE_WORD = 3;
-    public static final int ORDERTYPE_PROMOTION = 4;
-    public static final int ORDERTYPE_VOLUME = 5;
-
     //3分钟。用于统计规则5中的订购次数
-    public final static int THREEO_MINUTES = 3 * 60;
+    public final static int THREE_MINUTES = 3 * 60;
     //5分钟。用于定时清空sessionInfo ipInfo terminalInfo的数据
     public final static int FIVE_MINUTES = 5 * 60;
     //65分钟，用于定时清空bookreadpv的数据

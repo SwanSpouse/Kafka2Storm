@@ -32,8 +32,7 @@ public class SessionInfo {
     //订单类型
     private int orderType = 0;
 
-    private Thread rule1Checker = null;
-    private Thread rule2Checker = null;
+    private Thread rule123Checker = null;
 
     //图书阅读浏览pv，应用于1、2、6、7
     private RealTimeCacheList<String> bookReadPv = new RealTimeCacheList<String>(Constant.SIXTYFIVE_MINUTES);
@@ -115,24 +114,36 @@ public class SessionInfo {
      * @param callback
      */
     public void checkRule123(final String bookId, final RulesCallback callback) {
-        rule1Checker = new Thread(new Runnable() {
+        rule123Checker = new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
                     //延迟5分钟之后对65分钟内的数据进行检测。
-                    rule1Checker.sleep(Constant.FIVE_MINUTES);
-                    if (bookChapterOrderPv.sizeById(bookId) <= Constant.READPV_THREASHOLD) {
-                        callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee, channelId, promotionId, Rules.ONE);
-                    } else {
-                        callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee, channelId, promotionId, Rules.ONE);
+                    rule123Checker.sleep(Constant.FIVE_MINUTES);
+                    if (orderType == 4 || orderType == 5 || orderType == 9 || orderType == 99) {
+                        return ;
+                    }
+                    //根据特定图书浏览次数来判断违反的是哪条规则
+                    Rules rule = null;
+                    if (bookReadPv.sizeById(bookId) == Constant.READPV_ZERO_TIMES) {
+                        rule = Rules.ONE;
+                    }else if (bookReadPv.sizeById(bookId) == Constant.READPV_ONE_TIMES) {
+                        rule = Rules.TWO;
+                    }else if (bookReadPv.sizeById(bookId) <= Constant.READPV_THREASHOLD
+                            && bookReadPv.sizeById(bookId) > Constant.READPV_ONE_TIMES) {
+                        rule = Rules.THREE;
+                    }
+                    if (rule != null) {
+                        callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
+                                channelId, promotionId, rule, provinceId);
                     }
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }
         });
-        rule1Checker.start();
-        rule1Checker.setDaemon(true);
+        rule123Checker.start();
+        rule123Checker.setDaemon(true);
     }
 
     /**
@@ -161,11 +172,10 @@ public class SessionInfo {
      * @param callback
      */
     public void checkRule6(String bookId, final RulesCallback callback) {
-        if (bookOrderPv.sizeWithTimeThreshold(bookId, lastUpdateTime, Constant.THREEO_MINUTES)
-                >= Constant.ORDER_BY_MONTH_THRESHOLD) {
-            callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee, channelId, promotionId, Rules.SEVEN);
-        } else {
-            callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee, channelId, promotionId, Rules.SEVEN);
+        if (orderType == 4 &&
+                bookOrderPv.sizeWithTimeThreshold(bookId, lastUpdateTime, Constant.THREE_MINUTES)
+                        >= Constant.ORDER_BY_MONTH_THRESHOLD) {
+            callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee, channelId, promotionId, Rules.SIX, provinceId);
         }
     }
 
@@ -177,7 +187,6 @@ public class SessionInfo {
      */
     public void checkRule7(final RulesCallback callback) {
         if (bookOrderPv.size() < 2) {
-            callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee, channelId, promotionId, Rules.EIGHT);
             return ;
         }
         int orderBookNums = bookOrderPv.size();
@@ -185,11 +194,9 @@ public class SessionInfo {
         for (String bookId : bookOrderPv.keySet()) {
             countBookReadpv += bookReadPv.sizeWithTimeThreshold(bookId, lastUpdateTime, Constant.FIVE_MINUTES);
         }
-        if (orderBookNums <= 5 * countBookReadpv) {
-            callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee, channelId, promotionId, Rules.EIGHT);
-            return ;
+        if (countBookReadpv <= 5 * orderBookNums) {
+            callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee, channelId, promotionId, Rules.SEVEN,provinceId);
         }
-        callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee, channelId, promotionId, Rules.EIGHT);
     }
 
     /**
@@ -200,11 +207,13 @@ public class SessionInfo {
      * @param callback
      */
     public void checkRule8(String id, final RulesCallback callback) {
-        //TODO 这里需要知道这本书包含哪些章数。
+        //TODO 应该维护图书和章节的对应关系。
+        if (bookChapterOrderPv.sizeWithTimeThreshold(id, lastUpdateTime, Constant.FIVE_MINUTES) < 10) {
+            return;
+        }
     }
 
     public void clean() {
-        rule1Checker.interrupt();
-        rule2Checker.interrupt();
+        rule123Checker.interrupt();
     }
 }
