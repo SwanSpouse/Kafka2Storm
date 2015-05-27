@@ -10,7 +10,7 @@ import com.order.databean.TimeCacheStructures.RealTimeCacheList;
  */
 public class UserInfo {
 
-    //规则8、9、10对应的检测位
+    //规则9、10、11对应的检测位
     private final static int SESSION_CHECK_BIT = 0;
     private final static int IP_CHECK_BIT = 1;
     private final static int UA_CHECK_BIT = 2;
@@ -55,10 +55,10 @@ public class UserInfo {
     }
 
     /**
-     * 检测规则8、9、10是否符合规则。如果符合规则，则返回true，反之返回false
-     * 规则八： 一个订购用户一个小时内的session变化 >=3 次
-     * 规则九： 一小时内用户订购IP地址变化 >= 3 次
-     * 规则十： 一个小时内用户订购UA信息变化次数 >= 2次。
+     * 检测规则9、10、11是否符合规则。如果符合规则，则返回true，反之返回false
+     * 规则9：一个用户一小时内订购session>=3。
+     * 规则10：一小时内用户订购IP地址变化 变化次数>=3次。
+     * 规则11：一小时内用户订购UA信息发生变化次数>=2次。
      * @return
      */
     public boolean[] isObeyRules() {
