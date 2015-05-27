@@ -11,9 +11,9 @@ import com.order.databean.TimeCacheStructures.RealTimeCacheList;
 public class UserInfo {
 
     //规则9、10、11对应的检测位
-    private final static int SESSION_CHECK_BIT = 0;
-    private final static int IP_CHECK_BIT = 1;
-    private final static int UA_CHECK_BIT = 2;
+    public final static int SESSION_CHECK_BIT = 0;
+    public final static int IP_CHECK_BIT = 1;
+    public final static int UA_CHECK_BIT = 2;
 
     //是否为异常用户
     private boolean isNormalUser = true;
