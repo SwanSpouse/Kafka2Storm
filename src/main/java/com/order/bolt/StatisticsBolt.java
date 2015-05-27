@@ -28,7 +28,7 @@ public class StatisticsBolt extends BaseBasicBolt {
     private RealTimeCacheList<Pair<String, SessionInfo>> sessionInfos =
             new RealTimeCacheList<Pair<String, SessionInfo>>(Constant.ONE_DAY);
 
-    private void constructInfoFromBrowseData(Tuple input) {
+    private void constructInfoFromBrowseData(Tuple input) throws Exception{
         String remoteIp = input.getStringByField(FName.REMOTEIP.name());
         Long recordTime = TimeParaser.splitTime(input.getStringByField(FName.RECORDTIME.name()));
         String sessionId = input.getStringByField(FName.SESSIONID.name());
@@ -63,7 +63,7 @@ public class StatisticsBolt extends BaseBasicBolt {
         }
     }
 
-    private void constructInfoFromOrderData(Tuple input) {
+    private void constructInfoFromOrderData(Tuple input) throws Exception {
         String msisdn = input.getStringByField(FName.MSISDN.name());
         Long recordTime = TimeParaser.splitTime(input.getStringByField(FName.RECORDTIME.name()));
         String userAgent = input.getStringByField(FName.USERAGENT.name());
@@ -106,10 +106,18 @@ public class StatisticsBolt extends BaseBasicBolt {
     public void execute(Tuple input, BasicOutputCollector collector) {
         if (input.getSourceStreamId().equals(StreamId.BROWSEDATA)) {
             //阅读浏览话单
-            this.constructInfoFromBrowseData(input);
+            try {
+                this.constructInfoFromBrowseData(input);
+            } catch (Exception e) {
+                log.error("阅读浏览话单数据结构异常");
+            }
         }else if (input.getSourceStreamId().equals(StreamId.ORDERDATA)) {
             // 订购话单
-            this.constructInfoFromOrderData(input);
+            try {
+                this.constructInfoFromOrderData(input);
+            } catch (Exception e) {
+                log.error("订购话单数据结构异常");
+            }
         }
     }
 
