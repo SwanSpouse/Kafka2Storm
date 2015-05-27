@@ -33,6 +33,7 @@ import backtype.storm.tuple.Values;
  *  8. ChapterID   |   章节ID
  *  9. ChannelCode |   渠道ID
  * 14. RealInfoFee |   真实信息费
+ * 22. provinceID  |   手机号对应的省ID    （20150527新增）
  * 24. WapIp       |   终端或网关IP
  * 39. SessionId   |   会话ID
  * 40. PromotionId |   促销活动ID
@@ -63,13 +64,14 @@ public class OrderSplit extends BaseBasicBolt {
             String chapterID = words[8]; // 章节ID Varchar2(32)
             String channelCode = words[9];// 渠道ID Varchar2(8)
             String cost = words[14]; // 费用 Number(12,4)
+            String provinceId = words[22]; // Varchar2(16)
             String wapIp = words[24]; // IP地址 Varchar2(40)
             String sessionId = words[39];// sessionId Varchar2(255)
             String promotionid = words[40]; // 营销参数 Number(19)
 
             collector.emit(StreamId.ORDERDATA.name(), new Values(msisdn,
                     recordTime, terminal, orderType, productID, bookID, chapterID,
-                    channelCode, cost, wapIp, sessionId, promotionid));
+                    channelCode, cost, provinceId ,wapIp, sessionId, promotionid));
 		} else {
 			log.info("Error data: " + line);
 		}
@@ -82,7 +84,8 @@ public class OrderSplit extends BaseBasicBolt {
                         FName.TERMINAL.name(), FName.ORDERTYPE.name(),
                         FName.PRODUCTID.name(), FName.BOOKID.name(),
                         FName.CHAPTERID.name(), FName.CHANNELCODE.name(),
-                        FName.COST.name(), FName.WAPIP.name(),
-                        FName.SESSIONID.name(), FName.PROMOTIONID.name()));
+                        FName.COST.name(), FName.PROMOTIONID.name(),
+                        FName.WAPIP.name(), FName.SESSIONID.name(),
+                        FName.PROMOTIONID.name()));
     }
 }

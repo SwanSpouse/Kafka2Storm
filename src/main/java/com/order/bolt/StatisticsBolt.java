@@ -48,9 +48,9 @@ public class StatisticsBolt extends BaseBasicBolt {
         Pair<String, SessionInfo> sessionPair = new Pair<String, SessionInfo>(sessionId, null);
         if (sessionInfos.contains(sessionPair)) {
             SessionInfo currentSessionInfo = (SessionInfo) sessionInfos.get(sessionPair).getValue();
-            currentSessionInfo.upDateSeesionInfo(bookId, null, null, recordTime, -1, 0, channelCode, -1);
+            currentSessionInfo.upDateSeesionInfo(bookId, null, null, recordTime, -1, 0, channelCode, -1, null);
         } else {
-            SessionInfo currentSessionInfo = new SessionInfo(sessionId, msisdn, bookId, null, null, recordTime, -1, 0, channelCode, -1);
+            SessionInfo currentSessionInfo = new SessionInfo(sessionId, msisdn, bookId, null, null, recordTime, -1, 0, channelCode, -1, null);
             sessionInfos.put(new Pair<String, SessionInfo>(sessionId, currentSessionInfo));
         }
         //浏览话单不需要更新用户信息
@@ -69,6 +69,8 @@ public class StatisticsBolt extends BaseBasicBolt {
         String wapIp = input.getStringByField(FName.WAPIP.name());
         String sessionId = input.getStringByField(FName.SESSIONID.name());
         int promotionId = input.getIntegerByField(FName.PROMOTIONID.name());
+        String provinceId = input.getStringByField(FName.PROVINCEID.name());
+
         if (sessionId == null || sessionId.trim().equals("")) {
             return;
         }
@@ -82,10 +84,10 @@ public class StatisticsBolt extends BaseBasicBolt {
         if (sessionInfos.contains(sessionInfoPair)) {
             currentSessionInfo = (SessionInfo) sessionInfos.get(sessionInfoPair).getValue();
             currentSessionInfo.upDateSeesionInfo(null, bookId, chapterId, recordTime, orderType,
-                    realInfoFee, channelCode, promotionId);
+                    realInfoFee, channelCode, promotionId, provinceId);
         } else {
             currentSessionInfo = new SessionInfo(sessionId, msisdn, null, bookId,
-                    chapterId, recordTime, orderType, realInfoFee, channelCode, promotionId);
+                    chapterId, recordTime, orderType, realInfoFee, channelCode, promotionId, provinceId);
             sessionInfos.put(new Pair<String, SessionInfo>(sessionId, currentSessionInfo));
         }
         //检测相应的各个规则。
@@ -109,15 +111,15 @@ public class StatisticsBolt extends BaseBasicBolt {
         boolean[] isObeyRules = currentUserInfo.isObeyRules();
         if (!isObeyRules[UserInfo.SESSION_CHECK_BIT]) {
             collector.emit(StreamId.ABNORMALDATASTREAM.name(),
-                    new Values(msisdn, sessionId, recordTime, realInfoFee, channelCode, promotionId, Rules.NINE));
+                    new Values(msisdn, sessionId, recordTime, realInfoFee, channelCode, promotionId, Rules.NINE, provinceId));
         }
         if (!isObeyRules[UserInfo.IP_CHECK_BIT]) {
             collector.emit(StreamId.ABNORMALDATASTREAM.name(),
-                    new Values(msisdn, sessionId, recordTime, realInfoFee, channelCode, promotionId, Rules.TEN));
+                    new Values(msisdn, sessionId, recordTime, realInfoFee, channelCode, promotionId, Rules.TEN, provinceId));
         }
         if (!isObeyRules[UserInfo.UA_CHECK_BIT]) {
             collector.emit(StreamId.ABNORMALDATASTREAM.name(),
-                    new Values(msisdn, sessionId, recordTime, realInfoFee, channelCode, promotionId, Rules.ELEVEN));
+                    new Values(msisdn, sessionId, recordTime, realInfoFee, channelCode, promotionId, Rules.ELEVEN, provinceId));
         }
     }
 
@@ -144,11 +146,12 @@ public class StatisticsBolt extends BaseBasicBolt {
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
         declarer.declareStream(StreamId.DATASTREAM.name(),
                 new Fields(FName.MSISDN.name(), FName.SESSIONID.name(), FName.RECORDTIME.name(),
-                           FName.REALINFORFEE.name(), FName.CHANNELCODE.name(), FName.PROMOTIONID.name()));
+                           FName.REALINFORFEE.name(), FName.CHANNELCODE.name(), FName.PROMOTIONID.name(),
+                          FName.PROVINCEID.name()));
 
         declarer.declareStream(StreamId.ABNORMALDATASTREAM.name(),
                 new Fields(FName.MSISDN.name(), FName.SESSIONID.name(), FName.RECORDTIME.name(),
                             FName.REALINFORFEE.name(), FName.CHANNELCODE.name(), FName.PROMOTIONID.name(),
-                            FName.RULES.name()));
+                            FName.RULES.name(), FName.PROVINCEID.name()));
     }
 }

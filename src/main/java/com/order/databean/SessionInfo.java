@@ -27,6 +27,8 @@ public class SessionInfo {
     private int promotionId = 0;
     private long lastUpdateTime;
 
+    //手机号码对应的省ID
+    private String provinceId = null;
     //订单类型
     private int orderType = 0;
 
@@ -44,7 +46,7 @@ public class SessionInfo {
     //对应浏览pv 和 订购pv 构建SeesionInfo
     public SessionInfo(String sessionId, String msisdnId, String bookReadId,
                        String bookOrderId, String bookChapterOrderId, Long currentTime,
-                       int orderType, int realInfoFee, int channelId, int promotionId) {
+                       int orderType, int realInfoFee, int channelId, int promotionId, String provinceId) {
         if (currentTime != null) {
             this.lastUpdateTime = currentTime;
         } else {
@@ -71,12 +73,15 @@ public class SessionInfo {
         if (bookChapterOrderId != null) {
             bookChapterOrderPv.put(bookChapterOrderId, lastUpdateTime);
         }
+        if (provinceId != null) {
+            this.provinceId = provinceId;
+        }
     }
 
     //对已存在的SessionInfo进行更新。
     public void upDateSeesionInfo(String bookReadId, String bookOrderId, String bookChapterOrderId,
                                   Long currentTime, int orderType, int realInfoFee,
-                                  int channelId, int promotionId) {
+                                  int channelId, int promotionId, String provinceId) {
         if (currentTime != null) {
             lastUpdateTime = currentTime;
         } else {
@@ -91,6 +96,10 @@ public class SessionInfo {
         if (bookChapterOrderPv != null) {
             bookChapterOrderPv.put(bookChapterOrderId, lastUpdateTime);
         }
+        if (provinceId != null) {
+            this.provinceId = provinceId;
+        }
+
         this.orderType = orderType;
         this.realInfoFee = realInfoFee;
         this.channelId = channelId;

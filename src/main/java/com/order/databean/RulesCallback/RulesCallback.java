@@ -19,7 +19,9 @@ public interface RulesCallback {
      * @param channelId   渠道Id
      * @param promotionId 营销参数
      * @param rules       对应处理的规则。
+     * @param provinceId  手机号码对应的省ID
      */
     public void hanleData(String msisdnId, String sessionId, Long currentTime,
-                          int realInfoFee, int channelId, int promotionId, Rules rules);
+                          int realInfoFee, int channelId, int promotionId, Rules rules,
+                          String provinceId);
 }
