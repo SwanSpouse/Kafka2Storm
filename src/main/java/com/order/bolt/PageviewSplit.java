@@ -28,10 +28,10 @@ import backtype.storm.tuple.Values;
  * |2.0|19216801220119804201503192013064690000000040|0||15968578881||||798287619|798287622|0|0|1|1||0||
  *
  * 需要获取的字段：（发射消息）
- *  0. remoteIp      |   对端IP地址
+ *  0. remoteIp      |   对端IP地址    (弃用)
  *  2. recordTime    |   记录时间 格式:yyMMddhhmmss
  *  6. sessionId     |   会话ID
- * 12. userAgent     |   用户原始UA信息
+ * 12. userAgent     |   用户原始UA信息（弃用）
  * 15. pageType      |   页面类型
  * 27. msisdn        |   阅读号
  * 33. channelCode   |   渠道代码
@@ -55,18 +55,16 @@ public class PageviewSplit extends BaseBasicBolt {
 		String line = input.getString(0);
 		String[] words = line.split("\\|", -1);
 		if (words.length >= 57) {
-			String remoteIp = words[0]; // remoteIp Varchar2(40)
 			String recordTime = words[2]; // Recordtime Varchar2(20)
 			String sessionId = words[6];// sessionId Varchar2(255)
-			String userAgent = words[12]; // userAgent Varchar2(255)
 			String pageType = words[15];// pageType Varchar2(8)
 			String msisdn = words[27];// msisdn Varchar2(20)
 			String channelCode = words[33]; // channelCode Varchar2(8)
             String bookId = words[47]; //exColumn1 扩展字段1 Varchar2(255)
             String chapterId = words[48]; //exColumn2 扩展字段2
 
-            collector.emit(StreamId.BROWSEDATA.name(), new Values(remoteIp,
-					recordTime, sessionId, userAgent, pageType, msisdn,
+            collector.emit(StreamId.BROWSEDATA.name(), new Values(
+					recordTime, sessionId, pageType, msisdn,
 					channelCode, bookId, chapterId));
 		} else {
 			log.info("Error data: " + line);
@@ -75,9 +73,8 @@ public class PageviewSplit extends BaseBasicBolt {
 
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
         declarer.declareStream(StreamId.BROWSEDATA.name(),
-                new Fields(FName.REMOTEIP.name(), FName.RECORDTIME.name(),
-                        FName.SESSIONID.name(), FName.USERAGENT.name(),
-                        FName.PAGETYPE.name(), FName.MSISDN.name(),
+                new Fields(FName.RECORDTIME.name(),
+                        FName.SESSIONID.name(), FName.PAGETYPE.name(), FName.MSISDN.name(),
                         FName.CHANNELCODE.name(), FName.BOOKID.name(), FName.CHAPTERID.name()));
     }
 }
