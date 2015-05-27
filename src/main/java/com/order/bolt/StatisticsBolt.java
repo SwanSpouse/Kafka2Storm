@@ -8,6 +8,8 @@ import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
 import com.order.constant.Constant;
 import com.order.constant.Rules;
+import com.order.databean.RulesCallback.EmitDatas;
+import com.order.databean.RulesCallback.RulesCallback;
 import com.order.databean.SessionInfo;
 import com.order.databean.TimeCacheStructures.Pair;
 import com.order.databean.TimeCacheStructures.RealTimeCacheList;
@@ -51,18 +53,10 @@ public class StatisticsBolt extends BaseBasicBolt {
             SessionInfo currentSessionInfo = new SessionInfo(sessionId, msisdn, bookId, null, null, recordTime, -1, 0, channelCode, -1);
             sessionInfos.put(new Pair<String, SessionInfo>(sessionId, currentSessionInfo));
         }
-        //更新阅读浏览话单的UserInfos信息
-        Pair<String, UserInfo> userPair = new Pair<String, UserInfo>(msisdn, null);
-        if (userInfos.contains(userPair)) {
-            UserInfo currentUserInfo = (UserInfo) userInfos.get(userPair).getValue();
-            currentUserInfo.upDateUserInfo(recordTime, sessionId, null, null);
-        } else {
-            UserInfo currentUserInfo = new UserInfo(msisdn, recordTime, sessionId, null, null);
-            userInfos.put(new Pair<String, UserInfo>(msisdn, currentUserInfo));
-        }
+        //浏览话单不需要更新用户信息
     }
 
-    private void constructInfoFromOrderData(Tuple input, BasicOutputCollector collector) throws Exception {
+    private void constructInfoFromOrderData(Tuple input, final BasicOutputCollector collector) throws Exception {
         String msisdn = input.getStringByField(FName.MSISDN.name());
         Long recordTime = TimeParaser.splitTime(input.getStringByField(FName.RECORDTIME.name()));
         String userAgent = input.getStringByField(FName.USERAGENT.name());
@@ -78,6 +72,10 @@ public class StatisticsBolt extends BaseBasicBolt {
         if (sessionId == null || sessionId.trim().equals("")) {
             return;
         }
+        //所有订单数据先统一发送。用作数据统计。
+        collector.emit(StreamId.DATASTREAM.name(), new Values(msisdn, sessionId, recordTime,
+                realInfoFee, channelCode, promotionId));
+
         //更新订购话单的SessionInfos信息
         Pair<String, SessionInfo> sessionInfoPair = new Pair<String, SessionInfo>(sessionId, null);
         SessionInfo currentSessionInfo = null;
@@ -90,6 +88,14 @@ public class StatisticsBolt extends BaseBasicBolt {
                     chapterId, recordTime, orderType, realInfoFee, channelCode, promotionId);
             sessionInfos.put(new Pair<String, SessionInfo>(sessionId, currentSessionInfo));
         }
+        //检测相应的各个规则。
+        currentSessionInfo.checkRule123(bookId, new EmitDatas(collector));
+        currentSessionInfo.checkRule4(new EmitDatas(collector));
+        currentSessionInfo.checkRule5(new EmitDatas(collector));
+        currentSessionInfo.checkRule6(bookId, new EmitDatas(collector));
+        currentSessionInfo.checkRule7(new EmitDatas(collector));
+        currentSessionInfo.checkRule8(bookId, new EmitDatas(collector));
+
         //更新订购话单UserInfos信息
         Pair<String, UserInfo> userInfoPair = new Pair<String, UserInfo>(msisdn, null);
         UserInfo currentUserInfo = null;
@@ -101,15 +107,15 @@ public class StatisticsBolt extends BaseBasicBolt {
             userInfos.put(new Pair<String, UserInfo>(msisdn, currentUserInfo));
         }
         boolean[] isObeyRules = currentUserInfo.isObeyRules();
-        if (isObeyRules[UserInfo.SESSION_CHECK_BIT]) {
+        if (!isObeyRules[UserInfo.SESSION_CHECK_BIT]) {
             collector.emit(StreamId.ABNORMALDATASTREAM.name(),
                     new Values(msisdn, sessionId, recordTime, realInfoFee, channelCode, promotionId, Rules.NINE));
         }
-        if (isObeyRules[UserInfo.IP_CHECK_BIT]) {
+        if (!isObeyRules[UserInfo.IP_CHECK_BIT]) {
             collector.emit(StreamId.ABNORMALDATASTREAM.name(),
                     new Values(msisdn, sessionId, recordTime, realInfoFee, channelCode, promotionId, Rules.TEN));
         }
-        if (isObeyRules[UserInfo.UA_CHECK_BIT]) {
+        if (!isObeyRules[UserInfo.UA_CHECK_BIT]) {
             collector.emit(StreamId.ABNORMALDATASTREAM.name(),
                     new Values(msisdn, sessionId, recordTime, realInfoFee, channelCode, promotionId, Rules.ELEVEN));
         }

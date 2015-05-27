@@ -97,36 +97,15 @@ public class SessionInfo {
         this.promotionId = promotionId;
     }
 
-
     /**
-     * 检测规则 1
+     * 检测规则 1、2、3
      * 规则1：用户5分钟内，对图书有订购行为，且前1小时后5分钟内对该产品的点击pv=0 ordertype not in ( 4 5 9 99)
-     *
-     * @param bookId
-     * @param callback
-     */
-    public void checkRule1(final String bookId, final RulesCallback callback) {
-
-    }
-
-    /**
-     * 检测规则 2
      * 规则2：用户5分钟内，对图书有订购行为，且前1小时后5分钟内对该产品的点击pv=1 ordertype not in ( 4 5 9 99)
-     *
-     * @param bookId
-     * @param callback
-     */
-    public void checkRule2(final String bookId, final RulesCallback callback) {
-
-    }
-
-    /**
-     * 检测规则 3
      * 规则3：用户5分钟内，对图书有订购行为，且前1小时后5分钟内对该产品的点击 1<pv<=5 ordertype not in ( 4 5 9 99)
      * @param bookId
      * @param callback
      */
-    public void checkRule3(final String bookId, final RulesCallback callback) {
+    public void checkRule123(final String bookId, final RulesCallback callback) {
         rule1Checker = new Thread(new Runnable() {
             @Override
             public void run() {
