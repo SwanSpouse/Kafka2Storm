@@ -157,6 +157,31 @@ public class RealTimeCacheList<T> {
         }
     }
 
+    public Pair get(T value) {
+        if (!(value instanceof Pair)) {
+            return null;
+        }
+        synchronized (LOCK) {
+            if (oldList.containsKey(value)) {
+                for (T currentValue : oldList.keySet()) {
+                    Pair currentPair = (Pair) currentValue;
+                    if (currentPair.equals(value)) {
+                        return currentPair;
+                    }
+                }
+            }
+            if (currentList.containsKey(value)) {
+                for (T currentValue : currentList.keySet()) {
+                    Pair currentPair = (Pair) currentValue;
+                    if (currentPair.equals(value)) {
+                        return currentPair;
+                    }
+                }
+            }
+            return null;
+        }
+    }
+
     //对某个id下的过期数据进行清楚。
     private void removeExpiredData(T value, long currentTime) {
         synchronized (LOCK) {
