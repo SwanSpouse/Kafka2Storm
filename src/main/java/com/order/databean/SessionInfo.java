@@ -3,6 +3,7 @@ package com.order.databean;
 import com.order.constant.Constant;
 import com.order.constant.Rules;
 import com.order.databean.RulesCallback.RulesCallback;
+import com.order.databean.TimeCacheStructures.Pair;
 import com.order.databean.TimeCacheStructures.RealTimeCacheList;
 import org.apache.log4j.Logger;
 
@@ -34,13 +35,14 @@ public class SessionInfo {
 
     private Thread rule123Checker = null;
 
-    //图书阅读浏览pv，应用于1、2、6、7
+    //图书阅读浏览pv，
     private RealTimeCacheList<String> bookReadPv = new RealTimeCacheList<String>(Constant.SIXTYFIVE_MINUTES);
-    //图书购买pv, 应用于规则6
+    //图书购买pv,
     private RealTimeCacheList<String> bookOrderPv = new RealTimeCacheList<String>(Constant.FIVE_MINUTES);
-    //图书章节购买pv，应用于规则7
+    //图书章节购买pv，
     private RealTimeCacheList<String> bookChapterOrderPv = new RealTimeCacheList<String>(Constant.FIVE_MINUTES);
-
+    //各个渠道下的日购买费用
+    private RealTimeCacheList<Pair<String, Integer>> channelOrderpv = new RealTimeCacheList<Pair<String, Integer>>(Constant.ONE_DAY);
 
     //对应浏览pv 和 订购pv 构建SeesionInfo
     public SessionInfo(String sessionId, String msisdnId, String bookReadId,
@@ -75,6 +77,14 @@ public class SessionInfo {
         if (provinceId != null) {
             this.provinceId = provinceId;
         }
+        Pair<String, Integer> pair = new Pair<String, Integer>(msisdnId, realInfoFee);
+        if (channelOrderpv.contains(pair)) {
+            Pair<String, Integer> currentPair = channelOrderpv.get(pair);
+            currentPair.setValue(currentPair.getValue() + realInfoFee);
+            channelOrderpv.put(currentPair);
+        } else {
+            channelOrderpv.put(pair);
+        }
     }
 
     //对已存在的SessionInfo进行更新。
@@ -103,6 +113,15 @@ public class SessionInfo {
         this.realInfoFee = realInfoFee;
         this.channelId = channelId;
         this.promotionId = promotionId;
+
+        Pair<String, Integer> pair = new Pair<String, Integer>(msisdnId, realInfoFee);
+        if (channelOrderpv.contains(pair)) {
+            Pair<String, Integer> currentPair = channelOrderpv.get(pair);
+            currentPair.setValue(currentPair.getValue() + realInfoFee);
+            channelOrderpv.put(currentPair);
+        } else {
+            channelOrderpv.put(pair);
+        }
     }
 
     /**
@@ -161,7 +180,13 @@ public class SessionInfo {
      * @param callback
      */
     public void checkRule5(final RulesCallback callback) {
-        //TODO 这个规则还有待再讨论。
+        for (Pair<String, Integer> currentPair : channelOrderpv.keySet()) {
+            if (currentPair.getValue() > 10) {
+                callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
+                        channelId, promotionId, Rules.FIVE, provinceId);
+                break;
+            }
+        }
     }
 
     /**
