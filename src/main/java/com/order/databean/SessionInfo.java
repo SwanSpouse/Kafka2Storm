@@ -1,9 +1,9 @@
 package com.order.databean;
 
 import com.order.constant.Constant;
+import com.order.constant.Rules;
 import com.order.databean.RulesCallback.RulesCallback;
 import com.order.databean.TimeCacheStructures.RealTimeCacheList;
-import org.apache.commons.digester.Rules;
 import org.apache.log4j.Logger;
 
 /**
@@ -97,14 +97,36 @@ public class SessionInfo {
         this.promotionId = promotionId;
     }
 
+
     /**
      * 检测规则 1
-     * 规则一：用户有SessionId且对图书有订购行为，且前一小时后5分钟内对该产品的点击pv<=5
+     * 规则1：用户5分钟内，对图书有订购行为，且前1小时后5分钟内对该产品的点击pv=0 ordertype not in ( 4 5 9 99)
      *
      * @param bookId
      * @param callback
      */
     public void checkRule1(final String bookId, final RulesCallback callback) {
+
+    }
+
+    /**
+     * 检测规则 2
+     * 规则2：用户5分钟内，对图书有订购行为，且前1小时后5分钟内对该产品的点击pv=1 ordertype not in ( 4 5 9 99)
+     *
+     * @param bookId
+     * @param callback
+     */
+    public void checkRule2(final String bookId, final RulesCallback callback) {
+
+    }
+
+    /**
+     * 检测规则 3
+     * 规则3：用户5分钟内，对图书有订购行为，且前1小时后5分钟内对该产品的点击 1<pv<=5 ordertype not in ( 4 5 9 99)
+     * @param bookId
+     * @param callback
+     */
+    public void checkRule3(final String bookId, final RulesCallback callback) {
         rule1Checker = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -112,9 +134,9 @@ public class SessionInfo {
                     //延迟5分钟之后对65分钟内的数据进行检测。
                     rule1Checker.sleep(Constant.FIVE_MINUTES);
                     if (bookChapterOrderPv.sizeById(bookId) <= Constant.READPV_THREASHOLD) {
-                        callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee, channelId, promotionId, 1, false);
+                        callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee, channelId, promotionId, Rules.ONE);
                     } else {
-                        callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee, channelId, promotionId, 1, true);
+                        callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee, channelId, promotionId, Rules.ONE);
                     }
                 } catch (InterruptedException e) {
                     e.printStackTrace();
@@ -126,58 +148,48 @@ public class SessionInfo {
     }
 
     /**
-     * 检测规则 2
-     * 规则二：用户有SessionId且对促销包有订购行为，且前一小时后5分钟内对改促销包所包含的图书总点击pv<=5
-     * @param bookId
+     * 检测规则 4
+     * 规则5：一个用户日扣费二级渠道>=3个，
      * @param callback
      */
-    public void checkRule2(final String bookId, final RulesCallback callback) {
-        //TODO 需要有促销包内包含图书的尾表
-    }
-
-    /**
-     * 检测规则 3
-     * 规则三：一个用户日扣费二级渠道>=3 个，该用户当天所有信息费为异常。
-     * @param callback
-     */
-    public void checkRule3(final RulesCallback callback) {
+    public void checkRule4(final RulesCallback callback) {
         //TODO 还需要存一个二级渠道的变量。日过期。
     }
 
     /**
-     * 检测规则 4
-     * 规则四：一个用户日渠道ID中的按本订购费>10元。该用户本渠道所有信息费为异常。
+     * 检测规则 5
+     * 规则5：一个用户日渠道ID中的按本订购费>10元，该用户异常渠道当天所有信息费为异常
      * @param callback
      */
-    public void checkRule4(final RulesCallback callback) {
+    public void checkRule5(final RulesCallback callback) {
         //TODO 这个规则还有待再讨论。
     }
 
     /**
-     * 检测规则5
-     * 规则五：用户有seesionId且3分钟内，包月订购次数>=2
+     * 检测规则 6
+     * 规则6：用户3分钟内，包月订购>=2次
      *
      * @param bookId
      * @param callback
      */
-    public void checkRule5(String bookId, final RulesCallback callback) {
+    public void checkRule6(String bookId, final RulesCallback callback) {
         if (bookOrderPv.sizeWithTimeThreshold(bookId, lastUpdateTime, Constant.THREEO_MINUTES)
                 >= Constant.ORDER_BY_MONTH_THRESHOLD) {
-            callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee, channelId, promotionId, 5, false);
+            callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee, channelId, promotionId, Rules.SEVEN);
         } else {
-            callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee, channelId, promotionId, 5, true);
+            callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee, channelId, promotionId, Rules.SEVEN);
         }
     }
 
     /**
-     * 检测规则六
-     * 规则六：用户有sessionId且5分钟内，完本图书订购或批量订购>=2 且 订购图书pv <= 5*浏览次数
+     * 检测规则 7
+     * 规则7：用户5分钟内，完本图书订购本书>=2，且对订购图书的pv<=5*本数
      *
      * @param callback
      */
-    public void checkRule6(final RulesCallback callback) {
+    public void checkRule7(final RulesCallback callback) {
         if (bookOrderPv.size() < 2) {
-            callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee, channelId, promotionId, 6, true);
+            callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee, channelId, promotionId, Rules.EIGHT);
             return ;
         }
         int orderBookNums = bookOrderPv.size();
@@ -186,20 +198,20 @@ public class SessionInfo {
             countBookReadpv += bookReadPv.sizeWithTimeThreshold(bookId, lastUpdateTime, Constant.FIVE_MINUTES);
         }
         if (orderBookNums <= 5 * countBookReadpv) {
-            callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee, channelId, promotionId, 6, false);
+            callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee, channelId, promotionId, Rules.EIGHT);
             return ;
         }
-        callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee, channelId, promotionId, 6, true);
+        callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee, channelId, promotionId, Rules.EIGHT);
     }
 
     /**
-     * 检测规则七
-     * 规则七：用户有sessionId且5分钟内，连载图书订购章数 >= 10，且对订购图书的浏览pv <= 2*章数，如果订购章数
+     * 检测规则 8
+     * 规则8：用户5分钟内，连载图书订购章数>=10，且对订购图书的pv<=2*章数
      * 不满10个。后续判断不触发。
      *
      * @param callback
      */
-    public void checkRule7(String id, final RulesCallback callback) {
+    public void checkRule8(String id, final RulesCallback callback) {
         //TODO 这里需要知道这本书包含哪些章数。
     }
 

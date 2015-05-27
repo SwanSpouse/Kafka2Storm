@@ -29,10 +29,8 @@ public class StatisticsBolt extends BaseBasicBolt {
             new RealTimeCacheList<Pair<String, SessionInfo>>(Constant.ONE_DAY);
 
     private void constructInfoFromBrowseData(Tuple input) throws Exception{
-        String remoteIp = input.getStringByField(FName.REMOTEIP.name());
         Long recordTime = TimeParaser.splitTime(input.getStringByField(FName.RECORDTIME.name()));
         String sessionId = input.getStringByField(FName.SESSIONID.name());
-        String userAgent = input.getStringByField(FName.USERAGENT.name());
         String pageType = input.getStringByField(FName.PAGETYPE.name());
         String msisdn = input.getStringByField(FName.MSISDN.name());
         int channelCode = input.getIntegerByField(FName.CHANNELCODE.name());
@@ -56,9 +54,9 @@ public class StatisticsBolt extends BaseBasicBolt {
         Pair<String, UserInfo> userPair = new Pair<String, UserInfo>(msisdn, null);
         if (userInfos.contains(userPair)) {
             UserInfo currentUserInfo = (UserInfo) userInfos.get(userPair).getValue();
-            currentUserInfo.upDateUserInfo(recordTime, sessionId, remoteIp, userAgent);
+            currentUserInfo.upDateUserInfo(recordTime, sessionId, null, null);
         } else {
-            UserInfo currentUserInfo = new UserInfo(msisdn, recordTime, sessionId, remoteIp, userAgent);
+            UserInfo currentUserInfo = new UserInfo(msisdn, recordTime, sessionId, null, null);
             userInfos.put(new Pair<String, UserInfo>(msisdn, currentUserInfo));
         }
     }

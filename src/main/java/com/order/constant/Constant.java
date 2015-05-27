@@ -31,23 +31,27 @@ public final class Constant {
     //一天
     public final static int ONE_DAY = 24 * 60 * 60;
 
-    //规则1、2pv 变化阈值
+    //规则1变化阈值
+    public final static int READPV_ZERO_TIMES = 0;
+    //规则2变化阈值
+    public final static int READPV_ONE_TIMES = 1;
+    //规则3变化阈值
     public final static int READPV_THREASHOLD = Integer.parseInt(conf.get("READPV_THREASHOLD"));
-    //规则3 扣费二级渠道 变化阈值
+    //规则4 扣费二级渠道 变化阈值
     public final static int CHANNEL_THRESHOLD = Integer.parseInt(conf.get("CHANNEL_THRESHOLD"));
-    //规则4 日渠道ID按本扣费 变化阈值
+    //规则5 日渠道ID按本扣费 变化阈值
     public final static int ORDER_FEE_THRESHOLD = Integer.parseInt(conf.get("ORDER_FEE_THRESHOLD"));
-    //规则5 包月订购次数 变化阈值
+    //规则6 包月订购次数 变化阈值
     public final static int ORDER_BY_MONTH_THRESHOLD = Integer.parseInt(conf.get("ORDER_BY_MONTH_THRESHOLD"));
-    //规则6 图书订购或批量订购 变化阈值
+    //规则7 完本图书订购本数
     public final static int ORDER_TIMES_THRESHOLD = Integer.parseInt(conf.get("ORDER_TIMES_THRESHOLD"));
-    //规则7 连载图书订购章数 变化阈值
+    //规则8 连载图书订购章数 变化阈值
     public final static int ORDER_CHAPTER_TIMES_THRESHOLD = Integer.parseInt(conf.get("ORDER_CHAPTER_TIMES_THRESHOLD"));
-    //规则8 session 变化阈值
+    //规则9 session 变化阈值
     public final static int SESSION_CHANGE_THRESHOLD = Integer.parseInt(conf.get("SESSION_CHANGE_THRESHOLD"));
-    //规则9 IP变化阈值
+    //规则10 IP变化阈值
     public final static int IP_CHANGE_THRESHOLD = Integer.parseInt(conf.get("IP_CHANGE_THRESHOLD"));
-    //规则10 UA信息变化阈值
+    //规则11 UA信息变化阈值
     public final static int UA_CHANGE_THRESHOLD = Integer.parseInt(conf.get("UA_CHANGE_THRESHOLD"));
 
     //测试
