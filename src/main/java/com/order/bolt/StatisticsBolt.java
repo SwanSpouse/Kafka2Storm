@@ -9,7 +9,6 @@ import backtype.storm.tuple.Values;
 import com.order.constant.Constant;
 import com.order.constant.Rules;
 import com.order.databean.RulesCallback.EmitDatas;
-import com.order.databean.RulesCallback.RulesCallback;
 import com.order.databean.SessionInfo;
 import com.order.databean.TimeCacheStructures.Pair;
 import com.order.databean.TimeCacheStructures.RealTimeCacheList;
@@ -85,6 +84,7 @@ public class StatisticsBolt extends BaseBasicBolt {
             currentSessionInfo = (SessionInfo) sessionInfos.get(sessionInfoPair).getValue();
             currentSessionInfo.upDateSeesionInfo(null, bookId, chapterId, recordTime, orderType,
                     realInfoFee, channelCode, promotionId, provinceId);
+            sessionInfos.put(new Pair<String, SessionInfo>(sessionId, currentSessionInfo));
         } else {
             currentSessionInfo = new SessionInfo(sessionId, msisdn, null, bookId,
                     chapterId, recordTime, orderType, realInfoFee, channelCode, promotionId, provinceId);
@@ -104,6 +104,7 @@ public class StatisticsBolt extends BaseBasicBolt {
         if (userInfos.contains(userInfoPair)) {
             currentUserInfo = (UserInfo) userInfos.get(userInfoPair).getValue();
             currentUserInfo.upDateUserInfo(recordTime, sessionId, wapIp, userAgent);
+            userInfos.put(new Pair<String, UserInfo>(msisdn, currentUserInfo));
         } else {
             currentUserInfo = new UserInfo(msisdn, recordTime, sessionId, wapIp, userAgent);
             userInfos.put(new Pair<String, UserInfo>(msisdn, currentUserInfo));

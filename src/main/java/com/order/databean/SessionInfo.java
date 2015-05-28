@@ -39,7 +39,7 @@ public class SessionInfo {
     private RealTimeCacheList<String> bookReadPv = new RealTimeCacheList<String>(Constant.SIXTYFIVE_MINUTES);
     //图书购买pv,
     private RealTimeCacheList<String> bookOrderPv = new RealTimeCacheList<String>(Constant.FIVE_MINUTES);
-    //图书章节购买pv，
+    //图书章节购买pv，存放章节对应的bookId。
     private RealTimeCacheList<String> bookChapterOrderPv = new RealTimeCacheList<String>(Constant.FIVE_MINUTES);
     //各个渠道下的日购买费用
     private RealTimeCacheList<Pair<String, Integer>> channelOrderpv = new RealTimeCacheList<Pair<String, Integer>>(Constant.ONE_DAY);
@@ -72,7 +72,7 @@ public class SessionInfo {
             bookOrderPv.put(bookOrderId, lastUpdateTime);
         }
         if (bookChapterOrderId != null) {
-            bookChapterOrderPv.put(bookChapterOrderId, lastUpdateTime);
+            bookChapterOrderPv.put(bookOrderId, lastUpdateTime);
         }
         if (provinceId != null) {
             this.provinceId = provinceId;
@@ -103,7 +103,7 @@ public class SessionInfo {
             bookOrderPv.put(bookOrderId, lastUpdateTime);
         }
         if (bookChapterOrderPv != null) {
-            bookChapterOrderPv.put(bookChapterOrderId, lastUpdateTime);
+            bookChapterOrderPv.put(bookOrderId, lastUpdateTime);
         }
         if (provinceId != null) {
             this.provinceId = provinceId;
