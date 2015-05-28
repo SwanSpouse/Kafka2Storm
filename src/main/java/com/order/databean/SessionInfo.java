@@ -102,7 +102,7 @@ public class SessionInfo {
         if (bookOrderId != null) {
             bookOrderPv.put(bookOrderId, lastUpdateTime);
         }
-        if (bookChapterOrderPv != null) {
+        if (bookChapterOrderId != null) {
             bookChapterOrderPv.put(bookOrderId, lastUpdateTime);
         }
         if (provinceId != null) {
