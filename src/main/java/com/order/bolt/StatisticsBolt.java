@@ -95,7 +95,7 @@ public class StatisticsBolt extends BaseBasicBolt {
         currentSessionInfo.checkRule4(new EmitDatas(collector));
         currentSessionInfo.checkRule5(new EmitDatas(collector));
         currentSessionInfo.checkRule6(bookId, new EmitDatas(collector));
-        currentSessionInfo.checkRule7(new EmitDatas(collector));
+        currentSessionInfo.checkRule7(bookId, new EmitDatas(collector));
         currentSessionInfo.checkRule8(bookId, new EmitDatas(collector));
 
         //更新订购话单UserInfos信息

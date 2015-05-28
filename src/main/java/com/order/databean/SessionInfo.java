@@ -3,6 +3,7 @@ package com.order.databean;
 import com.order.constant.Constant;
 import com.order.constant.Rules;
 import com.order.databean.RulesCallback.RulesCallback;
+import com.order.databean.TimeCacheStructures.BookOrderList;
 import com.order.databean.TimeCacheStructures.Pair;
 import com.order.databean.TimeCacheStructures.RealTimeCacheList;
 import org.apache.log4j.Logger;
@@ -38,7 +39,7 @@ public class SessionInfo {
     //图书阅读浏览pv，
     private RealTimeCacheList<String> bookReadPv = new RealTimeCacheList<String>(Constant.SIXTYFIVE_MINUTES);
     //图书购买pv,
-    private RealTimeCacheList<String> bookOrderPv = new RealTimeCacheList<String>(Constant.FIVE_MINUTES);
+    private BookOrderList bookOrderPv = new BookOrderList();
     //图书章节购买pv，存放章节对应的bookId。
     private RealTimeCacheList<String> bookChapterOrderPv = new RealTimeCacheList<String>(Constant.FIVE_MINUTES);
     //各个渠道下的日购买费用
@@ -69,7 +70,7 @@ public class SessionInfo {
             bookReadPv.put(bookReadId, lastUpdateTime);
         }
         if (bookOrderId != null) {
-            bookOrderPv.put(bookOrderId, lastUpdateTime);
+            bookOrderPv.put(bookOrderId, orderType, lastUpdateTime);
         }
         if (bookChapterOrderId != null) {
             bookChapterOrderPv.put(bookOrderId, lastUpdateTime);
@@ -100,7 +101,7 @@ public class SessionInfo {
             bookReadPv.put(bookReadId, lastUpdateTime);
         }
         if (bookOrderId != null) {
-            bookOrderPv.put(bookOrderId, lastUpdateTime);
+            bookOrderPv.put(bookOrderId, orderType, lastUpdateTime);
         }
         if (bookChapterOrderId != null) {
             bookChapterOrderPv.put(bookOrderId, lastUpdateTime);
@@ -140,15 +141,15 @@ public class SessionInfo {
                     //延迟5分钟之后对65分钟内的数据进行检测。
                     rule123Checker.sleep(Constant.FIVE_MINUTES);
                     if (orderType == 4 || orderType == 5 || orderType == 9 || orderType == 99) {
-                        return ;
+                        return;
                     }
                     //根据特定图书浏览次数来判断违反的是哪条规则
                     Rules rule = null;
                     if (bookReadPv.sizeById(bookId) == Constant.READPV_ZERO_TIMES) {
                         rule = Rules.ONE;
-                    }else if (bookReadPv.sizeById(bookId) == Constant.READPV_ONE_TIMES) {
+                    } else if (bookReadPv.sizeById(bookId) == Constant.READPV_ONE_TIMES) {
                         rule = Rules.TWO;
-                    }else if (bookReadPv.sizeById(bookId) <= Constant.READPV_THREASHOLD
+                    } else if (bookReadPv.sizeById(bookId) <= Constant.READPV_THREASHOLD
                             && bookReadPv.sizeById(bookId) > Constant.READPV_ONE_TIMES) {
                         rule = Rules.THREE;
                     }
@@ -168,6 +169,7 @@ public class SessionInfo {
     /**
      * 检测规则 4
      * 规则5：一个用户日扣费二级渠道>=3个，
+     *
      * @param callback
      */
     public void checkRule4(final RulesCallback callback) {
@@ -192,35 +194,31 @@ public class SessionInfo {
     /**
      * 检测规则 6
      * 规则6：用户3分钟内，包月订购>=2次
-     *
+     * orderType = 4
      * @param bookId
      * @param callback
      */
     public void checkRule6(String bookId, final RulesCallback callback) {
-        if (orderType == 4 &&
-                bookOrderPv.sizeWithTimeThreshold(bookId, lastUpdateTime, Constant.THREE_MINUTES)
-                        >= Constant.ORDER_BY_MONTH_THRESHOLD) {
-            callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee, channelId, promotionId, Rules.SIX, provinceId);
+        if (bookOrderPv.sizeOfBookOrderTimesWithOrderType(bookId, 4)
+                >= Constant.ORDER_BY_MONTH_THRESHOLD) {
+            callback.hanleData(msisdnId, sessionId, lastUpdateTime,
+                    realInfoFee, channelId, promotionId, Rules.SIX, provinceId);
         }
     }
 
     /**
      * 检测规则 7
      * 规则7：用户5分钟内，完本图书订购本书>=2，且对订购图书的pv<=5*本数
-     *
+     * orderType = 1
+     * @param bookId
      * @param callback
      */
-    public void checkRule7(final RulesCallback callback) {
-        if (bookOrderPv.size() < 2) {
-            return ;
-        }
-        int orderBookNums = bookOrderPv.size();
-        int countBookReadpv = 0;
-        for (String bookId : bookOrderPv.keySet()) {
-            countBookReadpv += bookReadPv.sizeWithTimeThreshold(bookId, lastUpdateTime, Constant.FIVE_MINUTES);
-        }
-        if (countBookReadpv <= 5 * orderBookNums) {
-            callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee, channelId, promotionId, Rules.SEVEN,provinceId);
+    public void checkRule7(String bookId, final RulesCallback callback) {
+        int bookOrderNums = bookOrderPv.sizeOfBookOrderTimesWithOrderType(bookId, 1);
+        if (bookOrderNums >= 2 &&
+                bookReadPv.sizeWithTimeThreshold(bookId, lastUpdateTime, Constant.FIVE_MINUTES) < bookOrderNums * 5) {
+            callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
+                    channelId, promotionId, Rules.SEVEN, provinceId);
         }
     }
 

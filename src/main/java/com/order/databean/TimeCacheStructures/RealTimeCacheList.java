@@ -84,7 +84,7 @@ public class RealTimeCacheList<T> {
         }
     }
 
-    public int sizeById(String id) {
+    public int sizeById(T id) {
         synchronized (LOCK) {
             int countSize = 0;
             if (oldList.containsKey(id)) {
