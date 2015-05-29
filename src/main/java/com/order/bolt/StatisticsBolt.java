@@ -1,5 +1,6 @@
 package com.order.bolt;
 
+import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.BasicOutputCollector;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseBasicBolt;
@@ -18,6 +19,8 @@ import com.order.util.StreamId;
 import com.order.util.TimeParaser;
 import org.apache.log4j.Logger;
 
+import java.util.Iterator;
+import java.util.Map;
 
 /**
  * Created by LiMingji on 2015/5/24.
@@ -25,11 +28,64 @@ import org.apache.log4j.Logger;
 public class StatisticsBolt extends BaseBasicBolt {
     private static Logger log =Logger.getLogger(StatisticsBolt.class);
 
+    //存储字段为msisdn 和 UserInfo
     private RealTimeCacheList<Pair<String, UserInfo>> userInfos =
-            new RealTimeCacheList<Pair<String, UserInfo>>(Constant.ONE_DAY);
+            new RealTimeCacheList<Pair<String, UserInfo>>(Constant.FIVE_MINUTES);
 
+    //存储字段为seesionId 和 SessionInfo
     private RealTimeCacheList<Pair<String, SessionInfo>> sessionInfos =
             new RealTimeCacheList<Pair<String, SessionInfo>>(Constant.ONE_DAY);
+
+    //负责SeesionInfo数据的清理
+    private Thread cleaner = null;
+
+    @Override
+    public void prepare(Map stormConf, TopologyContext context) {
+        super.prepare(stormConf, context);
+        cleaner = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (true) {
+                    try {
+                        //每隔一个小时清理一次。
+                        cleaner.sleep(60 * 60 * 1000L);
+                        Iterator<Pair<String, SessionInfo>> iterator = sessionInfos.keySet().iterator();
+                        while (iterator.hasNext()) {
+                            Pair<String, SessionInfo> currentPair = iterator.next();
+                            if (currentPair.getValue().isOutOfTime()) {
+                                log.info("sessionID : " + currentPair.getValue() + " is out of time");
+                                currentPair.getValue().clean();
+                                sessionInfos.remove(currentPair);
+                            }
+                        }
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+        cleaner.start();
+        cleaner.setDaemon(true);
+    }
+
+    @Override
+    public void execute(Tuple input, BasicOutputCollector collector) {
+        if (input.getSourceStreamId().equals(StreamId.BROWSEDATA)) {
+            //阅读浏览话单
+            try {
+                this.constructInfoFromBrowseData(input);
+            } catch (Exception e) {
+                log.error("阅读浏览话单数据结构异常");
+            }
+        }else if (input.getSourceStreamId().equals(StreamId.ORDERDATA)) {
+            // 订购话单
+            try {
+                this.constructInfoFromOrderData(input, collector);
+            } catch (Exception e) {
+                log.error("订购话单数据结构异常");
+            }
+        }
+    }
 
     private void constructInfoFromBrowseData(Tuple input) throws Exception{
         Long recordTime = TimeParaser.splitTime(input.getStringByField(FName.RECORDTIME.name()));
@@ -79,7 +135,7 @@ public class StatisticsBolt extends BaseBasicBolt {
 
         //更新订购话单的SessionInfos信息
         Pair<String, SessionInfo> sessionInfoPair = new Pair<String, SessionInfo>(sessionId, null);
-        SessionInfo currentSessionInfo = null;
+        SessionInfo currentSessionInfo ;
         if (sessionInfos.contains(sessionInfoPair)) {
             currentSessionInfo = (SessionInfo) sessionInfos.get(sessionInfoPair).getValue();
             currentSessionInfo.upDateSeesionInfo(null, bookId, chapterId, recordTime, orderType,
@@ -100,7 +156,7 @@ public class StatisticsBolt extends BaseBasicBolt {
 
         //更新订购话单UserInfos信息
         Pair<String, UserInfo> userInfoPair = new Pair<String, UserInfo>(msisdn, null);
-        UserInfo currentUserInfo = null;
+        UserInfo currentUserInfo ;
         if (userInfos.contains(userInfoPair)) {
             currentUserInfo = (UserInfo) userInfos.get(userInfoPair).getValue();
             currentUserInfo.upDateUserInfo(recordTime, sessionId, wapIp, userAgent);
@@ -125,34 +181,15 @@ public class StatisticsBolt extends BaseBasicBolt {
     }
 
     @Override
-    public void execute(Tuple input, BasicOutputCollector collector) {
-        if (input.getSourceStreamId().equals(StreamId.BROWSEDATA)) {
-            //阅读浏览话单
-            try {
-                this.constructInfoFromBrowseData(input);
-            } catch (Exception e) {
-                log.error("阅读浏览话单数据结构异常");
-            }
-        }else if (input.getSourceStreamId().equals(StreamId.ORDERDATA)) {
-            // 订购话单
-            try {
-                this.constructInfoFromOrderData(input, collector);
-            } catch (Exception e) {
-                log.error("订购话单数据结构异常");
-            }
-        }
-    }
-
-    @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
         declarer.declareStream(StreamId.DATASTREAM.name(),
                 new Fields(FName.MSISDN.name(), FName.SESSIONID.name(), FName.RECORDTIME.name(),
-                           FName.REALINFORFEE.name(), FName.CHANNELCODE.name(), FName.PROMOTIONID.name(),
-                          FName.PROVINCEID.name()));
+                        FName.REALINFORFEE.name(), FName.CHANNELCODE.name(), FName.PROMOTIONID.name(),
+                        FName.PROVINCEID.name()));
 
         declarer.declareStream(StreamId.ABNORMALDATASTREAM.name(),
                 new Fields(FName.MSISDN.name(), FName.SESSIONID.name(), FName.RECORDTIME.name(),
-                            FName.REALINFORFEE.name(), FName.CHANNELCODE.name(), FName.PROMOTIONID.name(),
-                            FName.RULES.name(), FName.PROVINCEID.name()));
+                        FName.REALINFORFEE.name(), FName.CHANNELCODE.name(), FName.PROMOTIONID.name(),
+                        FName.RULES.name(), FName.PROVINCEID.name()));
     }
 }

@@ -127,7 +127,7 @@ public class RealTimeCacheList<T> {
     public void put(T value, Long date) {
         synchronized (LOCK) {
             long currentTime;
-            if (date == null) {
+            if (date != null) {
                 currentTime = date;
             } else {
                 currentTime = System.currentTimeMillis();
@@ -211,6 +211,17 @@ public class RealTimeCacheList<T> {
                 set.add(key);
             }
             return set;
+        }
+    }
+
+    public void remove(T key) {
+        synchronized (LOCK) {
+            if (oldList.containsKey(key)) {
+                oldList.remove(key);
+            }
+            if (currentList.containsKey(key)) {
+                currentList.remove(key);
+            }
         }
     }
 

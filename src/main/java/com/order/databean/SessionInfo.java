@@ -263,4 +263,10 @@ public class SessionInfo {
     public void clean() {
         rule123Checker.interrupt();
     }
+
+    public boolean isOutOfTime() {
+        return bookOrderPv.sizeOfOrderBooks() == 0 &&
+                bookReadPv.size() == 0 &&
+                channelOrderpv.size() == 0;
+    }
 }
