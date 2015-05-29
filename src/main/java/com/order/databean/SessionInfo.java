@@ -41,6 +41,7 @@ public class SessionInfo {
     //图书购买pv,
     private BookOrderList bookOrderPv = new BookOrderList();
     //图书章节购买pv，存放章节对应的bookId。
+    // !!!(废弃）。现在只需要知道订购的章节属于哪本书就可以了。不需要知道章节ID
     private RealTimeCacheList<String> bookChapterOrderPv = new RealTimeCacheList<String>(Constant.FIVE_MINUTES);
     //各个渠道下的日购买费用 Pair值为用户msisdn 和 orderType=1的 信息费。
     private RealTimeCacheList<Pair<String, Integer>> channelOrderpv = new RealTimeCacheList<Pair<String, Integer>>(Constant.ONE_DAY);
