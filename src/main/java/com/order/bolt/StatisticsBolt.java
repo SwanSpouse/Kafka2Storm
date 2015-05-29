@@ -93,7 +93,7 @@ public class StatisticsBolt extends BaseBasicBolt {
         //检测相应的各个规则。
         currentSessionInfo.checkRule123(bookId, new EmitDatas(collector));
         currentSessionInfo.checkRule4(new EmitDatas(collector));
-        currentSessionInfo.checkRule5(new EmitDatas(collector));
+        currentSessionInfo.checkRule5(bookId, new EmitDatas(collector));
         currentSessionInfo.checkRule6(bookId, new EmitDatas(collector));
         currentSessionInfo.checkRule7(bookId, new EmitDatas(collector));
         currentSessionInfo.checkRule8(bookId, new EmitDatas(collector));

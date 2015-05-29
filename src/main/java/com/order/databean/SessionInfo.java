@@ -42,7 +42,7 @@ public class SessionInfo {
     private BookOrderList bookOrderPv = new BookOrderList();
     //图书章节购买pv，存放章节对应的bookId。
     private RealTimeCacheList<String> bookChapterOrderPv = new RealTimeCacheList<String>(Constant.FIVE_MINUTES);
-    //各个渠道下的日购买费用
+    //各个渠道下的日购买费用 Pair值为用户msisdn 和 orderType=1的 信息费。
     private RealTimeCacheList<Pair<String, Integer>> channelOrderpv = new RealTimeCacheList<Pair<String, Integer>>(Constant.ONE_DAY);
 
     //对应浏览pv 和 订购pv 构建SeesionInfo
@@ -78,13 +78,17 @@ public class SessionInfo {
         if (provinceId != null) {
             this.provinceId = provinceId;
         }
-        Pair<String, Integer> pair = new Pair<String, Integer>(msisdnId, realInfoFee);
-        if (channelOrderpv.contains(pair)) {
-            Pair<String, Integer> currentPair = channelOrderpv.get(pair);
-            currentPair.setValue(currentPair.getValue() + realInfoFee);
-            channelOrderpv.put(currentPair);
-        } else {
-            channelOrderpv.put(pair);
+
+        //统计orderType == 1情况下的用户日渠道信息费。
+        if (orderType == 1) {
+            Pair<String, Integer> pair = new Pair<String, Integer>(msisdnId, realInfoFee);
+            if (channelOrderpv.contains(pair)) {
+                Pair<String, Integer> currentPair = channelOrderpv.get(pair);
+                currentPair.setValue(currentPair.getValue() + realInfoFee);
+                channelOrderpv.put(currentPair);
+            } else {
+                channelOrderpv.put(pair);
+            }
         }
     }
 
@@ -115,13 +119,16 @@ public class SessionInfo {
         this.channelId = channelId;
         this.promotionId = promotionId;
 
-        Pair<String, Integer> pair = new Pair<String, Integer>(msisdnId, realInfoFee);
-        if (channelOrderpv.contains(pair)) {
-            Pair<String, Integer> currentPair = channelOrderpv.get(pair);
-            currentPair.setValue(currentPair.getValue() + realInfoFee);
-            channelOrderpv.put(currentPair);
-        } else {
-            channelOrderpv.put(pair);
+        //统计orderType == 1情况下的用户日渠道信息费。
+        if (orderType == 1) {
+            Pair<String, Integer> pair = new Pair<String, Integer>(msisdnId, realInfoFee);
+            if (channelOrderpv.contains(pair)) {
+                Pair<String, Integer> currentPair = channelOrderpv.get(pair);
+                currentPair.setValue(currentPair.getValue() + realInfoFee);
+                channelOrderpv.put(currentPair);
+            } else {
+                channelOrderpv.put(pair);
+            }
         }
     }
 
@@ -179,14 +186,19 @@ public class SessionInfo {
     /**
      * 检测规则 5
      * 规则5：一个用户日渠道ID中的按本订购费>10元，该用户异常渠道当天所有信息费为异常
+     * orderType=1
      * @param callback
      */
-    public void checkRule5(final RulesCallback callback) {
-        for (Pair<String, Integer> currentPair : channelOrderpv.keySet()) {
-            if (currentPair.getValue() > 10) {
+    public void checkRule5(String msisdnId, final RulesCallback callback) {
+        if (orderType != 1) {
+            return ;
+        }
+        Pair<String, Integer> userChannelInfoFee = new Pair<String, Integer>(msisdnId, null);
+        if (channelOrderpv.contains(userChannelInfoFee)) {
+            Pair<String, Integer> currentUserChannelInFee = channelOrderpv.get(userChannelInfoFee);
+            if (currentUserChannelInFee.getValue() > 10) {
                 callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
                         channelId, promotionId, Rules.FIVE, provinceId);
-                break;
             }
         }
     }
@@ -199,6 +211,9 @@ public class SessionInfo {
      * @param callback
      */
     public void checkRule6(String bookId, final RulesCallback callback) {
+        if (orderType != 4) {
+            return ;
+        }
         if (bookOrderPv.sizeOfBookOrderTimesWithOrderType(bookId, 4)
                 >= Constant.ORDER_BY_MONTH_THRESHOLD) {
             callback.hanleData(msisdnId, sessionId, lastUpdateTime,
@@ -214,6 +229,9 @@ public class SessionInfo {
      * @param callback
      */
     public void checkRule7(String bookId, final RulesCallback callback) {
+        if (orderType != 1) {
+            return ;
+        }
         int bookOrderNums = bookOrderPv.sizeOfBookOrderTimesWithOrderType(bookId, 1);
         if (bookOrderNums >= 2 &&
                 bookReadPv.sizeWithTimeThreshold(bookId, lastUpdateTime, Constant.FIVE_MINUTES) < bookOrderNums * 5) {
@@ -226,13 +244,18 @@ public class SessionInfo {
      * 检测规则 8
      * 规则8：用户5分钟内，连载图书订购章数>=10，且对订购图书的pv<=2*章数
      * 不满10个。后续判断不触发。
-     *
+     * orderType=2
      * @param callback
      */
-    public void checkRule8(String id, final RulesCallback callback) {
-        //TODO 应该维护图书和章节的对应关系。
-        if (bookChapterOrderPv.sizeWithTimeThreshold(id, lastUpdateTime, Constant.FIVE_MINUTES) < 10) {
-            return;
+    public void checkRule8(String bookId, final RulesCallback callback) {
+        if (orderType != 2) {
+            return ;
+        }
+        int orderPvs = bookOrderPv.sizeOfBookOrderTimesWithOrderType(bookId, 2);
+        int readPvs = bookReadPv.sizeWithTimeThreshold(bookId, lastUpdateTime, Constant.FIVE_MINUTES);
+        if (orderPvs <= 2 * readPvs) {
+            callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
+                    channelId, promotionId, Rules.EIGHT, provinceId);
         }
     }
 
