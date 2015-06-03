@@ -26,6 +26,7 @@ import java.util.Map;
  * Created by LiMingji on 2015/5/24.
  */
 public class StatisticsBolt extends BaseBasicBolt {
+    public static boolean isDebug = true;
     private static Logger log =Logger.getLogger(StatisticsBolt.class);
 
     //存储字段为msisdn 和 UserInfo

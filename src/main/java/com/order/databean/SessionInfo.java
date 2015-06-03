@@ -6,7 +6,10 @@ import com.order.databean.RulesCallback.RulesCallback;
 import com.order.databean.TimeCacheStructures.BookOrderList;
 import com.order.databean.TimeCacheStructures.Pair;
 import com.order.databean.TimeCacheStructures.RealTimeCacheList;
+import com.order.util.LogUtil;
 import org.apache.log4j.Logger;
+
+import java.util.Date;
 
 /**
  * 根据浏览pv和订购pv生成SessionInfo。
@@ -43,6 +46,15 @@ public class SessionInfo {
     private RealTimeCacheList<String> bookChapterOrderPv = new RealTimeCacheList<String>(Constant.FIVE_MINUTES);
     //各个渠道下的日购买费用 Pair值为用户msisdn 和 orderType=1的 信息费。
     private RealTimeCacheList<Pair<String, Integer>> channelOrderpv = new RealTimeCacheList<Pair<String, Integer>>(Constant.ONE_DAY);
+
+    @Override
+    public String toString() {
+        String context = "msisdnId: " + msisdnId + " realInfoFee : " + realInfoFee + " channelId " + channelId +
+                " lastUpdateTime : " + new Date(lastUpdateTime) + " orderType: " + orderType + " \n ";
+        context += " 图书浏览pv：" + bookReadPv.toString() + " \n";
+        context += " 图书购买pv: " + bookOrderPv.toString() + " \n";
+        return context;
+    }
 
     //对应浏览pv 和 订购pv 构建SeesionInfo
     public SessionInfo(String sessionId, String msisdnId, String bookReadId,
@@ -168,8 +180,11 @@ public class SessionInfo {
                         rule = Rules.THREE;
                     }
                     if (rule != null) {
+                        LogUtil.printLog(this, "rule1", false);
                         callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
                                 channelId, promotionId, rule, provinceId);
+                    } else {
+                        LogUtil.printLog(this, "rule1", true);
                     }
                 } catch (InterruptedException e) {
                     e.printStackTrace();
@@ -204,6 +219,7 @@ public class SessionInfo {
         if (channelOrderpv.contains(userChannelInfoFee)) {
             Pair<String, Integer> currentUserChannelInFee = channelOrderpv.get(userChannelInfoFee);
             if (currentUserChannelInFee.getValue() > 10) {
+                LogUtil.printLog(this, "rule5 ", false);
                 callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
                         channelId, promotionId, Rules.FIVE, provinceId);
             }
@@ -226,6 +242,7 @@ public class SessionInfo {
             orderTimes += bookOrderPv.sizeOfBookOrderTimesWithOrderType(bookId, 4);
         }
         if (orderTimes >= Constant.ORDER_BY_MONTH_THRESHOLD) {
+            LogUtil.printLog(this, "rule6", false);
             callback.hanleData(msisdnId, sessionId, lastUpdateTime,
                     realInfoFee, channelId, promotionId, Rules.SIX, provinceId);
         }
@@ -250,6 +267,7 @@ public class SessionInfo {
             bookReadPvs += bookReadPv.sizeWithTimeThreshold(bookId, lastUpdateTime, Constant.FIVE_MINUTES);
         }
         if (bookOrderNums >= 2 && bookOrderNums < 5 * bookReadPvs) {
+            LogUtil.printLog(this, " rule7 ", false);
             callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
                     channelId, promotionId, Rules.SEVEN, provinceId);
         }
@@ -269,6 +287,7 @@ public class SessionInfo {
         int orderPvs = bookOrderPv.sizeOfBookOrderTimesWithOrderType(bookId, 2);
         int readPvs = bookReadPv.sizeWithTimeThreshold(bookId, lastUpdateTime, Constant.FIVE_MINUTES);
         if (orderPvs >=10 && orderPvs <= 2 * readPvs) {
+            LogUtil.printLog(this, " rule8", false);
             callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
                     channelId, promotionId, Rules.EIGHT, provinceId);
         }
@@ -291,6 +310,7 @@ public class SessionInfo {
                 try {
                     rule12Checker.sleep(Constant.FIVE_MINUTES);
                     if (bookReadPv.size() == 0) {
+                        LogUtil.printLog(this, "rule12", false);
                         callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
                                 channelId, promotionId, Rules.TWELVE, provinceId);
                     }

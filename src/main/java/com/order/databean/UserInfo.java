@@ -2,6 +2,7 @@ package com.order.databean;
 
 import com.order.constant.Constant;
 import com.order.databean.TimeCacheStructures.RealTimeCacheList;
+import com.order.util.LogUtil;
 
 /**
  * UserInfo 用于存储用户信息并对规则8 9 10 进行检测
@@ -30,6 +31,15 @@ public class UserInfo {
 
     //统计用户终端信息。
     private RealTimeCacheList<String> terminalInfos = new RealTimeCacheList<String>(Constant.FIVE_MINUTES);
+
+    @Override
+    public String toString() {
+        String context = "";
+        context += "session信息: " + seesionInfos.toString() + "\n";
+        context += "ip信息 : " + ipInfos.toString() + "\n";
+        context += "ua信息 : " + terminalInfos.toString() + "\n";
+        return context;
+    }
 
     //构造新用户。
     public UserInfo(String msisdnId, long currentTime, String sessionInfo, String ipInfo, String terminalInfo) {
@@ -64,20 +74,26 @@ public class UserInfo {
     public boolean[] isObeyRules() {
         boolean[] checkMarkBit = new boolean[3];
         if (seesionInfos.size() >= Constant.SESSION_CHANGE_THRESHOLD) {
+            LogUtil.printLog(this,"rule9", false);
             checkMarkBit[SESSION_CHECK_BIT] = false;
         } else {
+            LogUtil.printLog(this,"rule9", true);
             checkMarkBit[SESSION_CHECK_BIT] = true;
         }
 
         if (ipInfos.size() >= Constant.IP_CHANGE_THRESHOLD) {
+            LogUtil.printLog(this,"rule10", false);
             checkMarkBit[IP_CHECK_BIT] = false;
         } else {
+            LogUtil.printLog(this,"rule10", true);
             checkMarkBit[IP_CHECK_BIT] = true;
         }
 
         if (terminalInfos.size() >= Constant.UA_CHANGE_THRESHOLD) {
+            LogUtil.printLog(this,"rule11", false);
             checkMarkBit[UA_CHECK_BIT] = false;
         } else {
+            LogUtil.printLog(this, "rule11", true);
             checkMarkBit[UA_CHECK_BIT] = true;
         }
         return checkMarkBit;

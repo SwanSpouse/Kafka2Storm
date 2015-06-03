@@ -18,6 +18,15 @@ public class BookOrderList {
         map = new HashMap<String, RealTimeCacheList<Integer>>();
     }
 
+    @Override
+    public String toString() {
+        String str = "";
+        for (String key : map.keySet()) {
+            str += "key " + key + " " + map.get(key) + "\n";
+        }
+        return str;
+    }
+
     public void put(String bookId, int orderType, Long currentTime) {
         synchronized (LOCK) {
             if (map.containsKey(bookId)) {
