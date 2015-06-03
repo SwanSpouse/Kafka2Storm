@@ -71,6 +71,10 @@ public class SessionInfo {
             bookReadPv.put(bookReadId, lastUpdateTime);
         }
         if (bookOrderId != null) {
+            //为了方便规则7的判断。在此将orderType=21定义为批量订购
+            if (orderType == 2 && bookChapterOrderId == null) {
+                this.orderType = 21;
+            }
             bookOrderPv.put(bookOrderId, orderType, lastUpdateTime);
         }
         if (bookChapterOrderId != null) {
@@ -106,6 +110,9 @@ public class SessionInfo {
             bookReadPv.put(bookReadId, lastUpdateTime);
         }
         if (bookOrderId != null) {
+            if (orderType == 2 && bookChapterOrderId == null) {
+                this.orderType = 21;
+            }
             bookOrderPv.put(bookOrderId, orderType, lastUpdateTime);
         }
         if (bookChapterOrderId != null) {
@@ -208,15 +215,18 @@ public class SessionInfo {
      * 检测规则 6
      * 规则6：用户3分钟内，包月订购>=2次
      * orderType = 4
-     * @param bookId
+     *
      * @param callback
      */
-    public void checkRule6(String bookId, final RulesCallback callback) {
+    public void checkRule6(final RulesCallback callback) {
         if (orderType != 4) {
-            return ;
+            return;
         }
-        if (bookOrderPv.sizeOfBookOrderTimesWithOrderType(bookId, 4)
-                >= Constant.ORDER_BY_MONTH_THRESHOLD) {
+        int orderTimes = 0;
+        for (String bookId : bookOrderPv.keySet()) {
+            orderTimes += bookOrderPv.sizeOfBookOrderTimesWithOrderType(bookId, 4);
+        }
+        if (orderTimes >= Constant.ORDER_BY_MONTH_THRESHOLD) {
             callback.hanleData(msisdnId, sessionId, lastUpdateTime,
                     realInfoFee, channelId, promotionId, Rules.SIX, provinceId);
         }
@@ -224,18 +234,23 @@ public class SessionInfo {
 
     /**
      * 检测规则 7
-     * 规则7：用户5分钟内，完本图书订购本书>=2，且对订购图书的pv<=5*本数
-     * orderType = 1
-     * @param bookId
+     * 新版7：用户5分钟内，完本图书订购本数+批量订购本数>=2, 且对订购图书的pv<=5*本数
+     * orderType = 1 || ( orderType = 2 且 chapterId == null ) 将此情况的orderType 定为 21
+     *
      * @param callback
      */
-    public void checkRule7(String bookId, final RulesCallback callback) {
-        if (orderType != 1) {
-            return ;
+    public void checkRule7(final RulesCallback callback) {
+        if (orderType != 1 || orderType != 21) {
+            return;
         }
-        int bookOrderNums = bookOrderPv.sizeOfBookOrderTimesWithOrderType(bookId, 1);
-        if (bookOrderNums >= 2 &&
-                bookReadPv.sizeWithTimeThreshold(bookId, lastUpdateTime, Constant.FIVE_MINUTES) < bookOrderNums * 5) {
+        int bookOrderNums = 0;
+        int bookReadPvs = 0;
+        for (String bookId : bookOrderPv.keySet()) {
+            bookOrderNums += bookOrderPv.sizeOfBookOrderTimesWithOrderType(bookId, 1)
+                    + bookOrderPv.sizeOfBookOrderTimesWithOrderType(bookId, 21);
+            bookReadPvs += bookReadPv.sizeWithTimeThreshold(bookId, lastUpdateTime, Constant.FIVE_MINUTES);
+        }
+        if (bookOrderNums >= 2 && bookOrderNums < 5 * bookReadPvs) {
             callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
                     channelId, promotionId, Rules.SEVEN, provinceId);
         }
@@ -254,7 +269,7 @@ public class SessionInfo {
         }
         int orderPvs = bookOrderPv.sizeOfBookOrderTimesWithOrderType(bookId, 2);
         int readPvs = bookReadPv.sizeWithTimeThreshold(bookId, lastUpdateTime, Constant.FIVE_MINUTES);
-        if (orderPvs <= 2 * readPvs) {
+        if (orderPvs >=10 && orderPvs <= 2 * readPvs) {
             callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
                     channelId, promotionId, Rules.EIGHT, provinceId);
         }
