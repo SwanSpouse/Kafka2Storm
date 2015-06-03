@@ -33,7 +33,7 @@ public class SessionInfo {
     private long lastUpdateTime;
 
     //手机号码对应的省ID
-    private String provinceId = null;
+    private int provinceId = 0;
     //订单类型
     private int orderType = 0;
 
@@ -59,7 +59,7 @@ public class SessionInfo {
     //对应浏览pv 和 订购pv 构建SeesionInfo
     public SessionInfo(String sessionId, String msisdnId, String bookReadId,
                        String bookOrderId, String bookChapterOrderId, Long currentTime,
-                       int orderType, int realInfoFee, int channelId, int promotionId, String provinceId) {
+                       int orderType, int realInfoFee, int channelId, int promotionId, int provinceId) {
         if (currentTime != null) {
             this.lastUpdateTime = currentTime;
         } else {
@@ -90,9 +90,8 @@ public class SessionInfo {
         if (bookChapterOrderId != null) {
             bookChapterOrderPv.put(bookOrderId, lastUpdateTime);
         }
-        if (provinceId != null) {
-            this.provinceId = provinceId;
-        }
+
+        this.provinceId = provinceId;
 
         //统计orderType == 1情况下的用户日渠道信息费。
         if (orderType == 1) {
@@ -110,7 +109,7 @@ public class SessionInfo {
     //对已存在的SessionInfo进行更新。
     public void upDateSeesionInfo(String bookReadId, String bookOrderId, String bookChapterOrderId,
                                   Long currentTime, int orderType, int realInfoFee,
-                                  int channelId, int promotionId, String provinceId) {
+                                  int channelId, int promotionId, int provinceId) {
         if (currentTime != null) {
             lastUpdateTime = currentTime;
         } else {
@@ -128,10 +127,8 @@ public class SessionInfo {
         if (bookChapterOrderId != null) {
             bookChapterOrderPv.put(bookOrderId, lastUpdateTime);
         }
-        if (provinceId != null) {
-            this.provinceId = provinceId;
-        }
 
+        this.provinceId = provinceId;
         this.orderType = orderType;
         this.realInfoFee = realInfoFee;
         this.channelId = channelId;
@@ -182,7 +179,7 @@ public class SessionInfo {
                     if (rule != null) {
                         LogUtil.printLog(this, "rule1", false);
                         callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
-                                channelId, promotionId, rule, provinceId);
+                                channelId, promotionId, rule.name(), provinceId);
                     } else {
                         LogUtil.printLog(this, "rule1", true);
                     }
@@ -221,7 +218,7 @@ public class SessionInfo {
             if (currentUserChannelInFee.getValue() > 10) {
                 LogUtil.printLog(this, "rule5 ", false);
                 callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
-                        channelId, promotionId, Rules.FIVE, provinceId);
+                        channelId, promotionId, Rules.FIVE.name(), provinceId);
             }
         }
     }
@@ -244,7 +241,7 @@ public class SessionInfo {
         if (orderTimes >= Constant.ORDER_BY_MONTH_THRESHOLD) {
             LogUtil.printLog(this, "rule6", false);
             callback.hanleData(msisdnId, sessionId, lastUpdateTime,
-                    realInfoFee, channelId, promotionId, Rules.SIX, provinceId);
+                    realInfoFee, channelId, promotionId, Rules.SIX.name(), provinceId);
         }
     }
 
@@ -269,7 +266,7 @@ public class SessionInfo {
         if (bookOrderNums >= 2 && bookOrderNums < 5 * bookReadPvs) {
             LogUtil.printLog(this, " rule7 ", false);
             callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
-                    channelId, promotionId, Rules.SEVEN, provinceId);
+                    channelId, promotionId, Rules.SEVEN.name(), provinceId);
         }
     }
 
@@ -289,7 +286,7 @@ public class SessionInfo {
         if (orderPvs >=10 && orderPvs <= 2 * readPvs) {
             LogUtil.printLog(this, " rule8", false);
             callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
-                    channelId, promotionId, Rules.EIGHT, provinceId);
+                    channelId, promotionId, Rules.EIGHT.name(), provinceId);
         }
     }
 
@@ -312,7 +309,7 @@ public class SessionInfo {
                     if (bookReadPv.size() == 0) {
                         LogUtil.printLog(this, "rule12", false);
                         callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
-                                channelId, promotionId, Rules.TWELVE, provinceId);
+                                channelId, promotionId, Rules.TWELVE.name(), provinceId);
                     }
                 } catch (InterruptedException e) {
                     e.printStackTrace();

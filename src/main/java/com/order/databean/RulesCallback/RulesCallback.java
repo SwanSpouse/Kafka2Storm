@@ -1,8 +1,6 @@
 package com.order.databean.RulesCallback;
 
 
-import com.order.constant.Rules;
-
 /**
  * 自定义延迟检测。并对异常数据做处理。
  *
@@ -22,6 +20,6 @@ public interface RulesCallback {
      * @param provinceId  手机号码对应的省ID
      */
     public void hanleData(String msisdnId, String sessionId, Long currentTime,
-                          int realInfoFee, int channelId, int promotionId, Rules rules,
-                          String provinceId);
+                          int realInfoFee, int channelId, int promotionId, String rules,
+                          int provinceId);
 }

@@ -5,7 +5,7 @@ import com.order.databean.TimeCacheStructures.RealTimeCacheList;
 import com.order.util.LogUtil;
 
 /**
- * UserInfo 用于存储用户信息并对规则8 9 10 进行检测
+ * UserInfo 用于存储用户信息并对规则9 10 11 进行检测
  *
  * Created by LiMingji on 2015/5/21.
  */

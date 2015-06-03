@@ -27,7 +27,7 @@ public class EmitDatas implements RulesCallback {
     * */
     @Override
     public void hanleData(String msisdnId, String sessionId, Long currentTime, int realInfoFee,
-                          int channelId, int promotionId, Rules rules, String provinceId) {
+                          int channelId, int promotionId, String rules, int provinceId) {
         collector.emit(StreamId.DATASTREAM.name(), new Values(msisdnId, sessionId, currentTime,
                 realInfoFee, channelId, promotionId, rules, provinceId));
     }

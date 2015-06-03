@@ -104,9 +104,9 @@ public class StatisticsBolt extends BaseBasicBolt {
         Pair<String, SessionInfo> sessionPair = new Pair<String, SessionInfo>(sessionId, null);
         if (sessionInfos.contains(sessionPair)) {
             SessionInfo currentSessionInfo = (SessionInfo) sessionInfos.get(sessionPair).getValue();
-            currentSessionInfo.upDateSeesionInfo(bookId, null, null, recordTime, -1, 0, channelCode, -1, null);
+            currentSessionInfo.upDateSeesionInfo(bookId, null, null, recordTime, -1, 0, channelCode, -1, 0);
         } else {
-            SessionInfo currentSessionInfo = new SessionInfo(sessionId, msisdn, bookId, null, null, recordTime, -1, 0, channelCode, -1, null);
+            SessionInfo currentSessionInfo = new SessionInfo(sessionId, msisdn, bookId, null, null, recordTime, -1, 0, channelCode, -1, 0);
             sessionInfos.put(new Pair<String, SessionInfo>(sessionId, currentSessionInfo));
         }
         //浏览话单不需要更新用户信息
@@ -126,14 +126,14 @@ public class StatisticsBolt extends BaseBasicBolt {
         String wapIp = input.getStringByField(FName.WAPIP.name());
         String sessionId = input.getStringByField(FName.SESSIONID.name());
         int promotionId = input.getIntegerByField(FName.PROMOTIONID.name());
-        String provinceId = input.getStringByField(FName.PROVINCEID.name());
+        int provinceId = input.getIntegerByField(FName.PROVINCEID.name());
 
         if (sessionId == null || sessionId.trim().equals("")) {
             return;
         }
         //所有订单数据先统一发送。用作数据统计。
         collector.emit(StreamId.DATASTREAM.name(), new Values(msisdn, sessionId, recordTime,
-                realInfoFee, channelCode, promotionId));
+                realInfoFee, channelCode, promotionId, provinceId));
 
         //更新订购话单的SessionInfos信息
         Pair<String, SessionInfo> sessionInfoPair = new Pair<String, SessionInfo>(sessionId, null);
@@ -171,15 +171,15 @@ public class StatisticsBolt extends BaseBasicBolt {
         boolean[] isObeyRules = currentUserInfo.isObeyRules();
         if (!isObeyRules[UserInfo.SESSION_CHECK_BIT]) {
             collector.emit(StreamId.ABNORMALDATASTREAM.name(),
-                    new Values(msisdn, sessionId, recordTime, realInfoFee, channelCode, promotionId, Rules.NINE, provinceId));
+                    new Values(msisdn, sessionId, recordTime, realInfoFee, channelCode, promotionId, Rules.NINE.name(), provinceId));
         }
         if (!isObeyRules[UserInfo.IP_CHECK_BIT]) {
             collector.emit(StreamId.ABNORMALDATASTREAM.name(),
-                    new Values(msisdn, sessionId, recordTime, realInfoFee, channelCode, promotionId, Rules.TEN, provinceId));
+                    new Values(msisdn, sessionId, recordTime, realInfoFee, channelCode, promotionId, Rules.TEN.name(), provinceId));
         }
         if (!isObeyRules[UserInfo.UA_CHECK_BIT]) {
             collector.emit(StreamId.ABNORMALDATASTREAM.name(),
-                    new Values(msisdn, sessionId, recordTime, realInfoFee, channelCode, promotionId, Rules.ELEVEN, provinceId));
+                    new Values(msisdn, sessionId, recordTime, realInfoFee, channelCode, promotionId, Rules.ELEVEN.name(), provinceId));
         }
     }
 
