@@ -46,15 +46,11 @@ public class Kafka2StormTopo {
 
 		Config conf = new Config();
 		TopologyBuilder builder = new TopologyBuilder();
-		builder.setSpout(StreamId.TOPIC1.name(), new KafkaSpout(
-				spoutConfigTopic1), 1);
-		builder.setBolt(StreamId.BOLT1.name(), new SequenceBolt(), 2)
-				.shuffleGrouping(StreamId.TOPIC1.name());
+		builder.setSpout(StreamId.TOPIC1.name(), new KafkaSpout(spoutConfigTopic1), 1);
+		builder.setBolt(StreamId.BOLT1.name(), new SequenceBolt(), 2).shuffleGrouping(StreamId.TOPIC1.name());
 
-		builder.setSpout(StreamId.TOPIC2.name(), new KafkaSpout(
-				spoutConfigTopic2), 1);
-		builder.setBolt(StreamId.BOLT2.name(), new SequenceBolt("second"), 2)
-				.shuffleGrouping(StreamId.TOPIC2.name());
+		builder.setSpout(StreamId.TOPIC2.name(), new KafkaSpout(spoutConfigTopic2), 1);
+		builder.setBolt(StreamId.BOLT2.name(), new SequenceBolt("second"), 2).shuffleGrouping(StreamId.TOPIC2.name());
 
 		// Run Topo on Cluster
 		conf.setNumWorkers(2);
