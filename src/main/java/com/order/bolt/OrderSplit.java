@@ -27,6 +27,7 @@ import backtype.storm.tuple.Values;
  *  0. msisdn      |   发起人身份ID
  *  1. recordTime  |   记录时间
  *  2. terminal    |   终端名称
+ *  3. platform    |   门户类型
  *  4. OrderType   |   订购类型 1-按本  2-按章 4-包月 5-促销包
  *  5. ProductID   |   产品ID
  *  7. BookID      |   图书ID
@@ -58,6 +59,7 @@ public class OrderSplit extends BaseBasicBolt {
 			String msisdn = words[0]; // msisdnID Varchar2(20)
 			String recordTime = words[1]; // Recordtime Varchar2(14)
             String terminal = words[2];// UA Varchar2(255)
+            String platform = words[3];// 门户类型numbser(2)
             String orderType = words[4]; // 订购类型  number(2)
             String productID = words[5];// 产品ID Varchar2(32)
             String bookID = words[7]; // 图书ID Number(19)
@@ -70,9 +72,9 @@ public class OrderSplit extends BaseBasicBolt {
             String promotionid = words[40]; // 营销参数 Number(19)
 
             collector.emit(StreamId.ORDERDATA.name(), new Values(msisdn,
-                    recordTime, terminal, orderType, productID, bookID, chapterID,
-                    channelCode, cost, provinceId ,wapIp, sessionId, promotionid));
-		} else {
+                    recordTime, terminal, platform, orderType, productID, bookID, chapterID,
+                    channelCode, cost, provinceId, wapIp, sessionId, promotionid));
+        } else {
 			log.info("Error data: " + line);
 		}
 	}
@@ -81,7 +83,8 @@ public class OrderSplit extends BaseBasicBolt {
 
         declarer.declareStream(StreamId.ORDERDATA.name(),
                 new Fields(FName.MSISDN.name(), FName.RECORDTIME.name(),
-                        FName.TERMINAL.name(), FName.ORDERTYPE.name(),
+                        FName.TERMINAL.name(), FName.PLATFORM.name(),
+                        FName.ORDERTYPE.name(),
                         FName.PRODUCTID.name(), FName.BOOKID.name(),
                         FName.CHAPTERID.name(), FName.CHANNELCODE.name(),
                         FName.COST.name(), FName.PROMOTIONID.name(),

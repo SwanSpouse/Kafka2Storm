@@ -34,8 +34,6 @@ public class SessionInfo {
     //订单类型
     private int orderType = 0;
 
-    private Thread rule123Checker = null;
-
     //图书阅读浏览pv，
     private RealTimeCacheList<String> bookReadPv = new RealTimeCacheList<String>(Constant.SIXTYFIVE_MINUTES);
     //图书购买pv,
@@ -148,6 +146,7 @@ public class SessionInfo {
      * @param bookId
      * @param callback
      */
+    private Thread rule123Checker = null;
     public void checkRule123(final String bookId, final RulesCallback callback) {
         rule123Checker = new Thread(new Runnable() {
             @Override
@@ -275,7 +274,37 @@ public class SessionInfo {
         }
     }
 
+    /**
+     * 规则12：用户有sessionid且属于非BOSS包月，前1小时后5分钟内图书的总pv=0
+     * ordertype = 4 accesstype <> 6
+     * @param platform  platform = accesstype
+     * @param callback
+     */
+    private Thread rule12Checker = null;
+    public void checkRule12(int platform, final RulesCallback callback) {
+        if (orderType != 4 || platform == 6) {
+            return ;
+        }
+        rule123Checker = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    rule12Checker.sleep(Constant.FIVE_MINUTES);
+                    if (bookReadPv.size() == 0) {
+                        callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
+                                channelId, promotionId, Rules.TWELVE, provinceId);
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        rule12Checker.start();
+        rule12Checker.setDaemon(true);
+    }
+
     public void clean() {
+        rule123Checker.interrupt();
         rule123Checker.interrupt();
     }
 

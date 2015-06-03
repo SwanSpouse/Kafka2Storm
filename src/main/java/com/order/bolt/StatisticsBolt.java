@@ -115,6 +115,7 @@ public class StatisticsBolt extends BaseBasicBolt {
         String msisdn = input.getStringByField(FName.MSISDN.name());
         Long recordTime = TimeParaser.splitTime(input.getStringByField(FName.RECORDTIME.name()));
         String userAgent = input.getStringByField(FName.USERAGENT.name());
+        int platform = input.getIntegerByField(FName.PLATFORM.name());
         int orderType = input.getIntegerByField(FName.ORDERTYPE.name());
         String productId = input.getStringByField(FName.PRODUCTID.name());
         String bookId = input.getStringByField(FName.BOOKID.name());
@@ -153,6 +154,7 @@ public class StatisticsBolt extends BaseBasicBolt {
         currentSessionInfo.checkRule6(new EmitDatas(collector));
         currentSessionInfo.checkRule7(new EmitDatas(collector));
         currentSessionInfo.checkRule8(bookId, new EmitDatas(collector));
+        currentSessionInfo.checkRule12(platform, new EmitDatas(collector));
 
         //更新订购话单UserInfos信息
         Pair<String, UserInfo> userInfoPair = new Pair<String, UserInfo>(msisdn, null);
