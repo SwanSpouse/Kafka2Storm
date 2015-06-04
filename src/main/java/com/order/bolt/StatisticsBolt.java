@@ -93,7 +93,7 @@ public class StatisticsBolt extends BaseBasicBolt {
         String sessionId = input.getStringByField(FName.SESSIONID.name());
         String pageType = input.getStringByField(FName.PAGETYPE.name());
         String msisdn = input.getStringByField(FName.MSISDN.name());
-        int channelCode = input.getIntegerByField(FName.CHANNELCODE.name());
+        String channelCode = input.getStringByField(FName.CHANNELCODE.name());
         String bookId = input.getStringByField(FName.BOOKID.name());
         String chapterId = input.getStringByField(FName.CHAPTERID.name());
 
@@ -121,7 +121,7 @@ public class StatisticsBolt extends BaseBasicBolt {
         String productId = input.getStringByField(FName.PRODUCTID.name());
         String bookId = input.getStringByField(FName.BOOKID.name());
         String chapterId = input.getStringByField(FName.CHAPTERID.name());
-        int channelCode = input.getIntegerByField(FName.CHANNELCODE.name());
+        String channelCode = input.getStringByField(FName.CHANNELCODE.name());
         int realInfoFee = input.getIntegerByField(FName.REALINFORFEE.name());
         String wapIp = input.getStringByField(FName.WAPIP.name());
         String sessionId = input.getStringByField(FName.SESSIONID.name());

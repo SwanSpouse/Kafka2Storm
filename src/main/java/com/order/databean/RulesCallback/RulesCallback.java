@@ -20,6 +20,6 @@ public interface RulesCallback {
      * @param provinceId  手机号码对应的省ID
      */
     public void hanleData(String msisdnId, String sessionId, Long currentTime,
-                          int realInfoFee, int channelId, int promotionId, String rules,
+                          int realInfoFee, String channelId, int promotionId, String rules,
                           int provinceId);
 }

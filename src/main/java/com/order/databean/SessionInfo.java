@@ -26,8 +26,8 @@ public class SessionInfo {
     private String msisdnId = null;
     //真实信息费
     private int realInfoFee = -1;
-    //渠道id
-    private int channelId = -1;
+    //渠道id 营销ID
+    private String channelId = null;
     //营销参数
     private int promotionId = 0;
     private long lastUpdateTime;
@@ -59,7 +59,7 @@ public class SessionInfo {
     //对应浏览pv 和 订购pv 构建SeesionInfo
     public SessionInfo(String sessionId, String msisdnId, String bookReadId,
                        String bookOrderId, String bookChapterOrderId, Long currentTime,
-                       int orderType, int realInfoFee, int channelId, int promotionId, int provinceId) {
+                       int orderType, int realInfoFee, String channelId, int promotionId, int provinceId) {
         if (currentTime != null) {
             this.lastUpdateTime = currentTime;
         } else {
@@ -109,7 +109,7 @@ public class SessionInfo {
     //对已存在的SessionInfo进行更新。
     public void upDateSeesionInfo(String bookReadId, String bookOrderId, String bookChapterOrderId,
                                   Long currentTime, int orderType, int realInfoFee,
-                                  int channelId, int promotionId, int provinceId) {
+                                  String channelId, int promotionId, int provinceId) {
         if (currentTime != null) {
             lastUpdateTime = currentTime;
         } else {
