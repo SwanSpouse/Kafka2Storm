@@ -14,6 +14,7 @@ import com.order.databean.SessionInfo;
 import com.order.databean.TimeCacheStructures.Pair;
 import com.order.databean.TimeCacheStructures.RealTimeCacheList;
 import com.order.databean.UserInfo;
+import com.order.db.DBHelper.DBStatisticBoltHelper;
 import com.order.util.FName;
 import com.order.util.StreamId;
 import com.order.util.TimeParaser;
@@ -29,9 +30,11 @@ public class StatisticsBolt extends BaseBasicBolt {
     public static boolean isDebug = true;
     private static Logger log =Logger.getLogger(StatisticsBolt.class);
 
+    private DBStatisticBoltHelper DBhelper = new DBStatisticBoltHelper();
+
     //存储字段为msisdn 和 UserInfo
     private RealTimeCacheList<Pair<String, UserInfo>> userInfos =
-            new RealTimeCacheList<Pair<String, UserInfo>>(Constant.FIVE_MINUTES);
+            new RealTimeCacheList<Pair<String, UserInfo>>(Constant.ONE_HOUR);
 
     //存储字段为seesionId 和 SessionInfo
     private RealTimeCacheList<Pair<String, SessionInfo>> sessionInfos =
@@ -39,7 +42,8 @@ public class StatisticsBolt extends BaseBasicBolt {
 
     //负责SeesionInfo数据的清理
     private Thread cleaner = null;
-
+    //负责每天导入维表的数据
+    private Thread loader = null;
     @Override
     public void prepare(Map stormConf, TopologyContext context) {
         super.prepare(stormConf, context);
@@ -67,6 +71,21 @@ public class StatisticsBolt extends BaseBasicBolt {
         });
         cleaner.start();
         cleaner.setDaemon(true);
+
+        //启动线程每天3点准时load数据
+        loader = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    loader.sleep(TimeParaser.getMilliesFromNowToThreeOclock());
+                    DBhelper.getData();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        loader.start();
+        loader.setDaemon(true);
     }
 
     @Override

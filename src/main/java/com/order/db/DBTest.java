@@ -1,5 +1,7 @@
 package com.order.db;
 
+import com.order.db.DBHelper.DBStatisticBoltHelper;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -39,7 +41,6 @@ public class DBTest {
      * 如何在bolt中使用Oracle的JDBC.
      */
     public static void main(String[] args) {
-        DB db = new DB();
-        db.getData();
+        DBStatisticBoltHelper dbhelper = new DBStatisticBoltHelper();
     }
 }

@@ -6,6 +6,7 @@ import com.order.databean.RulesCallback.RulesCallback;
 import com.order.databean.TimeCacheStructures.BookOrderList;
 import com.order.databean.TimeCacheStructures.Pair;
 import com.order.databean.TimeCacheStructures.RealTimeCacheList;
+import com.order.db.DBHelper.DBStatisticBoltHelper;
 import com.order.util.LogUtil;
 import org.apache.log4j.Logger;
 
@@ -46,8 +47,11 @@ public class SessionInfo {
     private RealTimeCacheList<String> bookChapterOrderPv = new RealTimeCacheList<String>(Constant.FIVE_MINUTES);
     //各个渠道下的日购买费用 Pair值为用户msisdn 和 orderType=1的 信息费。
     private RealTimeCacheList<Pair<String, Integer>> channelOrderpv = new RealTimeCacheList<Pair<String, Integer>>(Constant.ONE_DAY);
+    //用户营销Id对应的扣费二级渠道。
+    private RealTimeCacheList<String> orderChannelCodeByDay = new RealTimeCacheList<String>(Constant.ONE_DAY);
 
     @Override
+
     public String toString() {
         String context = "msisdnId: " + msisdnId + " realInfoFee : " + realInfoFee + " channelId " + channelId +
                 " lastUpdateTime : " + new Date(lastUpdateTime) + " orderType: " + orderType + " \n ";
@@ -104,6 +108,11 @@ public class SessionInfo {
                 channelOrderpv.put(pair);
             }
         }
+        //将用户channelCode对应的二级渠道进行保存
+        String secondChannelId = DBStatisticBoltHelper.getParameterId2SecChannelId().get(channelId);
+        if (secondChannelId != null) {
+            this.orderChannelCodeByDay.put(secondChannelId);
+        }
     }
 
     //对已存在的SessionInfo进行更新。
@@ -145,6 +154,11 @@ public class SessionInfo {
                 channelOrderpv.put(pair);
             }
         }
+        //将用户channelCode对应的二级渠道进行保存
+        String secondChannelId = DBStatisticBoltHelper.getParameterId2SecChannelId().get(channelId);
+        if (secondChannelId != null) {
+            this.orderChannelCodeByDay.put(secondChannelId);
+        }
     }
 
     /**
@@ -152,10 +166,12 @@ public class SessionInfo {
      * 规则1：用户5分钟内，对图书有订购行为，且前1小时后5分钟内对该产品的点击pv=0 ordertype not in ( 4 5 9 99)
      * 规则2：用户5分钟内，对图书有订购行为，且前1小时后5分钟内对该产品的点击pv=1 ordertype not in ( 4 5 9 99)
      * 规则3：用户5分钟内，对图书有订购行为，且前1小时后5分钟内对该产品的点击 1<pv<=5 ordertype not in ( 4 5 9 99)
+     *
      * @param bookId
      * @param callback
      */
     private Thread rule123Checker = null;
+
     public void checkRule123(final String bookId, final RulesCallback callback) {
         rule123Checker = new Thread(new Runnable() {
             @Override
@@ -199,18 +215,22 @@ public class SessionInfo {
      * @param callback
      */
     public void checkRule4(final RulesCallback callback) {
-        //TODO 还需要存一个二级渠道的变量。日过期。
+        if (orderChannelCodeByDay.size() >= 3) {
+            callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee, channelId,
+                    promotionId, Rules.FOUR.name(), provinceId);
+        }
     }
 
     /**
      * 检测规则 5
      * 规则5：一个用户日渠道ID中的按本订购费>10元，该用户异常渠道当天所有信息费为异常
      * orderType=1
+     *
      * @param callback
      */
     public void checkRule5(String msisdnId, final RulesCallback callback) {
         if (orderType != 1) {
-            return ;
+            return;
         }
         Pair<String, Integer> userChannelInfoFee = new Pair<String, Integer>(msisdnId, null);
         if (channelOrderpv.contains(userChannelInfoFee)) {
@@ -275,15 +295,16 @@ public class SessionInfo {
      * 规则8：用户5分钟内，连载图书订购章数>=10，且对订购图书的pv<=2*章数
      * 不满10个。后续判断不触发。
      * orderType=2
+     *
      * @param callback
      */
     public void checkRule8(String bookId, final RulesCallback callback) {
         if (orderType != 2) {
-            return ;
+            return;
         }
         int orderPvs = bookOrderPv.sizeOfBookOrderTimesWithOrderType(bookId, 2);
         int readPvs = bookReadPv.sizeWithTimeThreshold(bookId, lastUpdateTime, Constant.FIVE_MINUTES);
-        if (orderPvs >=10 && orderPvs <= 2 * readPvs) {
+        if (orderPvs >= 10 && orderPvs <= 2 * readPvs) {
             LogUtil.printLog(this, " rule8", false);
             callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
                     channelId, promotionId, Rules.EIGHT.name(), provinceId);
@@ -293,13 +314,15 @@ public class SessionInfo {
     /**
      * 规则12：用户有sessionid且属于非BOSS包月，前1小时后5分钟内图书的总pv=0
      * ordertype = 4 accesstype <> 6
+     *
      * @param platform  platform = accesstype
      * @param callback
      */
     private Thread rule12Checker = null;
+
     public void checkRule12(int platform, final RulesCallback callback) {
         if (orderType != 4 || platform == 6) {
-            return ;
+            return;
         }
         rule123Checker = new Thread(new Runnable() {
             @Override

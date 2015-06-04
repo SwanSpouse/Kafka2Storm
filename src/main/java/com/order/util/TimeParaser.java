@@ -2,7 +2,9 @@ package com.order.util;
 
 import org.apache.log4j.Logger;
 
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 
 /**
  * Created by LiMingji on 2015/5/26.
@@ -30,5 +32,40 @@ public class TimeParaser {
             log.error("时间输入格式有问题: " + e);
         }
         return -1L;
+    }
+
+    //根据long型构造符合条件的日期格式
+    public static String formatTimeInDay(Long inputTime) {
+        SimpleDateFormat sFormat = new SimpleDateFormat("yyyyMMdd");
+        Date date = new Date(inputTime);
+        return sFormat.format(date);
+    }
+
+    public static String formatTimeInSeconds(Long inputTime) {
+        SimpleDateFormat sFormat = new SimpleDateFormat("yyyyMMddhhmmss");
+        Date date = new Date(inputTime);
+        return sFormat.format(date);
+    }
+
+    //获取从当前时间到明天凌晨三天的毫秒数
+    public static long getMilliesFromNowToThreeOclock() {
+        Calendar calendar = Calendar.getInstance();
+        Calendar calendar3Oclock = Calendar.getInstance();
+        System.out.println(calendar.getTime());
+        calendar3Oclock.add(Calendar.DATE, 1);
+        calendar3Oclock.set(Calendar.HOUR_OF_DAY, 3);
+        calendar3Oclock.set(Calendar.MINUTE, 0);
+        calendar3Oclock.set(Calendar.SECOND, 0);
+        calendar3Oclock.set(Calendar.MILLISECOND, 0);
+        System.out.println(calendar3Oclock.getTime());
+        return calendar3Oclock.getTimeInMillis() - calendar.getTimeInMillis();
+    }
+
+    public static void main(String[] args) {
+//        Long time =1433494523823L;
+//        System.out.println(formatTimeInDay(time));
+//        System.out.println(formatTimeInSeconds(time));
+
+        System.out.println(getMilliesFromNowToThreeOclock());
     }
 }

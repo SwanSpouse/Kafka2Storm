@@ -35,7 +35,7 @@ import com.order.util.StreamId;
  *
  * Created by LiMingji on 2015/5/24.
  */
-public class RealtimeOuputBolt extends BaseBasicBolt {
+public class RealtimeOutputBolt extends BaseBasicBolt {
 
     @Override
     public void execute(Tuple input, BasicOutputCollector collector) {

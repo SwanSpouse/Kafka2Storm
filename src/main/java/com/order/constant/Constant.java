@@ -20,6 +20,8 @@ public final class Constant {
     public final static int FIVE_MINUTES = 5 * 60;
     //65分钟，用于定时清空bookreadpv的数据
     public final static int SIXTYFIVE_MINUTES = 65 * 60;
+    //60分钟，用于保存用户信息UserInfo
+    public final static int ONE_HOUR = 1 * 60 * 60;
     //一天
     public final static int ONE_DAY = 24 * 60 * 60;
 
