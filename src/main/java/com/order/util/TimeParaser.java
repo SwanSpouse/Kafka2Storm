@@ -48,7 +48,7 @@ public class TimeParaser {
     }
 
     //获取从当前时间到明天凌晨三天的毫秒数
-    public static long getMilliesFromNowToThreeOclock() {
+    public static long getMillisFromNowToThreeOclock() {
         Calendar calendar = Calendar.getInstance();
         Calendar calendar3Oclock = Calendar.getInstance();
         System.out.println(calendar.getTime());
@@ -61,11 +61,21 @@ public class TimeParaser {
         return calendar3Oclock.getTimeInMillis() - calendar.getTimeInMillis();
     }
 
+    public static long getMillisFromTimeToNetFiveMinutes(long time) {
+        Calendar now = Calendar.getInstance();
+        now.setTimeInMillis(time);
+        now.add(Calendar.MINUTE, 5);
+        return now.getTimeInMillis();
+    }
+
     public static void main(String[] args) {
 //        Long time =1433494523823L;
 //        System.out.println(formatTimeInDay(time));
 //        System.out.println(formatTimeInSeconds(time));
 
-        System.out.println(getMilliesFromNowToThreeOclock());
+//        System.out.println(getMillisFromNowToThreeOclock());
+
+        System.out.println(getMillisFromTimeToNetFiveMinutes(System.currentTimeMillis()));
+
     }
 }

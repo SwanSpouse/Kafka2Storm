@@ -77,7 +77,10 @@ public class StatisticsBolt extends BaseBasicBolt {
             @Override
             public void run() {
                 try {
-                    loader.sleep(TimeParaser.getMilliesFromNowToThreeOclock());
+                    long sleepTime = TimeParaser.getMillisFromNowToThreeOclock();
+                    if (sleepTime > 0) {
+                        loader.sleep(sleepTime);
+                    }
                     DBhelper.getData();
                 } catch (InterruptedException e) {
                     e.printStackTrace();

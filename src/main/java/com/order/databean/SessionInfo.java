@@ -8,6 +8,7 @@ import com.order.databean.TimeCacheStructures.Pair;
 import com.order.databean.TimeCacheStructures.RealTimeCacheList;
 import com.order.db.DBHelper.DBStatisticBoltHelper;
 import com.order.util.LogUtil;
+import com.order.util.TimeParaser;
 import org.apache.log4j.Logger;
 
 import java.util.Date;
@@ -178,7 +179,10 @@ public class SessionInfo {
             public void run() {
                 try {
                     //延迟5分钟之后对65分钟内的数据进行检测。
-                    rule123Checker.sleep(Constant.FIVE_MINUTES);
+                    long sleepTime = TimeParaser.getMillisFromTimeToNetFiveMinutes(lastUpdateTime);
+                    if (sleepTime > 0) {
+                        rule123Checker.sleep(sleepTime);
+                    }
                     if (orderType == 4 || orderType == 5 || orderType == 9 || orderType == 99) {
                         return;
                     }
