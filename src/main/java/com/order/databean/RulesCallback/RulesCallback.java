@@ -15,11 +15,11 @@ public interface RulesCallback {
      * @param currentTime 默认为订单产生时间，如果此时间为空，则用消息到达系统的时间来代替。
      * @param realInfoFee 真实信息费
      * @param channelId   渠道Id
-     * @param promotionId 营销参数
+     * @param product     产品ID
      * @param rules       对应处理的规则。
      * @param provinceId  手机号码对应的省ID
      */
     public void hanleData(String msisdnId, String sessionId, Long currentTime,
-                          int realInfoFee, String channelId, int promotionId, String rules,
+                          int realInfoFee, String channelId, String product, String rules,
                           int provinceId);
 }

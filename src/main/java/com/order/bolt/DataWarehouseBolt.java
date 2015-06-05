@@ -4,6 +4,7 @@ import backtype.storm.topology.BasicOutputCollector;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseBasicBolt;
 import backtype.storm.tuple.Tuple;
+import com.order.db.DBHelper.DBDataWarehouseBoltHelper;
 import com.order.util.FName;
 import com.order.util.StreamId;
 
@@ -35,6 +36,8 @@ import com.order.util.StreamId;
  */
 public class DataWarehouseBolt extends BaseBasicBolt {
 
+    private DBDataWarehouseBoltHelper DBHelper = new DBDataWarehouseBoltHelper();
+
     @Override
     public void execute(Tuple input, BasicOutputCollector collector) {
         if (input.getSourceStreamId().equals(StreamId.DATASTREAM.name())) {
@@ -56,9 +59,10 @@ public class DataWarehouseBolt extends BaseBasicBolt {
         String seesionId = input.getStringByField(FName.SESSIONID.name());
         Long recordTime = input.getLongByField(FName.RECORDTIME.name());
         int realInfoFee = input.getIntegerByField(FName.REALINFORFEE.name());
-        int channelCode = input.getIntegerByField(FName.CHANNELCODE.name());
-        int promotionId = input.getIntegerByField(FName.PROMOTIONID.name());
+        String channelCode = input.getStringByField(FName.CHANNELCODE.name());
         int provinceId = input.getIntegerByField(FName.PROVINCEID.name());
+
+        DBHelper.updateData(recordTime, channelCode, null, null, provinceId+"","0", realInfoFee);
     }
 
     /**
@@ -71,10 +75,11 @@ public class DataWarehouseBolt extends BaseBasicBolt {
         String sessionId = input.getStringByField(FName.SESSIONID.name());
         Long recordTime = input.getLongByField(FName.RECORDTIME.name());
         int realInfoFee = input.getIntegerByField(FName.REALINFORFEE.name());
-        int channelCode = input.getIntegerByField(FName.CHANNELCODE.name());
-        int promotionId = input.getIntegerByField(FName.PROMOTIONID.name());
+        String channelCode = input.getStringByField(FName.CHANNELCODE.name());
         String rule = input.getStringByField(FName.RULES.name());
         int provinceId = input.getIntegerByField(FName.PROVINCEID.name());
+
+        DBHelper.updateData(recordTime, channelCode, null, null, provinceId + "", rule, realInfoFee);
     }
 
     @Override

@@ -69,7 +69,7 @@ public class OrderSplit extends BaseBasicBolt {
             String provinceId = words[22]; // Varchar2(16)
             String wapIp = words[24]; // IP地址 Varchar2(40)
             String sessionId = words[39];// sessionId Varchar2(255)
-            String promotionid = words[40]; // 营销参数 Number(19)
+            String promotionid = words[40]; // 促销互动ID (废弃) 2015-06-05
 
             collector.emit(StreamId.ORDERDATA.name(), new Values(msisdn,
                     recordTime, terminal, platform, orderType, productID, bookID, chapterID,
@@ -87,7 +87,7 @@ public class OrderSplit extends BaseBasicBolt {
                         FName.ORDERTYPE.name(),
                         FName.PRODUCTID.name(), FName.BOOKID.name(),
                         FName.CHAPTERID.name(), FName.CHANNELCODE.name(),
-                        FName.COST.name(), FName.PROMOTIONID.name(),
+                        FName.COST.name(), FName.PROVINCEID.name(),
                         FName.WAPIP.name(), FName.SESSIONID.name(),
                         FName.PROMOTIONID.name()));
     }

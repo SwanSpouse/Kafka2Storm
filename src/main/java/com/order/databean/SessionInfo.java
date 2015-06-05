@@ -31,8 +31,8 @@ public class SessionInfo implements Serializable{
     private int realInfoFee = -1;
     //渠道id 营销ID
     private String channelId = null;
-    //营销参数
-    private int promotionId = 0;
+    //产品ID
+    private String productId = null;
     private long lastUpdateTime;
 
     //手机号码对应的省ID
@@ -65,7 +65,7 @@ public class SessionInfo implements Serializable{
     //对应浏览pv 和 订购pv 构建SeesionInfo
     public SessionInfo(String sessionId, String msisdnId, String bookReadId,
                        String bookOrderId, String bookChapterOrderId, Long currentTime,
-                       int orderType, int realInfoFee, String channelId, int promotionId, int provinceId) {
+                       int orderType, int realInfoFee, String channelId, String productId, int provinceId) {
         if (currentTime != null) {
             this.lastUpdateTime = currentTime;
         } else {
@@ -81,8 +81,10 @@ public class SessionInfo implements Serializable{
         this.orderType = orderType;
         this.realInfoFee = realInfoFee;
         this.channelId = channelId;
-        this.promotionId = promotionId;
 
+        if (productId != null) {
+            this.productId = productId;
+        }
         if (bookReadId != null) {
             bookReadPv.put(bookReadId, lastUpdateTime);
         }
@@ -120,7 +122,7 @@ public class SessionInfo implements Serializable{
     //对已存在的SessionInfo进行更新。
     public void upDateSeesionInfo(String bookReadId, String bookOrderId, String bookChapterOrderId,
                                   Long currentTime, int orderType, int realInfoFee,
-                                  String channelId, int promotionId, int provinceId) {
+                                  String channelId, String productId, int provinceId) {
         if (currentTime != null) {
             lastUpdateTime = currentTime;
         } else {
@@ -143,8 +145,10 @@ public class SessionInfo implements Serializable{
         this.orderType = orderType;
         this.realInfoFee = realInfoFee;
         this.channelId = channelId;
-        this.promotionId = promotionId;
 
+        if (productId != null) {
+            this.productId = productId;
+        }
         //统计orderType == 1情况下的用户日渠道信息费。
         if (orderType == 1) {
             Pair<String, Integer> pair = new Pair<String, Integer>(msisdnId, realInfoFee);
@@ -200,7 +204,7 @@ public class SessionInfo implements Serializable{
                     if (rule != null) {
                         LogUtil.printLog(this, "rule1", false);
                         callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
-                                channelId, promotionId, rule.name(), provinceId);
+                                channelId, productId, rule.name(), provinceId);
                     } else {
                         LogUtil.printLog(this, "rule1", true);
                     }
@@ -222,7 +226,7 @@ public class SessionInfo implements Serializable{
     public void checkRule4(final RulesCallback callback) {
         if (orderChannelCodeByDay.size() >= 3) {
             callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee, channelId,
-                    promotionId, Rules.FOUR.name(), provinceId);
+                    productId, Rules.FOUR.name(), provinceId);
         }
     }
 
@@ -243,7 +247,7 @@ public class SessionInfo implements Serializable{
             if (currentUserChannelInFee.getValue() > 10) {
                 LogUtil.printLog(this, "rule5 ", false);
                 callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
-                        channelId, promotionId, Rules.FIVE.name(), provinceId);
+                        channelId, productId, Rules.FIVE.name(), provinceId);
             }
         }
     }
@@ -266,7 +270,7 @@ public class SessionInfo implements Serializable{
         if (orderTimes >= Constant.ORDER_BY_MONTH_THRESHOLD) {
             LogUtil.printLog(this, "rule6", false);
             callback.hanleData(msisdnId, sessionId, lastUpdateTime,
-                    realInfoFee, channelId, promotionId, Rules.SIX.name(), provinceId);
+                    realInfoFee, channelId, productId, Rules.SIX.name(), provinceId);
         }
     }
 
@@ -291,7 +295,7 @@ public class SessionInfo implements Serializable{
         if (bookOrderNums >= 2 && bookOrderNums < 5 * bookReadPvs) {
             LogUtil.printLog(this, " rule7 ", false);
             callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
-                    channelId, promotionId, Rules.SEVEN.name(), provinceId);
+                    channelId, productId, Rules.SEVEN.name(), provinceId);
         }
     }
 
@@ -312,7 +316,7 @@ public class SessionInfo implements Serializable{
         if (orderPvs >= 10 && orderPvs <= 2 * readPvs) {
             LogUtil.printLog(this, " rule8", false);
             callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
-                    channelId, promotionId, Rules.EIGHT.name(), provinceId);
+                    channelId, productId, Rules.EIGHT.name(), provinceId);
         }
     }
 
@@ -337,7 +341,7 @@ public class SessionInfo implements Serializable{
                     if (bookReadPv.size() == 0) {
                         LogUtil.printLog(this, "rule12", false);
                         callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
-                                channelId, promotionId, Rules.TWELVE.name(), provinceId);
+                                channelId, productId, Rules.TWELVE.name(), provinceId);
                     }
                 } catch (InterruptedException e) {
                     e.printStackTrace();

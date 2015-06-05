@@ -52,15 +52,11 @@ public class RealtimeOutputBolt extends BaseBasicBolt {
 
     //处理正常数据流
     private void handleDataStream(Tuple input) {
-        //collector.emit(StreamId.DATASTREAM.name(), new Values(msisdn, sessionId, recordTime,realInfoFee,
-        // channelCode, promotionId, provinceId));
         String msisdn = input.getStringByField(FName.MSISDN.name());
         String sessionId = input.getStringByField(FName.SESSIONID.name());
         Long recordTime = input.getLongByField(FName.RECORDTIME.name());
         int realInfoFee = input.getIntegerByField(FName.REALINFORFEE.name());
         String channelCode = input.getStringByField(FName.CHANNELCODE.name());
-        int promotionId = input.getIntegerByField(FName.PROMOTIONID.name());
-        int provinceId = input.getIntegerByField(FName.PROVINCEID.name());
         //数据入库
         DBHelper.upDateData(msisdn,sessionId,channelCode,
                 TimeParaser.formatTimeInSeconds(recordTime),realInfoFee,"0");
@@ -73,9 +69,7 @@ public class RealtimeOutputBolt extends BaseBasicBolt {
         Long recordTime = input.getLongByField(FName.RECORDTIME.name());
         int realInfoFee = input.getIntegerByField(FName.REALINFORFEE.name());
         String channelCode = input.getStringByField(FName.CHANNELCODE.name());
-        int promotionId = input.getIntegerByField(FName.PROMOTIONID.name());
         String rule = input.getStringByField(FName.RULES.name());
-        int provinceId = input.getIntegerByField(FName.PROVINCEID.name());
         //数据入库
         DBHelper.upDateData(msisdn,sessionId,channelCode,
                 TimeParaser.formatTimeInSeconds(recordTime),realInfoFee,rule);

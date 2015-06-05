@@ -130,9 +130,9 @@ public class StatisticsBolt extends BaseBasicBolt {
         Pair<String, SessionInfo> sessionPair = new Pair<String, SessionInfo>(sessionId, null);
         if (sessionInfos.contains(sessionPair)) {
             SessionInfo currentSessionInfo = (SessionInfo) sessionInfos.get(sessionPair).getValue();
-            currentSessionInfo.upDateSeesionInfo(bookId, null, null, recordTime, -1, 0, channelCode, -1, 0);
+            currentSessionInfo.upDateSeesionInfo(bookId, null, null, recordTime, -1, 0, channelCode, null, 0);
         } else {
-            SessionInfo currentSessionInfo = new SessionInfo(sessionId, msisdn, bookId, null, null, recordTime, -1, 0, channelCode, -1, 0);
+            SessionInfo currentSessionInfo = new SessionInfo(sessionId, msisdn, bookId, null, null, recordTime, -1, 0, channelCode, null, 0);
             sessionInfos.put(new Pair<String, SessionInfo>(sessionId, currentSessionInfo));
         }
         //浏览话单不需要更新用户信息
@@ -151,7 +151,6 @@ public class StatisticsBolt extends BaseBasicBolt {
         int realInfoFee = input.getIntegerByField(FName.REALINFORFEE.name());
         String wapIp = input.getStringByField(FName.WAPIP.name());
         String sessionId = input.getStringByField(FName.SESSIONID.name());
-        int promotionId = input.getIntegerByField(FName.PROMOTIONID.name());
         int provinceId = input.getIntegerByField(FName.PROVINCEID.name());
 
         if (sessionId == null || sessionId.trim().equals("")) {
@@ -162,7 +161,7 @@ public class StatisticsBolt extends BaseBasicBolt {
         }
         //所有订单数据先统一发送。用作数据统计。
         collector.emit(StreamId.DATASTREAM.name(), new Values(msisdn, sessionId, recordTime,
-                realInfoFee, channelCode, promotionId, provinceId));
+                realInfoFee, channelCode, productId, provinceId));
 
         //更新订购话单的SessionInfos信息
         Pair<String, SessionInfo> sessionInfoPair = new Pair<String, SessionInfo>(sessionId, null);
@@ -170,11 +169,11 @@ public class StatisticsBolt extends BaseBasicBolt {
         if (sessionInfos.contains(sessionInfoPair)) {
             currentSessionInfo = (SessionInfo) sessionInfos.get(sessionInfoPair).getValue();
             currentSessionInfo.upDateSeesionInfo(null, bookId, chapterId, recordTime, orderType,
-                    realInfoFee, channelCode, promotionId, provinceId);
+                    realInfoFee, channelCode, productId, provinceId);
             sessionInfos.put(new Pair<String, SessionInfo>(sessionId, currentSessionInfo));
         } else {
             currentSessionInfo = new SessionInfo(sessionId, msisdn, null, bookId,
-                    chapterId, recordTime, orderType, realInfoFee, channelCode, promotionId, provinceId);
+                    chapterId, recordTime, orderType, realInfoFee, channelCode, productId, provinceId);
             sessionInfos.put(new Pair<String, SessionInfo>(sessionId, currentSessionInfo));
         }
         if (isDebug) {
@@ -203,15 +202,15 @@ public class StatisticsBolt extends BaseBasicBolt {
         boolean[] isObeyRules = currentUserInfo.isObeyRules();
         if (!isObeyRules[UserInfo.SESSION_CHECK_BIT]) {
             collector.emit(StreamId.ABNORMALDATASTREAM.name(),
-                    new Values(msisdn, sessionId, recordTime, realInfoFee, channelCode, promotionId, Rules.NINE.name(), provinceId));
+                    new Values(msisdn, sessionId, recordTime, realInfoFee, channelCode, productId, Rules.NINE.name(), provinceId));
         }
         if (!isObeyRules[UserInfo.IP_CHECK_BIT]) {
             collector.emit(StreamId.ABNORMALDATASTREAM.name(),
-                    new Values(msisdn, sessionId, recordTime, realInfoFee, channelCode, promotionId, Rules.TEN.name(), provinceId));
+                    new Values(msisdn, sessionId, recordTime, realInfoFee, channelCode, productId, Rules.TEN.name(), provinceId));
         }
         if (!isObeyRules[UserInfo.UA_CHECK_BIT]) {
             collector.emit(StreamId.ABNORMALDATASTREAM.name(),
-                    new Values(msisdn, sessionId, recordTime, realInfoFee, channelCode, promotionId, Rules.ELEVEN.name(), provinceId));
+                    new Values(msisdn, sessionId, recordTime, realInfoFee, channelCode, productId, Rules.ELEVEN.name(), provinceId));
         }
     }
 
@@ -219,12 +218,12 @@ public class StatisticsBolt extends BaseBasicBolt {
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
         declarer.declareStream(StreamId.DATASTREAM.name(),
                 new Fields(FName.MSISDN.name(), FName.SESSIONID.name(), FName.RECORDTIME.name(),
-                        FName.REALINFORFEE.name(), FName.CHANNELCODE.name(), FName.PROMOTIONID.name(),
+                        FName.REALINFORFEE.name(), FName.CHANNELCODE.name(), FName.PRODUCTID.name(),
                         FName.PROVINCEID.name()));
 
         declarer.declareStream(StreamId.ABNORMALDATASTREAM.name(),
                 new Fields(FName.MSISDN.name(), FName.SESSIONID.name(), FName.RECORDTIME.name(),
-                        FName.REALINFORFEE.name(), FName.CHANNELCODE.name(), FName.PROMOTIONID.name(),
+                        FName.REALINFORFEE.name(), FName.CHANNELCODE.name(), FName.PRODUCTID.name(),
                         FName.RULES.name(), FName.PROVINCEID.name()));
     }
 }
