@@ -172,7 +172,7 @@ public class SessionInfo implements Serializable{
      * @param bookId
      * @param callback
      */
-    private Thread rule123Checker = null;
+    private transient Thread rule123Checker = null;
 
     public void checkRule123(final String bookId, final RulesCallback callback) {
         rule123Checker = new Thread(new Runnable() {
@@ -323,7 +323,7 @@ public class SessionInfo implements Serializable{
      * @param platform  platform = accesstype
      * @param callback
      */
-    private Thread rule12Checker = null;
+    private transient Thread rule12Checker = null;
 
     public void checkRule12(int platform, final RulesCallback callback) {
         if (orderType != 4 || platform == 6) {

@@ -42,9 +42,9 @@ public class StatisticsBolt extends BaseBasicBolt {
             new RealTimeCacheList<Pair<String, SessionInfo>>(Constant.ONE_DAY);
 
     //负责SeesionInfo数据的清理
-    private Thread cleaner = null;
+    private transient Thread cleaner = null;
     //负责每天导入维表的数据
-    private Thread loader = null;
+    private transient Thread loader = null;
     @Override
     public void prepare(Map stormConf, TopologyContext context) {
         super.prepare(stormConf, context);

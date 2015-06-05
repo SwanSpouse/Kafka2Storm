@@ -16,7 +16,7 @@ import java.util.HashMap;
 public class DBStatisticBoltHelper implements Serializable{
     private static final long serialVersionUID = 1L;
     private static Logger log = Logger.getLogger(DBStatisticBoltHelper.class);
-    private Connection conn = null;
+    private transient Connection conn = null;
 
     private final Object LOCK = new Object();
 
