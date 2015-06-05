@@ -18,17 +18,11 @@ public class EmitDatas implements RulesCallback {
         this.collector = collector;
     }
 
-    /*
-     *声明的数据流格式。
-     *declarer.declareStream(StreamId.DATASTREAM.name(),
-     *   new Fields(FName.MSISDN.name(), FName.SESSIONID.name(), FName.RECORDTIME.name(),
-     *              FName.REALINFORFEE.name(), FName.CHANNELCODE.name(), FName.PROMOTIONID.name(),
-     *               FName.PROVINCEID.name()));
-    * */
     @Override
     public void hanleData(String msisdnId, String sessionId, Long currentTime, int realInfoFee,
-                          String channelId, String productId, String rules, int provinceId) {
+                          String channelId, String productId, String rules,
+                          int provinceId, int orderType, String bookId) {
         collector.emit(StreamId.DATASTREAM.name(), new Values(msisdnId, sessionId, currentTime,
-                realInfoFee, channelId, productId, rules, provinceId));
+                realInfoFee, channelId, productId, rules, provinceId, orderType, bookId));
     }
 }

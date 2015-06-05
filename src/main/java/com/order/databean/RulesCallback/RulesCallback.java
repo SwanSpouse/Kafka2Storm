@@ -18,8 +18,10 @@ public interface RulesCallback {
      * @param product     产品ID
      * @param rules       对应处理的规则。
      * @param provinceId  手机号码对应的省ID
+     * @param orderType   订单类型
+     * @param bookId      图书ID
      */
     public void hanleData(String msisdnId, String sessionId, Long currentTime,
                           int realInfoFee, String channelId, String product, String rules,
-                          int provinceId);
+                          int provinceId, int orderType, String bookId);
 }

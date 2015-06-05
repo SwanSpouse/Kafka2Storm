@@ -7,6 +7,7 @@ import backtype.storm.tuple.Tuple;
 import com.order.db.DBHelper.DBDataWarehouseBoltHelper;
 import com.order.util.FName;
 import com.order.util.StreamId;
+import com.order.util.TimeParaser;
 
 /**
  * 数据仓库Bolt
@@ -53,33 +54,35 @@ public class DataWarehouseBolt extends BaseBasicBolt {
      * 处理正常数据流
      */
     private void dealNormalDate(Tuple input) {
-//        collector.emit(StreamId.DATASTREAM.name(), new Values(msisdn, sessionId, recordTime,realInfoFee,
-//        channelCode, promotionId, provinceId));
-        String msisdn = input.getStringByField(FName.MSISDN.name());
-        String seesionId = input.getStringByField(FName.SESSIONID.name());
         Long recordTime = input.getLongByField(FName.RECORDTIME.name());
         int realInfoFee = input.getIntegerByField(FName.REALINFORFEE.name());
         String channelCode = input.getStringByField(FName.CHANNELCODE.name());
         int provinceId = input.getIntegerByField(FName.PROVINCEID.name());
+        String productId = input.getStringByField(FName.PRODUCTID.name());
+        int orderType = input.getIntegerByField(FName.ORDERTYPE.name());
+        String bookId = input.getStringByField(FName.BOOKID.name());
 
-        DBHelper.updateData(recordTime, channelCode, null, null, provinceId+"","0", realInfoFee);
+        String currentTime = TimeParaser.formatTimeInDay(recordTime);
+        DBHelper.updateData(currentTime, channelCode, null, null, provinceId + "", productId,
+                "0", realInfoFee, orderType, bookId);
     }
 
     /**
      * 处理异常数据流
      */
     private void dealAbnormalData(Tuple input) {
-//        String msisdnId, String sessionId, Long currentTime, int realInfoFee,
-//                          int channelId, int promotionId, Rules rules, int provinceId
-        String msisdn = input.getStringByField(FName.MSISDN.name());
-        String sessionId = input.getStringByField(FName.SESSIONID.name());
         Long recordTime = input.getLongByField(FName.RECORDTIME.name());
         int realInfoFee = input.getIntegerByField(FName.REALINFORFEE.name());
         String channelCode = input.getStringByField(FName.CHANNELCODE.name());
         String rule = input.getStringByField(FName.RULES.name());
         int provinceId = input.getIntegerByField(FName.PROVINCEID.name());
+        String productId = input.getStringByField(FName.PRODUCTID.name());
+        int orderType = input.getIntegerByField(FName.ORDERTYPE.name());
+        String bookId = input.getStringByField(FName.BOOKID.name());
 
-        DBHelper.updateData(recordTime, channelCode, null, null, provinceId + "", rule, realInfoFee);
+        String currentTime = TimeParaser.formatTimeInDay(recordTime);
+        DBHelper.updateData(currentTime, channelCode, null, null, provinceId + "", productId,
+                rule, realInfoFee, orderType, bookId);
     }
 
     @Override

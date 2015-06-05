@@ -36,25 +36,37 @@ public class DBDataWarehouseBoltHelper {
         }
     }
 
-    public void updateData(Long time, String channelCode, String context, String contextType,
-                           String provinceId, String rules, int realInfoFee) {
+    /**
+     * orderType = 21 为自定义类型。
+     */
+    public void updateData(String time, String channelCode, String contextId, String contextType,
+                           String provinceId, String productId, String rules,
+                           int realInfoFee, int orderType, String bookId) {
 
+        if (orderType == 1 || orderType == 2 || orderType == 21 || orderType == 3) {
+            contextType = 3+"";
+            contextId = bookId;
+        }else if (orderType == 4) {
+            contextType = 1 + "";
+            contextId = productId;
+        }else if (orderType == 5) {
+            contextType = 2 + "";
+            contextId = productId;
+        }
+        String totalFeeKey = time + "|" + channelCode + "|" + contextId + "|" + contextType;
+        String abnormalFeeKey = totalFeeKey + "|" + rules;
+        if (totalFee.containsKey(totalFeeKey)) {
+            int currentFee = totalFee.get(totalFeeKey) + realInfoFee;
+            this.totalFee.put(totalFeeKey, currentFee);
+        } else {
+            this.totalFee.put(totalFeeKey, realInfoFee);
+        }
+
+        if (abnormalFee.containsKey(abnormalFeeKey)) {
+            int currentAbnormalFee = abnormalFee.get(abnormalFeeKey) + realInfoFee;
+            this.abnormalFee.put(abnormalFeeKey, currentAbnormalFee);
+        } else {
+            this.abnormalFee.put(abnormalFeeKey, realInfoFee);
+        }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

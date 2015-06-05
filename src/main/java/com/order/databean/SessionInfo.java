@@ -35,6 +35,8 @@ public class SessionInfo implements Serializable{
     private String productId = null;
     private long lastUpdateTime;
 
+    //图书ID
+    private String bookId = null;
     //手机号码对应的省ID
     private int provinceId = 0;
     //订单类型
@@ -81,6 +83,7 @@ public class SessionInfo implements Serializable{
         this.orderType = orderType;
         this.realInfoFee = realInfoFee;
         this.channelId = channelId;
+        this.bookId = bookOrderId;
 
         if (productId != null) {
             this.productId = productId;
@@ -141,6 +144,7 @@ public class SessionInfo implements Serializable{
             bookChapterOrderPv.put(bookOrderId, lastUpdateTime);
         }
 
+        this.bookId = bookOrderId;
         this.provinceId = provinceId;
         this.orderType = orderType;
         this.realInfoFee = realInfoFee;
@@ -204,7 +208,7 @@ public class SessionInfo implements Serializable{
                     if (rule != null) {
                         LogUtil.printLog(this, "rule1", false);
                         callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
-                                channelId, productId, rule.name(), provinceId);
+                                channelId, productId, rule.name(), provinceId, orderType,bookId);
                     } else {
                         LogUtil.printLog(this, "rule1", true);
                     }
@@ -226,7 +230,7 @@ public class SessionInfo implements Serializable{
     public void checkRule4(final RulesCallback callback) {
         if (orderChannelCodeByDay.size() >= 3) {
             callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee, channelId,
-                    productId, Rules.FOUR.name(), provinceId);
+                    productId, Rules.FOUR.name(), provinceId, orderType, bookId);
         }
     }
 
@@ -247,7 +251,7 @@ public class SessionInfo implements Serializable{
             if (currentUserChannelInFee.getValue() > 10) {
                 LogUtil.printLog(this, "rule5 ", false);
                 callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
-                        channelId, productId, Rules.FIVE.name(), provinceId);
+                        channelId, productId, Rules.FIVE.name(), provinceId, orderType, bookId);
             }
         }
     }
@@ -270,7 +274,7 @@ public class SessionInfo implements Serializable{
         if (orderTimes >= Constant.ORDER_BY_MONTH_THRESHOLD) {
             LogUtil.printLog(this, "rule6", false);
             callback.hanleData(msisdnId, sessionId, lastUpdateTime,
-                    realInfoFee, channelId, productId, Rules.SIX.name(), provinceId);
+                    realInfoFee, channelId, productId, Rules.SIX.name(), provinceId, orderType,bookId);
         }
     }
 
@@ -295,7 +299,7 @@ public class SessionInfo implements Serializable{
         if (bookOrderNums >= 2 && bookOrderNums < 5 * bookReadPvs) {
             LogUtil.printLog(this, " rule7 ", false);
             callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
-                    channelId, productId, Rules.SEVEN.name(), provinceId);
+                    channelId, productId, Rules.SEVEN.name(), provinceId, orderType, bookId);
         }
     }
 
@@ -316,7 +320,7 @@ public class SessionInfo implements Serializable{
         if (orderPvs >= 10 && orderPvs <= 2 * readPvs) {
             LogUtil.printLog(this, " rule8", false);
             callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
-                    channelId, productId, Rules.EIGHT.name(), provinceId);
+                    channelId, productId, Rules.EIGHT.name(), provinceId, orderType, bookId);
         }
     }
 
@@ -341,7 +345,7 @@ public class SessionInfo implements Serializable{
                     if (bookReadPv.size() == 0) {
                         LogUtil.printLog(this, "rule12", false);
                         callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
-                                channelId, productId, Rules.TWELVE.name(), provinceId);
+                                channelId, productId, Rules.TWELVE.name(), provinceId, orderType,bookId);
                     }
                 } catch (InterruptedException e) {
                     e.printStackTrace();
