@@ -17,7 +17,7 @@ public class OrderDataTestBolt extends BaseBasicBolt {
     @Override
     public void execute(Tuple input, BasicOutputCollector collector) {
         String value = input.getStringByField(STRING_SCHEME_KEY);
-        log.info("=========== 订单数据 ===========");
+        log.info("=========== 数据 ===========");
         log.info("value " + value);
     }
 

@@ -11,6 +11,7 @@ import com.order.util.LogUtil;
 import com.order.util.TimeParaser;
 import org.apache.log4j.Logger;
 
+import java.io.Serializable;
 import java.util.Date;
 
 /**
@@ -18,8 +19,8 @@ import java.util.Date;
  *
  * Created by LiMingji on 2015/5/21.
  */
-public class SessionInfo {
-
+public class SessionInfo implements Serializable{
+    private static final long serialVersionUID = 1L;
     private static Logger log = Logger.getLogger(SessionInfo.class);
 
     //SessionId

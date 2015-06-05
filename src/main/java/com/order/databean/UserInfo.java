@@ -4,13 +4,16 @@ import com.order.constant.Constant;
 import com.order.databean.TimeCacheStructures.RealTimeCacheList;
 import com.order.util.LogUtil;
 
+import java.io.Serializable;
+
 /**
  * UserInfo 用于存储用户信息并对规则9 10 11 进行检测
  *
  * Created by LiMingji on 2015/5/21.
  */
-public class UserInfo {
+public class UserInfo implements Serializable{
 
+    private static final long serialVersionUID = 1L;
     //规则9、10、11对应的检测位
     public final static int SESSION_CHECK_BIT = 0;
     public final static int IP_CHECK_BIT = 1;

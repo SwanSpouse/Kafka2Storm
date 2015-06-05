@@ -2,13 +2,15 @@ package com.order.databean.TimeCacheStructures;
 
 import com.order.constant.Constant;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Set;
 
 /**
  * Created by LiMingji on 2015/5/28.
  */
-public class BookOrderList {
+public class BookOrderList implements Serializable{
+    private static final long serialVersionUID = 1L;
 
     private HashMap<String, RealTimeCacheList<Integer>> map = null;
 

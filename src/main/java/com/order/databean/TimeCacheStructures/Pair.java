@@ -1,5 +1,7 @@
 package com.order.databean.TimeCacheStructures;
 
+import java.io.Serializable;
+
 /**
  * 设计用于存储
  *     SessionId SessionInfo
@@ -8,7 +10,8 @@ package com.order.databean.TimeCacheStructures;
  *
  * Created by LiMingji on 2015/5/27.
  */
-public class Pair<K, V> {
+public class Pair<K, V> implements Serializable{
+    private static final long serialVersionUID = 1L;
     private K key;
     private V value;
 

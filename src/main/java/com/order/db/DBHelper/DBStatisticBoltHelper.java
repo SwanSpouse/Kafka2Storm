@@ -3,6 +3,7 @@ package com.order.db.DBHelper;
 import com.order.db.JDBCUtil;
 import org.apache.log4j.Logger;
 
+import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -12,7 +13,8 @@ import java.util.HashMap;
 /**
  * Created by LiMingji on 2015/6/4.
  */
-public class DBStatisticBoltHelper {
+public class DBStatisticBoltHelper implements Serializable{
+    private static final long serialVersionUID = 1L;
     private static Logger log = Logger.getLogger(DBStatisticBoltHelper.class);
     private Connection conn = null;
 

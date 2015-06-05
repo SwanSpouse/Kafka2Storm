@@ -2,6 +2,7 @@ package com.order.databean.TimeCacheStructures;
 
 import org.apache.log4j.Logger;
 
+import java.io.Serializable;
 import java.util.*;
 
 /**
@@ -20,8 +21,9 @@ import java.util.*;
  *
  * Created by LiMingji on 2015/5/22.
  */
-public class RealTimeCacheList<T> {
+public class RealTimeCacheList<T> implements Serializable{
 
+    private static final long serialVersionUID = 1L;
     private static Logger log = Logger.getLogger(RealTimeCacheList.class);
 
     public static interface TimeOutCallback<T> {

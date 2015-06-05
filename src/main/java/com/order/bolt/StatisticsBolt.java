@@ -20,6 +20,7 @@ import com.order.util.StreamId;
 import com.order.util.TimeParaser;
 import org.apache.log4j.Logger;
 
+import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -72,7 +73,7 @@ public class StatisticsBolt extends BaseBasicBolt {
         cleaner.start();
         cleaner.setDaemon(true);
 
-        //启动线程每天3点准时load数据
+//        启动线程每天3点准时load数据
         loader = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -122,6 +123,9 @@ public class StatisticsBolt extends BaseBasicBolt {
         if (sessionId == null || !sessionId.trim().equals("") ) {
             return ;
         }
+        if (isDebug) {
+            log.info("接收到浏览话单数据，更新数据结构 " + msisdn + " recordTime " + new Date(recordTime));
+        }
         //更新阅读浏览话单的SessionInfos信息
         Pair<String, SessionInfo> sessionPair = new Pair<String, SessionInfo>(sessionId, null);
         if (sessionInfos.contains(sessionPair)) {
@@ -153,6 +157,9 @@ public class StatisticsBolt extends BaseBasicBolt {
         if (sessionId == null || sessionId.trim().equals("")) {
             return;
         }
+        if (StatisticsBolt.isDebug) {
+            log.info("接受到订单数据 " + msisdn + " recordTime " + new Date(recordTime));
+        }
         //所有订单数据先统一发送。用作数据统计。
         collector.emit(StreamId.DATASTREAM.name(), new Values(msisdn, sessionId, recordTime,
                 realInfoFee, channelCode, promotionId, provinceId));
@@ -169,6 +176,9 @@ public class StatisticsBolt extends BaseBasicBolt {
             currentSessionInfo = new SessionInfo(sessionId, msisdn, null, bookId,
                     chapterId, recordTime, orderType, realInfoFee, channelCode, promotionId, provinceId);
             sessionInfos.put(new Pair<String, SessionInfo>(sessionId, currentSessionInfo));
+        }
+        if (isDebug) {
+            log.info("开始根据各个规则对订单数据进行检测 "+ msisdn + " recordTime " + new Date(recordTime));
         }
         //检测相应的各个规则。
         currentSessionInfo.checkRule123(bookId, new EmitDatas(collector));
