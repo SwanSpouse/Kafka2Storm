@@ -4,13 +4,13 @@ import backtype.storm.topology.BasicOutputCollector;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseBasicBolt;
 import backtype.storm.tuple.Tuple;
-import com.order.db.DBHelper.DBDataWarehouseBoltHelper;
+import com.order.db.DBHelper.DBRealTimeOutputBolt2Helper;
 import com.order.util.FName;
 import com.order.util.StreamId;
 import com.order.util.TimeParaser;
 
 /**
- * 数据仓库Bolt
+ * 实时输出Bolt
  *
  * 输出表结构
  * CREATE TABLE "AAS"."ABN_CTID_CTTP_PARM_PRV_D"
@@ -35,9 +35,9 @@ import com.order.util.TimeParaser;
  * <p/>
  * Created by LiMingji on 2015/5/24.
  */
-public class DataWarehouseBolt extends BaseBasicBolt {
+public class RealTimeOutputBolt2 extends BaseBasicBolt {
 
-    private DBDataWarehouseBoltHelper DBHelper = new DBDataWarehouseBoltHelper();
+    private DBRealTimeOutputBolt2Helper DBHelper = new DBRealTimeOutputBolt2Helper();
 
     @Override
     public void execute(Tuple input, BasicOutputCollector collector) {

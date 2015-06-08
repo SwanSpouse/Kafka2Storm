@@ -10,8 +10,8 @@ import java.util.HashMap;
 /**
  * Created by LiMingji on 2015/6/4.
  */
-public class DBDataWarehouseBoltHelper {
-    private static Logger log = Logger.getLogger(DBDataWarehouseBoltHelper.class);
+public class DBRealTimeOutputBolt2Helper {
+    private static Logger log = Logger.getLogger(DBRealTimeOutputBolt2Helper.class);
     private transient Connection conn = null;
 
     //Key: data|channelCode|context|contextType|ruleID
@@ -26,7 +26,7 @@ public class DBDataWarehouseBoltHelper {
         return conn;
     }
 
-    public DBDataWarehouseBoltHelper() {
+    public DBRealTimeOutputBolt2Helper() {
         totalFee = new HashMap<String, Integer>();
         abnormalFee = new HashMap<String, Integer>();
         try {
