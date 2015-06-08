@@ -5,7 +5,10 @@ import com.order.db.JDBCUtil;
 import org.apache.log4j.Logger;
 
 import java.io.Serializable;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 /**
  * 用于实现DataWarehouseBolt中的数据库操作。
@@ -35,6 +38,7 @@ import java.sql.*;
  */
 public class DBDataWarehouseBoltHelper implements Serializable {
     private static Logger log = Logger.getLogger(DBStatisticBoltHelper.class);
+    public static final String TABLE_NAME = "ods_iread.RESULT_TABLE";
     private transient Connection conn = null;
 
     private Connection getConn() throws SQLException {
@@ -47,7 +51,7 @@ public class DBDataWarehouseBoltHelper implements Serializable {
 
     public DBDataWarehouseBoltHelper() {
         try {
-            conn = (new JDBCUtil()).getConnection();
+            conn = this.getConn();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -64,7 +68,7 @@ public class DBDataWarehouseBoltHelper implements Serializable {
     }
 
     private boolean checkExists(String msisdn, String sessionId, String channelCode) {
-        String queryTimesSql = "SELECT COUNT(*) recordTimes FROM ods_iread.RESULT_TABLE " +
+        String queryTimesSql = "SELECT COUNT(*) recordTimes FROM "+TABLE_NAME +
                 "WHERE \"msisdn\"=? AND \"sessionid\"=? AND \"channelcode\"=?";
         try {
             PreparedStatement stmt = conn.prepareStatement(queryTimesSql);
@@ -85,8 +89,8 @@ public class DBDataWarehouseBoltHelper implements Serializable {
     private void insert(String msisdn, String sessionId, String channelCode,
                         String reacordTime, int realInfoFee) {
         String sql =
-                "INSERT INTO ods_iread.RESULT_TABLE " +
-                        "VALUES (?,?,?,?,?," +
+                "INSERT INTO " + TABLE_NAME+
+                        " VALUES (?,?,?,?,?," +
                         "?,?,?,?,?,?,?,?,?,?,?,?)";
         try {
             PreparedStatement prepStmt = conn.prepareStatement(sql);
@@ -106,7 +110,7 @@ public class DBDataWarehouseBoltHelper implements Serializable {
     }
 
     private void update(String msisdn, String sessionId, String channelCode, int rules) {
-        String sql = "UPDATE ods_iread.RESULT_TABLE SET \"rule_" + rules + "\"=1 " +
+        String sql = "UPDATE "+TABLE_NAME+" SET \"rule_" + rules + "\"=1 " +
                 "WHERE \"msisdn\"=? AND \"sessionid\"=? AND \"channelcode\"=?";
         try {
             PreparedStatement prepStmt = conn.prepareStatement(sql);
@@ -121,7 +125,7 @@ public class DBDataWarehouseBoltHelper implements Serializable {
         }
     }
 
-    private int getRuleNumFromString(String rule) {
+    public static int getRuleNumFromString(String rule) {
         if (rule.equals(Rules.ONE.name())) {
             return 1;
         } else if (rule.equals(Rules.TWO.name())) {

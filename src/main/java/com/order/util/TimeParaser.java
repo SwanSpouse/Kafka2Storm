@@ -42,8 +42,22 @@ public class TimeParaser {
     }
 
     public static String formatTimeInSeconds(Long inputTime) {
-        SimpleDateFormat sFormat = new SimpleDateFormat("yyyyMMddhhmmss");
+        SimpleDateFormat sFormat = new SimpleDateFormat("yyyyMMddHHmmss");
         Date date = new Date(inputTime);
+        return sFormat.format(date);
+    }
+
+    /**
+     * 将输入时间提前一个小时
+     * @param time
+     * @return
+     */
+    public static String OneHourAge(Long time) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(time);
+        calendar.add(Calendar.HOUR, -1);
+        Date date = calendar.getTime();
+        SimpleDateFormat sFormat = new SimpleDateFormat("yyyyMMddHHmmss");
         return sFormat.format(date);
     }
 
@@ -75,7 +89,7 @@ public class TimeParaser {
 
 //        System.out.println(getMillisFromNowToThreeOclock());
 
-        System.out.println(getMillisFromTimeToNetFiveMinutes(System.currentTimeMillis()));
-
+//        System.out.println(getMillisFromTimeToNetFiveMinutes(System.currentTimeMillis()));
+        System.out.println(OneHourAge(System.currentTimeMillis()));
     }
 }

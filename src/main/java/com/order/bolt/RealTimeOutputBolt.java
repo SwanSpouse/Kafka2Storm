@@ -54,6 +54,7 @@ public class RealTimeOutputBolt extends BaseBasicBolt {
      * 处理正常数据流
      */
     private void dealNormalDate(Tuple input) {
+        String msisdn = input.getStringByField(FName.MSISDN.name());
         Long recordTime = input.getLongByField(FName.RECORDTIME.name());
         int realInfoFee = input.getIntegerByField(FName.REALINFORFEE.name());
         String channelCode = input.getStringByField(FName.CHANNELCODE.name());
@@ -62,8 +63,7 @@ public class RealTimeOutputBolt extends BaseBasicBolt {
         int orderType = input.getIntegerByField(FName.ORDERTYPE.name());
         String bookId = input.getStringByField(FName.BOOKID.name());
 
-        String currentTime = TimeParaser.formatTimeInDay(recordTime);
-        DBHelper.updateData(currentTime, channelCode, null, null, provinceId + "", productId,
+        DBHelper.updateData(msisdn, recordTime, channelCode, null, null, provinceId + "", productId,
                 "0", realInfoFee, orderType, bookId);
     }
 
@@ -71,6 +71,7 @@ public class RealTimeOutputBolt extends BaseBasicBolt {
      * 处理异常数据流
      */
     private void dealAbnormalData(Tuple input) {
+        String msisdn = input.getStringByField(FName.MSISDN.name());
         Long recordTime = input.getLongByField(FName.RECORDTIME.name());
         int realInfoFee = input.getIntegerByField(FName.REALINFORFEE.name());
         String channelCode = input.getStringByField(FName.CHANNELCODE.name());
@@ -80,8 +81,7 @@ public class RealTimeOutputBolt extends BaseBasicBolt {
         int orderType = input.getIntegerByField(FName.ORDERTYPE.name());
         String bookId = input.getStringByField(FName.BOOKID.name());
 
-        String currentTime = TimeParaser.formatTimeInDay(recordTime);
-        DBHelper.updateData(currentTime, channelCode, null, null, provinceId + "", productId,
+        DBHelper.updateData(msisdn, recordTime, channelCode, null, null, provinceId + "", productId,
                 rule, realInfoFee, orderType, bookId);
     }
 
