@@ -52,10 +52,41 @@ public class TimeParaser {
      * @param time
      * @return
      */
-    public static String OneHourAge(Long time) {
+    public static String OneHourAgo(Long time) {
         Calendar calendar = Calendar.getInstance();
         calendar.setTimeInMillis(time);
         calendar.add(Calendar.HOUR, -1);
+        Date date = calendar.getTime();
+        SimpleDateFormat sFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+        return sFormat.format(date);
+    }
+
+    /**
+     * 将时间调整为今天0点
+     * @param time
+     * @return
+     */
+    public static String OneDayAgo(Long time) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(time);
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        Date date = calendar.getTime();
+        SimpleDateFormat sFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+        return sFormat.format(date);
+    }
+
+    /**
+     * 将时间调整为今天0点
+     * @param time
+     * @return
+     */
+    public static String NormalHourAgo(Long time) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(time);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
         Date date = calendar.getTime();
         SimpleDateFormat sFormat = new SimpleDateFormat("yyyyMMddHHmmss");
         return sFormat.format(date);
@@ -90,6 +121,6 @@ public class TimeParaser {
 //        System.out.println(getMillisFromNowToThreeOclock());
 
 //        System.out.println(getMillisFromTimeToNetFiveMinutes(System.currentTimeMillis()));
-        System.out.println(OneHourAge(System.currentTimeMillis()));
+        System.out.println(NormalHourAgo(System.currentTimeMillis()));
     }
 }
