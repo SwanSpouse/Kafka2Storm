@@ -53,7 +53,7 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
         }
     }
 
-    public void upDateData(String msisdn, String sessionId, String channelCode,
+    public void updateData(String msisdn, String sessionId, String channelCode,
                            String reacordTime, int realInfoFee, String rule) {
         int ruleNum = getRuleNumFromString(rule);
         if (checkExists(msisdn, sessionId, channelCode)) {
