@@ -11,7 +11,7 @@ import com.order.util.TimeParaser;
 
 
 /**
- * 实时输出Bolt，计算异常率，定时写入数据库
+ * 仓库接口。计算异常率，定时写入数据库
  *
  * 输出表结构:
  * CREATE TABLE "AAS"."RESULT_TABLE"
@@ -58,7 +58,7 @@ public class DataWarehouseBolt extends BaseBasicBolt {
         int realInfoFee = input.getIntegerByField(FName.REALINFORFEE.name());
         String channelCode = input.getStringByField(FName.CHANNELCODE.name());
         //数据入库
-        DBHelper.upDateData(msisdn,sessionId,channelCode,
+        DBHelper.updateData(msisdn,sessionId,channelCode,
                 TimeParaser.formatTimeInSeconds(recordTime),realInfoFee,"0");
     }
 
@@ -71,7 +71,7 @@ public class DataWarehouseBolt extends BaseBasicBolt {
         String channelCode = input.getStringByField(FName.CHANNELCODE.name());
         String rule = input.getStringByField(FName.RULES.name());
         //数据入库
-        DBHelper.upDateData(msisdn,sessionId,channelCode,
+        DBHelper.updateData(msisdn,sessionId,channelCode,
                 TimeParaser.formatTimeInSeconds(recordTime),realInfoFee,rule);
     }
 

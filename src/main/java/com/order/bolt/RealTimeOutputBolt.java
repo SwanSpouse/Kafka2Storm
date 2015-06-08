@@ -4,7 +4,7 @@ import backtype.storm.topology.BasicOutputCollector;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseBasicBolt;
 import backtype.storm.tuple.Tuple;
-import com.order.db.DBHelper.DBRealTimeOutputBolt2Helper;
+import com.order.db.DBHelper.DBRealTimeOutputBoltHelper;
 import com.order.util.FName;
 import com.order.util.StreamId;
 import com.order.util.TimeParaser;
@@ -35,9 +35,9 @@ import com.order.util.TimeParaser;
  * <p/>
  * Created by LiMingji on 2015/5/24.
  */
-public class RealTimeOutputBolt2 extends BaseBasicBolt {
+public class RealTimeOutputBolt extends BaseBasicBolt {
 
-    private DBRealTimeOutputBolt2Helper DBHelper = new DBRealTimeOutputBolt2Helper();
+    private DBRealTimeOutputBoltHelper DBHelper = new DBRealTimeOutputBoltHelper();
 
     @Override
     public void execute(Tuple input, BasicOutputCollector collector) {

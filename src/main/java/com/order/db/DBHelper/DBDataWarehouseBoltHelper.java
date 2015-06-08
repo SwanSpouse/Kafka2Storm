@@ -8,7 +8,7 @@ import java.io.Serializable;
 import java.sql.*;
 
 /**
- * 用于实现RealTimeOutputBolt中的数据库操作。
+ * 用于实现DataWarehouseBolt中的数据库操作。
  * * 输出表结构:
  * CREATE TABLE "AAS"."RESULT_TABLE"
  * (
