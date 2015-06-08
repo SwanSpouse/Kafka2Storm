@@ -33,7 +33,7 @@ import java.sql.*;
  *
  * Created by LiMingji on 2015/6/4.
  */
-public class DBRealTimeOutputBoltHelper implements Serializable {
+public class DBDataWarehouseBoltHelper implements Serializable {
     private static Logger log = Logger.getLogger(DBStatisticBoltHelper.class);
     private transient Connection conn = null;
 
@@ -45,7 +45,7 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
         return conn;
     }
 
-    public DBRealTimeOutputBoltHelper() {
+    public DBDataWarehouseBoltHelper() {
         try {
             conn = (new JDBCUtil()).getConnection();
         } catch (SQLException e) {
