@@ -4,8 +4,11 @@ import backtype.storm.Config;
 import backtype.storm.StormSubmitter;
 import backtype.storm.spout.SchemeAsMultiScheme;
 import backtype.storm.topology.TopologyBuilder;
-import com.order.bolt.StatisticsBolt;
+import backtype.storm.tuple.Fields;
+import com.order.bolt.*;
+import com.order.util.FName;
 import com.order.util.StormConf;
+import com.order.util.StreamId;
 import org.apache.log4j.Logger;
 import storm.kafka.*;
 
@@ -30,26 +33,38 @@ public class ExceptOrderTopo {
         BrokerHosts brokerHosts = new ZkHosts(zkCfg);
 
         //浏览话单
-        SpoutConfig spoutConfigTopic2 = new SpoutConfig(brokerHosts, topics[0], zkRoot, kafkaZkId);
-        spoutConfigTopic2.scheme = new SchemeAsMultiScheme(new StringScheme());
-        spoutConfigTopic2.forceFromStart = true;
+        SpoutConfig pageViewSpoutConfigTopic = new SpoutConfig(brokerHosts, topics[0], zkRoot, kafkaZkId);
+        pageViewSpoutConfigTopic.scheme = new SchemeAsMultiScheme(new StringScheme());
+        pageViewSpoutConfigTopic.forceFromStart = true;
 
         //订购话单
-
-        SpoutConfig spoutConfigTopic1 = new SpoutConfig(brokerHosts, topics[1], zkRoot, kafkaZkId);
-        spoutConfigTopic1.scheme = new SchemeAsMultiScheme(new StringScheme());
-        spoutConfigTopic1.forceFromStart = true;
+        SpoutConfig orderSpoutConfigTopic = new SpoutConfig(brokerHosts, topics[1], zkRoot, kafkaZkId);
+        orderSpoutConfigTopic.scheme = new SchemeAsMultiScheme(new StringScheme());
+        orderSpoutConfigTopic.forceFromStart = true;
 
         Config conf = new Config();
         TopologyBuilder builder = new TopologyBuilder();
-        builder.setSpout("report.cdr", new KafkaSpout(spoutConfigTopic1), 1);
-        builder.setBolt("reportStatisticsBolt", new StatisticsBolt(), 2).shuffleGrouping("report.cdr");
 
-        builder.setSpout("Portal.Pageview", new KafkaSpout(spoutConfigTopic2), 1);
-        builder.setBolt("PageviewStatisticsBolt", new StatisticsBolt(), 2).shuffleGrouping("Portal.Pageview");
+        //浏览话单发射、分词bolt
+        builder.setSpout(StreamId.Portal_Pageview.name(), new KafkaSpout(pageViewSpoutConfigTopic), 1);
+        builder.setBolt(StreamId.PageViewSplit.name(), new PageviewSplit(), 2).shuffleGrouping(StreamId.Portal_Pageview.name());
+
+        //订购话单发射、分词bolt
+        builder.setSpout(StreamId.report_cdr.name(), new KafkaSpout(orderSpoutConfigTopic), 1);
+        builder.setBolt(StreamId.OrderSplit.name(), new OrderSplit(), 2).shuffleGrouping(StreamId.report_cdr.name());
+
+        //统计bolt
+        builder.setBolt(StreamId.StatisticsBolt.name(), new StatisticsBolt(), 2)
+                .fieldsGrouping(StreamId.PageViewSplit.name(), new Fields(FName.MSISDN.name()))
+                .fieldsGrouping(StreamId.OrderSplit.name(), new Fields(FName.MSISDN.name()));
+
+        //仓库入库bolt
+        builder.setBolt(StreamId.DataWarehouseBolt.name(), new DataWarehouseBolt(), 2).shuffleGrouping(StreamId.StatisticsBolt.name());
+        //实时输出接口bolt
+        builder.setBolt(StreamId.RealTimeOutputBolt.name(), new RealTimeOutputBolt(), 2).shuffleGrouping(StreamId.StatisticsBolt.name());
 
         // Run Topo on Cluster
         conf.setNumWorkers(2);
-        StormSubmitter.submitTopology("ExceptOrder", conf, builder.createTopology());
+        StormSubmitter.submitTopology(StormConf.TOPONAME, conf, builder.createTopology());
     }
 }

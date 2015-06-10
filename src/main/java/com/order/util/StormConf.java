@@ -17,7 +17,7 @@ public class StormConf {
 	private static Map<String, String> conf = readPropery(filePath);
 
 	// # 异常订购参数
-	public static final String TOPONAME = conf.get("TopoName");
+	public static final String TOPONAME = conf.get("ExceptOrder");
 	public static final String ZKCFG = conf.get("ZkCfg");
 	public static final String[] TOPIC = conf.get("Topic").split(",", -1);
 	public static final String TABLENAME = conf.get("TableName");
