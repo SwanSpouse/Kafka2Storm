@@ -37,6 +37,8 @@ import java.sql.SQLException;
  * Created by LiMingji on 2015/6/4.
  */
 public class DBDataWarehouseBoltHelper implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private static Logger log = Logger.getLogger(DBStatisticBoltHelper.class);
     public static final String TABLE_NAME = "ods_iread.RESULT_TABLE";
     private transient Connection conn = null;
@@ -69,7 +71,7 @@ public class DBDataWarehouseBoltHelper implements Serializable {
 
     private boolean checkExists(String msisdn, String sessionId, String channelCode) {
         String queryTimesSql = "SELECT COUNT(*) recordTimes FROM "+TABLE_NAME +
-                "WHERE \"msisdn\"=? AND \"sessionid\"=? AND \"channelcode\"=?";
+                " WHERE msisdn=? AND sessionid=? AND channelcode=?";
         try {
             PreparedStatement stmt = conn.prepareStatement(queryTimesSql);
             stmt.setString(1, msisdn);
@@ -111,7 +113,7 @@ public class DBDataWarehouseBoltHelper implements Serializable {
 
     private void update(String msisdn, String sessionId, String channelCode, int rules) {
         String sql = "UPDATE "+TABLE_NAME+" SET \"rule_" + rules + "\"=1 " +
-                "WHERE \"msisdn\"=? AND \"sessionid\"=? AND \"channelcode\"=?";
+                "WHERE msisdn=? AND sessionid=? AND channelcode=?";
         try {
             PreparedStatement prepStmt = conn.prepareStatement(sql);
             prepStmt.setString(1, msisdn);

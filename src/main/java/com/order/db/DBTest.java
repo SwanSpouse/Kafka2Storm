@@ -1,38 +1,52 @@
 package com.order.db;
 
-import com.order.db.DBHelper.DBDataWarehouseBoltHelper;
+import com.order.db.DBHelper.DBRealTimeOutputBoltHelper;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Statement;
 
 public class DBTest {
+
     /**
      * 如何在bolt中使用Oracle的JDBC.
      */
     public static void main(String[] args) {
         Connection conn;
+        int abnormalFeeNew = 886;
+        int orderFeeNew = 886;
+        double rateNew = 0.886;
+        String updateSql = " UPDATE " + DBRealTimeOutputBoltHelper.TABLE_NAME
+                +" SET ODR_ABN_FEE=\'"+abnormalFeeNew+"\', ODR_FEE=\'"+orderFeeNew+"\',"+
+                "ABN_RAT=\'"+rateNew+
+                " \' WHERE RECORD_DAY=? AND PROVINCE_ID=? AND CONTENT_ID=?" +
+                " AND SALE_PARM=? AND CONTENT_TYPE=? AND RULE_ID=?";
         try {
             conn = (new JDBCUtil()).getConnection();
-            Statement stmt = conn.createStatement();
-            String checkAbnormalOrderSql =
-                    "SELECT \"msisdn\",\"realfee\" FROM " + DBDataWarehouseBoltHelper.TABLE_NAME +
-                            " WHERE \"record_time\"<="+"20150608205535"+" AND \"rule_"+"1"+"\"=0 " +
-                            "AND \"msisdn\"="+"18001214581";
-            String updateOrderSql = "UPDATE "+DBDataWarehouseBoltHelper.TABLE_NAME+" SET \"rule_"+"1\""+"=1"+
-                    " WHERE \"record_time\">="+"20150608205535"+" AND \"rule_"+"1"+"\"=0 " +
-                    "AND \"msisdn\"="+"18001214581";
+            PreparedStatement prepStmt = conn.prepareStatement(updateSql);
+            prepStmt.setString(1, "20150610");
+            prepStmt.setString(2, "liao");
+            prepStmt.setString(3, "id");
+            prepStmt.setString(4, "code");
+            prepStmt.setString(5, "1");
+            prepStmt.setString(6, "10");
 
-            stmt.executeUpdate(updateOrderSql);
-//            ResultSet resultSet = stmt.executeQuery(updateOrderSql);
-//            while (resultSet.next()) {
-//                String msisdn = resultSet.getString("msisdn");
-//                int infoFee = resultSet.getInt("realfee");
-//                System.out.println("msisdn: " + msisdn + " infoFee:" + infoFee);
-//            }
-
+            prepStmt.execute();
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+

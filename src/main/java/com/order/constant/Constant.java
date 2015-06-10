@@ -14,6 +14,8 @@ public final class Constant {
     private static final String filePath = "rulesParams.properties";
     private static Map<String, String> conf = StormConf.readPropery(filePath);
 
+    //1分钟，用于数据库入库
+    public final static int ONE_MINUTE = 1 * 60;
     //3分钟。用于统计规则5中的订购次数
     public final static int THREE_MINUTES = 3 * 60;
     //5分钟。用于定时清空sessionInfo ipInfo terminalInfo的数据

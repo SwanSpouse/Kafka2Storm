@@ -5,24 +5,27 @@ import com.order.db.JDBCUtil;
 import com.order.util.TimeParaser;
 import org.apache.log4j.Logger;
 
+import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by LiMingji on 2015/6/4.
  */
-public class DBRealTimeOutputBoltHelper {
+public class DBRealTimeOutputBoltHelper implements Serializable{
+    private static final long serialVersionUID = 1L;
+
     private static Logger log = Logger.getLogger(DBRealTimeOutputBoltHelper.class);
     public static final String TABLE_NAME = "ods_iread.ABN_CTID_CTTP_PARM_PRV_D";
     private transient Connection conn = null;
 
     //Key: date|provinceId|channelCode|context|contextType|
-    private HashMap<String, Integer> abnormalFee = null;
+    private ConcurrentHashMap<String, Integer> abnormalFee = null;
     //Key: date|provinceId|channelCode|context|contextType|ruleID
-    private HashMap<String, Integer> totalFee = null;
+    private ConcurrentHashMap<String, Integer> totalFee = null;
 
     private Connection getConn() throws SQLException {
         if (conn == null) {
@@ -32,11 +35,15 @@ public class DBRealTimeOutputBoltHelper {
         return conn;
     }
 
+    private transient Thread storageData2DBTimer = null;
     public DBRealTimeOutputBoltHelper() {
-        totalFee = new HashMap<String, Integer>();
-        abnormalFee = new HashMap<String, Integer>();
+        totalFee = new ConcurrentHashMap<String, Integer>();
+        abnormalFee = new ConcurrentHashMap<String, Integer>();
         try {
             conn = this.getConn();
+            storageData2DBTimer = new DBTimer(conn, totalFee, abnormalFee);
+            storageData2DBTimer.start();
+            storageData2DBTimer.setDaemon(true);
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -148,6 +155,5 @@ public class DBRealTimeOutputBoltHelper {
             log.error("追溯重置sql错误" + updateOrderSql);
             e.printStackTrace();
         }
-
     }
 }
