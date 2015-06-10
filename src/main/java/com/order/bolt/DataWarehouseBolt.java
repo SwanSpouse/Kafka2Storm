@@ -55,7 +55,7 @@ public class DataWarehouseBolt extends BaseBasicBolt {
         String msisdn = input.getStringByField(FName.MSISDN.name());
         String sessionId = input.getStringByField(FName.SESSIONID.name());
         Long recordTime = input.getLongByField(FName.RECORDTIME.name());
-        int realInfoFee = input.getIntegerByField(FName.REALINFORFEE.name());
+        double realInfoFee = input.getDoubleByField(FName.REALINFORFEE.name());
         String channelCode = input.getStringByField(FName.CHANNELCODE.name());
         //数据入库
         DBHelper.updateData(msisdn,sessionId,channelCode,
@@ -67,7 +67,7 @@ public class DataWarehouseBolt extends BaseBasicBolt {
         String msisdn = input.getStringByField(FName.MSISDN.name());
         String sessionId = input.getStringByField(FName.SESSIONID.name());
         Long recordTime = input.getLongByField(FName.RECORDTIME.name());
-        int realInfoFee = input.getIntegerByField(FName.REALINFORFEE.name());
+        double realInfoFee = input.getDoubleByField(FName.REALINFORFEE.name());
         String channelCode = input.getStringByField(FName.CHANNELCODE.name());
         String rule = input.getStringByField(FName.RULES.name());
         //数据入库

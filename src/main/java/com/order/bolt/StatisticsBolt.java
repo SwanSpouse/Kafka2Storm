@@ -130,7 +130,7 @@ public class StatisticsBolt extends BaseBasicBolt {
         Pair<String, SessionInfo> sessionPair = new Pair<String, SessionInfo>(sessionId, null);
         if (sessionInfos.contains(sessionPair)) {
             SessionInfo currentSessionInfo = (SessionInfo) sessionInfos.get(sessionPair).getValue();
-            currentSessionInfo.upDateSeesionInfo(bookId, null, null, recordTime, -1, 0, channelCode, null, 0);
+            currentSessionInfo.upDateSeesionInfo(bookId, null, null, recordTime, -1, 0.0, channelCode, null, 0);
         } else {
             SessionInfo currentSessionInfo = new SessionInfo(sessionId, msisdn, bookId, null, null, recordTime, -1, 0, channelCode, null, 0);
             sessionInfos.put(new Pair<String, SessionInfo>(sessionId, currentSessionInfo));
@@ -148,7 +148,7 @@ public class StatisticsBolt extends BaseBasicBolt {
         String bookId = input.getStringByField(FName.BOOKID.name());
         String chapterId = input.getStringByField(FName.CHAPTERID.name());
         String channelCode = input.getStringByField(FName.CHANNELCODE.name());
-        int realInfoFee = input.getIntegerByField(FName.REALINFORFEE.name());
+        double realInfoFee = input.getDoubleByField(FName.REALINFORFEE.name());
         String wapIp = input.getStringByField(FName.WAPIP.name());
         String sessionId = input.getStringByField(FName.SESSIONID.name());
         int provinceId = input.getIntegerByField(FName.PROVINCEID.name());

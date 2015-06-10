@@ -20,9 +20,9 @@ public class DBTimer extends Thread {
 
     private Connection conn = null;
     //Key: date|provinceId|channelCode|context|contextType|
-    private ConcurrentHashMap<String, Integer> totalFee = null;
+    private ConcurrentHashMap<String, Double> totalFee = null;
     //Key: date|provinceId|channelCode|context|contextType|ruleID
-    private ConcurrentHashMap<String, Integer> abnormalFee = null;
+    private ConcurrentHashMap<String, Double> abnormalFee = null;
 
     private HashMap<String, String> parameterId2ChannelIds = null;
 
@@ -61,9 +61,9 @@ public class DBTimer extends Thread {
             String ruleID = keys[5];
             String totalFeeKey = date + "|" + provinceId + "|" + channelCode + "|"
                     + contentID + "|" + contentType;
-            int fee = totalFee.get(totalFeeKey);
+            double fee = totalFee.get(totalFeeKey);
             String abnormalFeeKey = totalFeeKey + "|" + ruleID;
-            int abnFee = abnormalFee.get(abnormalFeeKey);
+            double abnFee = abnormalFee.get(abnormalFeeKey);
             if (checkExists(date, provinceId, contentID, contentType, channelCode, ruleID)) {
                 this.updateDate(date, provinceId, contentID, contentType, channelCode, ruleID, abnFee, fee);
             } else {
@@ -100,7 +100,7 @@ public class DBTimer extends Thread {
     }
 
     private void insertData(String recordDay,String provinceId, String contentId, String contentType,
-                            String channelCode, String ruleId, int abnormalFee, int totalFee) {
+                            String channelCode, String ruleId, double abnormalFee, double totalFee) {
         if (!parameterId2ChannelIds.containsKey(channelCode)) {
             log.error("营销参数维表更新错误:" + new Date());
             return;
@@ -123,8 +123,8 @@ public class DBTimer extends Thread {
             prepStmt.setString(5, chl3);
             prepStmt.setString(6, contentId);
             prepStmt.setString(7, channelCode);
-            prepStmt.setInt(8, abnormalFee);
-            prepStmt.setInt(9, totalFee);
+            prepStmt.setDouble(8, abnormalFee);
+            prepStmt.setDouble(9, totalFee);
             prepStmt.setDouble(10, abnormalFeeRate);
             prepStmt.setString(11, contentType);
             prepStmt.setInt(12,Integer.parseInt(ruleId));
@@ -139,7 +139,7 @@ public class DBTimer extends Thread {
     }
 
     private void updateDate(String date, String provinceId, String contentID, String contentType,
-                            String channelCode, String ruleId, int abnormalFee, int totalFee) {
+                            String channelCode, String ruleId, double abnormalFee, double totalFee) {
         String checkExistsSql = "SELECT ODR_ABN_FEE,ODR_FEE FROM " + DBRealTimeOutputBoltHelper.TABLE_NAME
                 + " WHERE RECORD_DAY=? AND PROVINCE_ID=? AND CONTENT_ID=?"+
                 " AND SALE_PARM=? AND CONTENT_TYPE=? AND RULE_ID=?";
@@ -153,15 +153,15 @@ public class DBTimer extends Thread {
             prepStmt.setString(5, contentType);
             prepStmt.setString(6, ruleId);
 
-            int abnormalFeeOld = 0;
-            int orderFeeOld = 0;
+            double abnormalFeeOld = 0;
+            double orderFeeOld = 0;
             ResultSet rs = prepStmt.executeQuery();
             while (rs.next()) {
-                abnormalFeeOld = rs.getInt("ODR_ABN_FEE");
-                orderFeeOld = rs.getInt("ODR_FEE");
+                abnormalFeeOld = rs.getDouble("ODR_ABN_FEE");
+                orderFeeOld = rs.getDouble("ODR_FEE");
             }
-            int abnormalFeeNew = abnormalFeeOld + abnormalFee;
-            int orderFeeNew = orderFeeOld + totalFee;
+            double abnormalFeeNew = abnormalFeeOld + abnormalFee;
+            double orderFeeNew = orderFeeOld + totalFee;
             double rateNew = abnormalFeeNew / orderFeeNew;
 
             String updateSql = " UPDATE " + DBRealTimeOutputBoltHelper.TABLE_NAME

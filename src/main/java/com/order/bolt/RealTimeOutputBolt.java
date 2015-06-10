@@ -7,7 +7,6 @@ import backtype.storm.tuple.Tuple;
 import com.order.db.DBHelper.DBRealTimeOutputBoltHelper;
 import com.order.util.FName;
 import com.order.util.StreamId;
-import com.order.util.TimeParaser;
 
 /**
  * 实时输出Bolt
@@ -56,7 +55,7 @@ public class RealTimeOutputBolt extends BaseBasicBolt {
     private void dealNormalDate(Tuple input) {
         String msisdn = input.getStringByField(FName.MSISDN.name());
         Long recordTime = input.getLongByField(FName.RECORDTIME.name());
-        int realInfoFee = input.getIntegerByField(FName.REALINFORFEE.name());
+        double realInfoFee = input.getDoubleByField(FName.REALINFORFEE.name());
         String channelCode = input.getStringByField(FName.CHANNELCODE.name());
         int provinceId = input.getIntegerByField(FName.PROVINCEID.name());
         String productId = input.getStringByField(FName.PRODUCTID.name());
@@ -73,7 +72,7 @@ public class RealTimeOutputBolt extends BaseBasicBolt {
     private void dealAbnormalData(Tuple input) {
         String msisdn = input.getStringByField(FName.MSISDN.name());
         Long recordTime = input.getLongByField(FName.RECORDTIME.name());
-        int realInfoFee = input.getIntegerByField(FName.REALINFORFEE.name());
+        double realInfoFee = input.getDoubleByField(FName.REALINFORFEE.name());
         String channelCode = input.getStringByField(FName.CHANNELCODE.name());
         String rule = input.getStringByField(FName.RULES.name());
         int provinceId = input.getIntegerByField(FName.PROVINCEID.name());

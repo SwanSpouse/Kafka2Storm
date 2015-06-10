@@ -60,7 +60,7 @@ public class DBDataWarehouseBoltHelper implements Serializable {
     }
 
     public void updateData(String msisdn, String sessionId, String channelCode,
-                           String reacordTime, int realInfoFee, String rule) {
+                           String reacordTime, double realInfoFee, String rule) {
         int ruleNum = getRuleNumFromString(rule);
         if (checkExists(msisdn, sessionId, channelCode)) {
             update(msisdn, sessionId, channelCode, ruleNum);
@@ -89,7 +89,7 @@ public class DBDataWarehouseBoltHelper implements Serializable {
     }
 
     private void insert(String msisdn, String sessionId, String channelCode,
-                        String reacordTime, int realInfoFee) {
+                        String reacordTime, double realInfoFee) {
         String sql =
                 "INSERT INTO " + TABLE_NAME+
                         " VALUES (?,?,?,?,?," +
@@ -100,7 +100,7 @@ public class DBDataWarehouseBoltHelper implements Serializable {
             prepStmt.setString(2, msisdn);
             prepStmt.setString(3, sessionId);
             prepStmt.setString(4, channelCode);
-            prepStmt.setInt(5, realInfoFee);
+            prepStmt.setDouble(5, realInfoFee);
             for (int i = 6; i <= 17; i++) {
                 prepStmt.setString(i, 0 + "");
             }

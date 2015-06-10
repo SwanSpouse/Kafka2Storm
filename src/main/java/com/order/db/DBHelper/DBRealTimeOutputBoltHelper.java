@@ -23,9 +23,9 @@ public class DBRealTimeOutputBoltHelper implements Serializable{
     private transient Connection conn = null;
 
     //Key: date|provinceId|channelCode|context|contextType|
-    private ConcurrentHashMap<String, Integer> abnormalFee = null;
+    private ConcurrentHashMap<String, Double> abnormalFee = null;
     //Key: date|provinceId|channelCode|context|contextType|ruleID
-    private ConcurrentHashMap<String, Integer> totalFee = null;
+    private ConcurrentHashMap<String, Double> totalFee = null;
 
     private Connection getConn() throws SQLException {
         if (conn == null) {
@@ -37,8 +37,8 @@ public class DBRealTimeOutputBoltHelper implements Serializable{
 
     private transient Thread storageData2DBTimer = null;
     public DBRealTimeOutputBoltHelper() {
-        totalFee = new ConcurrentHashMap<String, Integer>();
-        abnormalFee = new ConcurrentHashMap<String, Integer>();
+        totalFee = new ConcurrentHashMap<String, Double>();
+        abnormalFee = new ConcurrentHashMap<String, Double>();
         try {
             conn = this.getConn();
             storageData2DBTimer = new DBTimer(conn, totalFee, abnormalFee);
@@ -59,7 +59,7 @@ public class DBRealTimeOutputBoltHelper implements Serializable{
      */
     public void updateData(String msisdn, Long time, String channelCode, String contextId, String contextType,
                            String provinceId, String productId, String rules,
-                           int realInfoFee, int orderType, String bookId) {
+                           double realInfoFee, int orderType, String bookId) {
         String currentTime = TimeParaser.formatTimeInDay(time);
         if (orderType == 1 || orderType == 2 || orderType == 21 || orderType == 3) {
             contextType = 3 + "";
@@ -76,7 +76,7 @@ public class DBRealTimeOutputBoltHelper implements Serializable{
         String totalFeeKey = currentTime + "|" + provinceId + "|" + channelCode + "|"
                 + contextId + "|" + contextType;
         if (totalFee.containsKey(totalFeeKey)) {
-            int currentFee = totalFee.get(totalFeeKey) + realInfoFee;
+            double currentFee = totalFee.get(totalFeeKey) + realInfoFee;
             this.totalFee.put(totalFeeKey, currentFee);
         } else {
             this.totalFee.put(totalFeeKey, realInfoFee);
@@ -90,7 +90,7 @@ public class DBRealTimeOutputBoltHelper implements Serializable{
         //先将本次记录登记为异常费用。
         String abnormalFeeKey = totalFeeKey + "|" + rules;
         if (abnormalFee.containsKey(abnormalFeeKey)) {
-            int currentAbnormalFee = abnormalFee.get(abnormalFeeKey) + realInfoFee;
+            double currentAbnormalFee = abnormalFee.get(abnormalFeeKey) + realInfoFee;
             this.abnormalFee.put(abnormalFeeKey, currentAbnormalFee);
         } else {
             this.abnormalFee.put(abnormalFeeKey, realInfoFee);
@@ -126,12 +126,12 @@ public class DBRealTimeOutputBoltHelper implements Serializable{
             while (rs.next()) {
                 //Key: date|provinceId|channelCode|context|contextType|ruleID
                 String channelCodeHistory = rs.getString("channelCode");
-                int abnormalInfoFee = rs.getInt("realfee");
+                double abnormalInfoFee = rs.getDouble("realfee");
                 totalFeeKey = currentTime + "|" + provinceId + "|" + channelCodeHistory + "|"
                         + contextId + "|" + contextType;
                 abnormalFeeKey = totalFeeKey + "|" + rules;
                 if (abnormalFee.containsKey(abnormalFeeKey)) {
-                    int currentAbnormalFee = abnormalFee.get(abnormalFeeKey) + abnormalInfoFee;
+                    double currentAbnormalFee = abnormalFee.get(abnormalFeeKey) + abnormalInfoFee;
                     this.abnormalFee.put(abnormalFeeKey, currentAbnormalFee);
                 } else {
                     this.abnormalFee.put(abnormalFeeKey, realInfoFee);

@@ -28,7 +28,7 @@ public class SessionInfo implements Serializable{
     //包含此Session的用户id
     private String msisdnId = null;
     //真实信息费
-    private int realInfoFee = -1;
+    private double realInfoFee = 0.0;
     //渠道id 营销ID
     private String channelId = null;
     //产品ID
@@ -50,7 +50,7 @@ public class SessionInfo implements Serializable{
     // !!!(废弃）。现在只需要知道订购的章节属于哪本书就可以了。不需要知道章节ID
     private RealTimeCacheList<String> bookChapterOrderPv = new RealTimeCacheList<String>(Constant.FIVE_MINUTES);
     //各个渠道下的日购买费用 Pair值为用户msisdn 和 orderType=1的 信息费。
-    private RealTimeCacheList<Pair<String, Integer>> channelOrderpv = new RealTimeCacheList<Pair<String, Integer>>(Constant.ONE_DAY);
+    private RealTimeCacheList<Pair<String, Double>> channelOrderpv = new RealTimeCacheList<Pair<String, Double>>(Constant.ONE_DAY);
     //用户营销Id对应的扣费二级渠道。
     private RealTimeCacheList<String> orderChannelCodeByDay = new RealTimeCacheList<String>(Constant.ONE_DAY);
 
@@ -67,7 +67,7 @@ public class SessionInfo implements Serializable{
     //对应浏览pv 和 订购pv 构建SeesionInfo
     public SessionInfo(String sessionId, String msisdnId, String bookReadId,
                        String bookOrderId, String bookChapterOrderId, Long currentTime,
-                       int orderType, int realInfoFee, String channelId, String productId, int provinceId) {
+                       int orderType, double realInfoFee, String channelId, String productId, int provinceId) {
         if (currentTime != null) {
             this.lastUpdateTime = currentTime;
         } else {
@@ -106,9 +106,9 @@ public class SessionInfo implements Serializable{
 
         //统计orderType == 1情况下的用户日渠道信息费。
         if (orderType == 1) {
-            Pair<String, Integer> pair = new Pair<String, Integer>(msisdnId, realInfoFee);
+            Pair<String, Double> pair = new Pair<String, Double>(msisdnId, realInfoFee);
             if (channelOrderpv.contains(pair)) {
-                Pair<String, Integer> currentPair = channelOrderpv.get(pair);
+                Pair<String, Double> currentPair = channelOrderpv.get(pair);
                 currentPair.setValue(currentPair.getValue() + realInfoFee);
                 channelOrderpv.put(currentPair);
             } else {
@@ -124,7 +124,7 @@ public class SessionInfo implements Serializable{
 
     //对已存在的SessionInfo进行更新。
     public void upDateSeesionInfo(String bookReadId, String bookOrderId, String bookChapterOrderId,
-                                  Long currentTime, int orderType, int realInfoFee,
+                                  Long currentTime, int orderType, Double realInfoFee,
                                   String channelId, String productId, int provinceId) {
         if (currentTime != null) {
             lastUpdateTime = currentTime;
@@ -155,9 +155,9 @@ public class SessionInfo implements Serializable{
         }
         //统计orderType == 1情况下的用户日渠道信息费。
         if (orderType == 1) {
-            Pair<String, Integer> pair = new Pair<String, Integer>(msisdnId, realInfoFee);
+            Pair<String, Double> pair = new Pair<String, Double>(msisdnId, realInfoFee);
             if (channelOrderpv.contains(pair)) {
-                Pair<String, Integer> currentPair = channelOrderpv.get(pair);
+                Pair<String, Double> currentPair = channelOrderpv.get(pair);
                 currentPair.setValue(currentPair.getValue() + realInfoFee);
                 channelOrderpv.put(currentPair);
             } else {
@@ -245,7 +245,7 @@ public class SessionInfo implements Serializable{
         if (orderType != 1) {
             return;
         }
-        Pair<String, Integer> userChannelInfoFee = new Pair<String, Integer>(msisdnId, null);
+        Pair<String, Double> userChannelInfoFee = new Pair<String, Double>(msisdnId, null);
         if (channelOrderpv.contains(userChannelInfoFee)) {
             Pair<String, Integer> currentUserChannelInFee = channelOrderpv.get(userChannelInfoFee);
             if (currentUserChannelInFee.getValue() > 10) {

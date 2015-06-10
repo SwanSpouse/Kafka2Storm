@@ -22,6 +22,6 @@ public interface RulesCallback {
      * @param bookId      图书ID
      */
     public void hanleData(String msisdnId, String sessionId, Long currentTime,
-                          int realInfoFee, String channelId, String product, String rules,
+                          double realInfoFee, String channelId, String product, String rules,
                           int provinceId, int orderType, String bookId);
 }

@@ -19,7 +19,7 @@ public class EmitDatas implements RulesCallback {
     }
 
     @Override
-    public void hanleData(String msisdnId, String sessionId, Long currentTime, int realInfoFee,
+    public void hanleData(String msisdnId, String sessionId, Long currentTime, double realInfoFee,
                           String channelId, String productId, String rules,
                           int provinceId, int orderType, String bookId) {
         collector.emit(StreamId.DATASTREAM.name(), new Values(msisdnId, sessionId, currentTime,
