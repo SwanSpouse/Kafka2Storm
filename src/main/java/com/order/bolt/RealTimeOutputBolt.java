@@ -36,10 +36,13 @@ import com.order.util.StreamId;
  */
 public class RealTimeOutputBolt extends BaseBasicBolt {
 
-    private DBRealTimeOutputBoltHelper DBHelper = new DBRealTimeOutputBoltHelper();
+    private DBRealTimeOutputBoltHelper DBHelper = null;
 
     @Override
     public void execute(Tuple input, BasicOutputCollector collector) {
+        if (DBHelper == null) {
+            DBHelper = new DBRealTimeOutputBoltHelper();
+        }
         if (input.getSourceStreamId().equals(StreamId.DATASTREAM.name())) {
             //正常统计数据流
             dealNormalDate(input);

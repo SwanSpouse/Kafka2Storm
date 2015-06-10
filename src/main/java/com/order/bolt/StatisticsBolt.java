@@ -1,6 +1,5 @@
 package com.order.bolt;
 
-import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.BasicOutputCollector;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseBasicBolt;
@@ -22,14 +21,13 @@ import org.apache.log4j.Logger;
 
 import java.util.Date;
 import java.util.Iterator;
-import java.util.Map;
 
 /**
  * Created by LiMingji on 2015/5/24.
  */
 public class StatisticsBolt extends BaseBasicBolt {
     public static boolean isDebug = true;
-    private static Logger log =Logger.getLogger(StatisticsBolt.class);
+    private static Logger log = Logger.getLogger(StatisticsBolt.class);
 
     private DBStatisticBoltHelper DBhelper = new DBStatisticBoltHelper();
 
@@ -45,55 +43,56 @@ public class StatisticsBolt extends BaseBasicBolt {
     private transient Thread cleaner = null;
     //负责每天导入维表的数据
     private transient Thread loader = null;
-    @Override
-    public void prepare(Map stormConf, TopologyContext context) {
-        super.prepare(stormConf, context);
-        cleaner = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                while (true) {
-                    try {
-                        //每隔一个小时清理一次。
-                        cleaner.sleep(60 * 60 * 1000L);
-                        Iterator<Pair<String, SessionInfo>> iterator = sessionInfos.keySet().iterator();
-                        while (iterator.hasNext()) {
-                            Pair<String, SessionInfo> currentPair = iterator.next();
-                            if (currentPair.getValue().isOutOfTime()) {
-                                log.info("sessionID : " + currentPair.getValue() + " is out of time");
-                                currentPair.getValue().clean();
-                                sessionInfos.remove(currentPair);
-                            }
-                        }
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        });
-        cleaner.start();
-        cleaner.setDaemon(true);
-
-//        启动线程每天3点准时load数据
-        loader = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    long sleepTime = TimeParaser.getMillisFromNowToThreeOclock();
-                    if (sleepTime > 0) {
-                        loader.sleep(sleepTime);
-                    }
-                    DBhelper.getData();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-        loader.start();
-        loader.setDaemon(true);
-    }
 
     @Override
     public void execute(Tuple input, BasicOutputCollector collector) {
+        if (cleaner == null) {
+            cleaner = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    while (true) {
+                        try {
+                            //每隔一个小时清理一次。
+                            cleaner.sleep(60 * 60 * 1000L);
+                            Iterator<Pair<String, SessionInfo>> iterator = sessionInfos.keySet().iterator();
+                            while (iterator.hasNext()) {
+                                Pair<String, SessionInfo> currentPair = iterator.next();
+                                if (currentPair.getValue().isOutOfTime()) {
+                                    log.info("sessionID : " + currentPair.getValue() + " is out of time");
+                                    currentPair.getValue().clean();
+                                    sessionInfos.remove(currentPair);
+                                }
+                            }
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            });
+            cleaner.start();
+            cleaner.setDaemon(true);
+        }
+        if (loader == null) {
+            //启动线程每天3点准时load数据
+            loader = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    while (true) {
+                        try {
+                            long sleepTime = TimeParaser.getMillisFromNowToThreeOclock();
+                            if (sleepTime > 0) {
+                                loader.sleep(sleepTime);
+                            }
+                            DBhelper.getData();
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            });
+            loader.start();
+            loader.setDaemon(true);
+        }
         if (input.getSourceStreamId().equals(StreamId.BROWSEDATA)) {
             //阅读浏览话单
             try {
@@ -101,7 +100,7 @@ public class StatisticsBolt extends BaseBasicBolt {
             } catch (Exception e) {
                 log.error("阅读浏览话单数据结构异常");
             }
-        }else if (input.getSourceStreamId().equals(StreamId.ORDERDATA)) {
+        } else if (input.getSourceStreamId().equals(StreamId.ORDERDATA)) {
             // 订购话单
             try {
                 this.constructInfoFromOrderData(input, collector);
@@ -111,7 +110,7 @@ public class StatisticsBolt extends BaseBasicBolt {
         }
     }
 
-    private void constructInfoFromBrowseData(Tuple input) throws Exception{
+    private void constructInfoFromBrowseData(Tuple input) throws Exception {
         Long recordTime = TimeParaser.splitTime(input.getStringByField(FName.RECORDTIME.name()));
         String sessionId = input.getStringByField(FName.SESSIONID.name());
         String pageType = input.getStringByField(FName.PAGETYPE.name());
@@ -120,8 +119,8 @@ public class StatisticsBolt extends BaseBasicBolt {
         String bookId = input.getStringByField(FName.BOOKID.name());
         String chapterId = input.getStringByField(FName.CHAPTERID.name());
 
-        if (sessionId == null || !sessionId.trim().equals("") ) {
-            return ;
+        if (sessionId == null || !sessionId.trim().equals("")) {
+            return;
         }
         if (isDebug) {
             log.info("接收到浏览话单数据，更新数据结构 " + msisdn + " recordTime " + new Date(recordTime));
@@ -165,7 +164,7 @@ public class StatisticsBolt extends BaseBasicBolt {
 
         //更新订购话单的SessionInfos信息
         Pair<String, SessionInfo> sessionInfoPair = new Pair<String, SessionInfo>(sessionId, null);
-        SessionInfo currentSessionInfo ;
+        SessionInfo currentSessionInfo;
         if (sessionInfos.contains(sessionInfoPair)) {
             currentSessionInfo = (SessionInfo) sessionInfos.get(sessionInfoPair).getValue();
             currentSessionInfo.upDateSeesionInfo(null, bookId, chapterId, recordTime, orderType,
@@ -177,7 +176,7 @@ public class StatisticsBolt extends BaseBasicBolt {
             sessionInfos.put(new Pair<String, SessionInfo>(sessionId, currentSessionInfo));
         }
         if (isDebug) {
-            log.info("开始根据各个规则对订单数据进行检测 "+ msisdn + " recordTime " + new Date(recordTime));
+            log.info("开始根据各个规则对订单数据进行检测 " + msisdn + " recordTime " + new Date(recordTime));
         }
         //检测相应的各个规则。
         currentSessionInfo.checkRule123(bookId, new EmitDatas(collector));
@@ -190,7 +189,7 @@ public class StatisticsBolt extends BaseBasicBolt {
 
         //更新订购话单UserInfos信息
         Pair<String, UserInfo> userInfoPair = new Pair<String, UserInfo>(msisdn, null);
-        UserInfo currentUserInfo ;
+        UserInfo currentUserInfo;
         if (userInfos.contains(userInfoPair)) {
             currentUserInfo = (UserInfo) userInfos.get(userInfoPair).getValue();
             currentUserInfo.upDateUserInfo(recordTime, sessionId, wapIp, userAgent);

@@ -108,9 +108,10 @@ public class TimeParaser {
 
     public static long getMillisFromTimeToNetFiveMinutes(long time) {
         Calendar now = Calendar.getInstance();
-        now.setTimeInMillis(time);
-        now.add(Calendar.MINUTE, 5);
-        return now.getTimeInMillis();
+        Calendar next = Calendar.getInstance();
+        next.setTimeInMillis(time);
+        next.add(Calendar.MINUTE, 5);
+        return next.getTimeInMillis() - now.getTimeInMillis();
     }
 
     public static void main(String[] args) {
@@ -120,7 +121,7 @@ public class TimeParaser {
 
 //        System.out.println(getMillisFromNowToThreeOclock());
 
-//        System.out.println(getMillisFromTimeToNetFiveMinutes(System.currentTimeMillis()));
-        System.out.println(NormalHourAgo(System.currentTimeMillis()));
+        System.out.println(getMillisFromTimeToNetFiveMinutes(System.currentTimeMillis()));
+//        System.out.println(NormalHourAgo(System.currentTimeMillis()));
     }
 }

@@ -38,9 +38,11 @@ public class DBTimer extends Thread {
     public void run() {
         super.run();
         try {
-            this.sleep(Constant.ONE_MINUTE * 1000L);
-            //将map中的数据更新到数据库中。
-            this.updateDB();
+            while (true) {
+                this.sleep(Constant.ONE_MINUTE * 1000L);
+                //将map中的数据更新到数据库中。
+                this.updateDB();
+            }
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
