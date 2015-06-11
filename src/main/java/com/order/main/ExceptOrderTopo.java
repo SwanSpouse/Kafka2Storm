@@ -47,16 +47,18 @@ public class ExceptOrderTopo {
 
         //浏览话单发射、分词bolt
         builder.setSpout(StreamId.Portal_Pageview.name(), new KafkaSpout(pageViewSpoutConfigTopic), 1);
-        builder.setBolt(StreamId.PageViewSplit.name(), new PageviewSplit(), 2).shuffleGrouping(StreamId.Portal_Pageview.name());
+        builder.setBolt(StreamId.PageViewSplit.name(), new PageviewSplit(), 2)
+                .shuffleGrouping(StreamId.Portal_Pageview.name());
 
         //订购话单发射、分词bolt
         builder.setSpout(StreamId.report_cdr.name(), new KafkaSpout(orderSpoutConfigTopic), 1);
-        builder.setBolt(StreamId.OrderSplit.name(), new OrderSplit(), 2).shuffleGrouping(StreamId.report_cdr.name());
+        builder.setBolt(StreamId.OrderSplit.name(), new OrderSplit(), 2)
+                .shuffleGrouping(StreamId.report_cdr.name());
 
         //统计bolt
         builder.setBolt(StreamId.StatisticsBolt.name(), new StatisticsBolt(), 2)
-                .fieldsGrouping(StreamId.PageViewSplit.name(), new Fields(FName.MSISDN.name()))
-                .fieldsGrouping(StreamId.OrderSplit.name(), new Fields(FName.MSISDN.name()));
+                .fieldsGrouping(StreamId.PageViewSplit.name(), StreamId.BROWSEDATA.name(), new Fields(FName.MSISDN.name()))
+                .fieldsGrouping(StreamId.OrderSplit.name(), StreamId.ORDERDATA.name(), new Fields(FName.MSISDN.name()));
 
         //仓库入库bolt
         builder.setBolt(StreamId.DataWarehouseBolt.name(), new DataWarehouseBolt(), 2)
