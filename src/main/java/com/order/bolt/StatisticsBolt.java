@@ -226,6 +226,7 @@ public class StatisticsBolt extends BaseBasicBolt {
         declarer.declareStream(StreamId.ABNORMALDATASTREAM.name(),
                 new Fields(FName.MSISDN.name(), FName.SESSIONID.name(), FName.RECORDTIME.name(),
                         FName.REALINFORFEE.name(), FName.CHANNELCODE.name(), FName.PRODUCTID.name(),
-                        FName.RULES.name(), FName.PROVINCEID.name(), FName.ORDERTYPE.name()));
+                        FName.RULES.name(), FName.PROVINCEID.name(), FName.ORDERTYPE.name(),
+                        FName.BOOKID.name()));
     }
 }
