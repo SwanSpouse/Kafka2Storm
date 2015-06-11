@@ -59,9 +59,13 @@ public class ExceptOrderTopo {
                 .fieldsGrouping(StreamId.OrderSplit.name(), new Fields(FName.MSISDN.name()));
 
         //仓库入库bolt
-        builder.setBolt(StreamId.DataWarehouseBolt.name(), new DataWarehouseBolt(), 2).shuffleGrouping(StreamId.StatisticsBolt.name());
+        builder.setBolt(StreamId.DataWarehouseBolt.name(), new DataWarehouseBolt(), 2)
+                .shuffleGrouping(StreamId.StatisticsBolt.name(), StreamId.DATASTREAM.name())
+                .shuffleGrouping(StreamId.StatisticsBolt.name(), StreamId.ABNORMALDATASTREAM.name());
         //实时输出接口bolt
-        builder.setBolt(StreamId.RealTimeOutputBolt.name(), new RealTimeOutputBolt(), 2).shuffleGrouping(StreamId.StatisticsBolt.name());
+        builder.setBolt(StreamId.RealTimeOutputBolt.name(), new RealTimeOutputBolt(), 2)
+                .shuffleGrouping(StreamId.StatisticsBolt.name(), StreamId.DATASTREAM.name())
+                .shuffleGrouping(StreamId.StatisticsBolt.name(), StreamId.ABNORMALDATASTREAM.name());
 
         // Run Topo on Cluster
         conf.setNumWorkers(2);

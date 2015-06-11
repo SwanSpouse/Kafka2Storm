@@ -140,17 +140,17 @@ public class StatisticsBolt extends BaseBasicBolt {
     private void constructInfoFromOrderData(Tuple input, final BasicOutputCollector collector) throws Exception {
         String msisdn = input.getStringByField(FName.MSISDN.name());
         Long recordTime = TimeParaser.splitTime(input.getStringByField(FName.RECORDTIME.name()));
-        String userAgent = input.getStringByField(FName.USERAGENT.name());
+        String userAgent = input.getStringByField(FName.TERMINAL.name());
         int platform = input.getIntegerByField(FName.PLATFORM.name());
         int orderType = input.getIntegerByField(FName.ORDERTYPE.name());
         String productId = input.getStringByField(FName.PRODUCTID.name());
         String bookId = input.getStringByField(FName.BOOKID.name());
         String chapterId = input.getStringByField(FName.CHAPTERID.name());
         String channelCode = input.getStringByField(FName.CHANNELCODE.name());
-        double realInfoFee = input.getDoubleByField(FName.REALINFORFEE.name());
+        double realInfoFee = input.getDoubleByField(FName.COST.name());
+        int provinceId = input.getIntegerByField(FName.PROVINCEID.name());
         String wapIp = input.getStringByField(FName.WAPIP.name());
         String sessionId = input.getStringByField(FName.SESSIONID.name());
-        int provinceId = input.getIntegerByField(FName.PROVINCEID.name());
 
         if (sessionId == null || sessionId.trim().equals("")) {
             return;
@@ -160,7 +160,7 @@ public class StatisticsBolt extends BaseBasicBolt {
         }
         //所有订单数据先统一发送正常数据流。用作数据统计。
         collector.emit(StreamId.DATASTREAM.name(), new Values(msisdn, sessionId, recordTime,
-                realInfoFee, channelCode, productId, provinceId));
+                realInfoFee, channelCode, productId, provinceId, orderType));
 
         //更新订购话单的SessionInfos信息
         Pair<String, SessionInfo> sessionInfoPair = new Pair<String, SessionInfo>(sessionId, null);
