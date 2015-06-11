@@ -131,6 +131,7 @@ public class DBTimer extends Thread {
             prepStmt.setString(11, contentType);
             prepStmt.setInt(12,Integer.parseInt(ruleId));
             prepStmt.execute();
+            prepStmt.execute("commit");
             if (StatisticsBolt.isDebug) {
                 log.info("数据插入成功" + insertDataSql);
             }
@@ -180,6 +181,7 @@ public class DBTimer extends Thread {
             prepStmt.setString(5, contentType);
             prepStmt.setString(6, ruleId);
             prepStmt.executeUpdate();
+            prepStmt.execute("commit");
         } catch (SQLException e) {
             log.error("查询sql错误" + checkExistsSql);
             e.printStackTrace();

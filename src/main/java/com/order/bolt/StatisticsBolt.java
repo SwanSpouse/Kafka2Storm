@@ -93,14 +93,14 @@ public class StatisticsBolt extends BaseBasicBolt {
             loader.start();
             loader.setDaemon(true);
         }
-        if (input.getSourceStreamId().equals(StreamId.BROWSEDATA)) {
+        if (input.getSourceStreamId().equals(StreamId.BROWSEDATA.name())) {
             //阅读浏览话单
             try {
                 this.constructInfoFromBrowseData(input);
             } catch (Exception e) {
                 log.error("阅读浏览话单数据结构异常");
             }
-        } else if (input.getSourceStreamId().equals(StreamId.ORDERDATA)) {
+        } else if (input.getSourceStreamId().equals(StreamId.ORDERDATA.name())) {
             // 订购话单
             try {
                 this.constructInfoFromOrderData(input, collector);

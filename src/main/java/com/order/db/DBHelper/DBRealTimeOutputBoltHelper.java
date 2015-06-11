@@ -151,6 +151,7 @@ public class DBRealTimeOutputBoltHelper implements Serializable{
                 log.error("追溯重置sql: " + updateOrderSql);
             }
             stmt.executeUpdate(updateOrderSql);
+            stmt.execute("commit");
         } catch (SQLException e) {
             log.error("追溯重置sql错误" + updateOrderSql);
             e.printStackTrace();

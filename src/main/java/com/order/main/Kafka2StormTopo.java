@@ -54,7 +54,6 @@ public class Kafka2StormTopo {
 
 		// Run Topo on Cluster
 		conf.setNumWorkers(2);
-		StormSubmitter.submitTopology(StormConf.TOPONAME, conf,
-				builder.createTopology());
-	}
+        StormSubmitter.submitTopology(StormConf.TOPONAME, conf, builder.createTopology());
+    }
 }

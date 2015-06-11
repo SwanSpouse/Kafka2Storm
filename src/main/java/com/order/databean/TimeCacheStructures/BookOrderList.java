@@ -14,9 +14,9 @@ public class BookOrderList implements Serializable{
 
     private HashMap<String, RealTimeCacheList<Integer>> map = null;
 
-    private static final Object LOCK = new Object();
-
+    private static Object LOCK = null;
     public BookOrderList() {
+        LOCK = new Object();
         map = new HashMap<String, RealTimeCacheList<Integer>>();
     }
 

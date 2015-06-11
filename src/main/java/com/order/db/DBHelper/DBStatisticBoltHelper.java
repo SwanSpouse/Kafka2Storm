@@ -18,7 +18,7 @@ public class DBStatisticBoltHelper implements Serializable{
     private static Logger log = Logger.getLogger(DBStatisticBoltHelper.class);
     private transient Connection conn = null;
 
-    private final Object LOCK = new Object();
+    private static Object LOCK = null;
 
     private static HashMap<String, String> parameterId2SecChannelId = null;
     private static HashMap<String, String> parameterId2ChannelIds = null;
@@ -32,6 +32,7 @@ public class DBStatisticBoltHelper implements Serializable{
     }
 
     public DBStatisticBoltHelper() {
+        LOCK = new Object();
         try {
             conn = getConn();
         } catch (SQLException e) {
@@ -53,8 +54,8 @@ public class DBStatisticBoltHelper implements Serializable{
         }
 //        String sql = "select FIRST_CHANNEL_ID,SECOND_CHANNEL_ID,THIRD_CHANNEL_ID,PARAMETER_ID" +
 //                " from dim.dim_drp_sale_param";
-        String sql = "select FIRST_CHANNEL_ID,SECOND_CHANNEL_ID,THIRD_CHANNEL_ID,PARAMETER_ID" +
-                " from ods_iread.dim_drp_sale_param";
+        String sql = "SELECT FIRST_CHANNEL_ID,SECOND_CHANNEL_ID,THIRD_CHANNEL_ID,PARAMETER_ID" +
+                " FROM ods_iread.dim_drp_sale_param";
         try {
             if (conn == null) {
                 conn = getConn();

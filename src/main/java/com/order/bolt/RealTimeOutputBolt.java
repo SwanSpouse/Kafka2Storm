@@ -46,7 +46,7 @@ public class RealTimeOutputBolt extends BaseBasicBolt {
         if (input.getSourceStreamId().equals(StreamId.DATASTREAM.name())) {
             //正常统计数据流
             dealNormalDate(input);
-        } else if (input.getSourceStreamId().equals(StreamId.ABNORMALDATASTREAM)) {
+        } else if (input.getSourceStreamId().equals(StreamId.ABNORMALDATASTREAM.name())) {
             //异常订购数据流
             dealAbnormalData(input);
         }

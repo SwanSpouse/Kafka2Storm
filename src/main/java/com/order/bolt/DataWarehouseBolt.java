@@ -43,9 +43,9 @@ public class DataWarehouseBolt extends BaseBasicBolt {
 
     @Override
     public void execute(Tuple input, BasicOutputCollector collector) {
-        if (input.getSourceStreamId().equals(StreamId.DATASTREAM)) {
+        if (input.getSourceStreamId().equals(StreamId.DATASTREAM.name())) {
             handleDataStream(input);
-        }else if (input.getSourceStreamId().equals(StreamId.ABNORMALDATASTREAM)) {
+        }else if (input.getSourceStreamId().equals(StreamId.ABNORMALDATASTREAM.name())) {
             handleAbnormalDataStream(input);
         }
     }

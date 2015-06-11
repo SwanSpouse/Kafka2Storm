@@ -33,7 +33,7 @@ public class RealTimeCacheList<T> implements Serializable{
     private Map<T, LinkedList<Long>> oldList;
     private Map<T, LinkedList<Long>> currentList;
 
-    protected final static Object LOCK = new Object();
+    protected static Object LOCK = null;
     protected transient Thread cleaner = null;
     protected TimeOutCallback timeOutCallback = null;
     protected int expiratonSecs = 0;
@@ -43,6 +43,7 @@ public class RealTimeCacheList<T> implements Serializable{
     }
 
     public RealTimeCacheList(int expirationSecs, final TimeOutCallback timeOutCallback) {
+        LOCK = new Object();
         oldList = new LinkedHashMap<T, LinkedList<Long>>();
         currentList = new LinkedHashMap<T, LinkedList<Long>>();
 
