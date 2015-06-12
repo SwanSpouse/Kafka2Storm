@@ -35,12 +35,12 @@ public class ExceptOrderTopo {
         //浏览话单
         SpoutConfig pageViewSpoutConfigTopic = new SpoutConfig(brokerHosts, topics[0], zkRoot, kafkaZkId);
         pageViewSpoutConfigTopic.scheme = new SchemeAsMultiScheme(new StringScheme());
-        pageViewSpoutConfigTopic.forceFromStart = true;
+//        pageViewSpoutConfigTopic.forceFromStart = true;
 
         //订购话单
         SpoutConfig orderSpoutConfigTopic = new SpoutConfig(brokerHosts, topics[1], zkRoot, kafkaZkId);
         orderSpoutConfigTopic.scheme = new SchemeAsMultiScheme(new StringScheme());
-        orderSpoutConfigTopic.forceFromStart = true;
+//        orderSpoutConfigTopic.forceFromStart = true;
 
         Config conf = new Config();
         TopologyBuilder builder = new TopologyBuilder();
