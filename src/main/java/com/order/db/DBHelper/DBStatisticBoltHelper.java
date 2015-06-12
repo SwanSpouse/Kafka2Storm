@@ -1,6 +1,7 @@
 package com.order.db.DBHelper;
 
 import com.order.db.JDBCUtil;
+import com.order.util.StormConf;
 import org.apache.log4j.Logger;
 
 import java.io.Serializable;
@@ -52,10 +53,8 @@ public class DBStatisticBoltHelper implements Serializable{
             this.parameterId2SecChannelId.clear();
             this.parameterId2ChannelIds.clear();
         }
-//        String sql = "select FIRST_CHANNEL_ID,SECOND_CHANNEL_ID,THIRD_CHANNEL_ID,PARAMETER_ID" +
-//                " from dim.dim_drp_sale_param";
         String sql = "SELECT FIRST_CHANNEL_ID,SECOND_CHANNEL_ID,THIRD_CHANNEL_ID,PARAMETER_ID" +
-                " FROM ods_iread.dim_drp_sale_param";
+                " FROM "+ StormConf.channelCodesTable;
         try {
             if (conn == null) {
                 conn = getConn();

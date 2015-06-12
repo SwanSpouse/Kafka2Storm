@@ -2,6 +2,7 @@ package com.order.db.DBHelper;
 
 import com.order.constant.Rules;
 import com.order.db.JDBCUtil;
+import com.order.util.StormConf;
 import org.apache.log4j.Logger;
 
 import java.io.Serializable;
@@ -40,7 +41,6 @@ public class DBDataWarehouseBoltHelper implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private static Logger log = Logger.getLogger(DBStatisticBoltHelper.class);
-    public static final String TABLE_NAME = "ods_iread.RESULT_TABLE";
     private transient Connection conn = null;
 
     private Connection getConn() throws SQLException {
@@ -70,7 +70,7 @@ public class DBDataWarehouseBoltHelper implements Serializable {
     }
 
     private boolean checkExists(String msisdn, String sessionId, String channelCode) {
-        String queryTimesSql = "SELECT COUNT(*) recordTimes FROM "+TABLE_NAME +
+        String queryTimesSql = "SELECT COUNT(*) recordTimes FROM "+ StormConf.dataWarehouseTable +
                 " WHERE msisdn=? AND sessionid=? AND channelcode=?";
         try {
             PreparedStatement stmt = conn.prepareStatement(queryTimesSql);
@@ -91,7 +91,7 @@ public class DBDataWarehouseBoltHelper implements Serializable {
     private void insert(String msisdn, String sessionId, String channelCode,
                         String reacordTime, double realInfoFee) {
         String sql =
-                "INSERT INTO " + TABLE_NAME+
+                "INSERT INTO " + StormConf.dataWarehouseTable+
                         " VALUES (?,?,?,?,?," +
                         "?,?,?,?,?,?,?,?,?,?,?,?)";
         try {
@@ -112,7 +112,7 @@ public class DBDataWarehouseBoltHelper implements Serializable {
     }
 
     private void update(String msisdn, String sessionId, String channelCode, int rules) {
-        String sql = "UPDATE "+TABLE_NAME+" SET \"rule_" + rules + "\"=1 " +
+        String sql = "UPDATE "+StormConf.dataWarehouseTable+" SET \"rule_" + rules + "\"=1 " +
                 "WHERE msisdn=? AND sessionid=? AND channelcode=?";
         try {
             PreparedStatement prepStmt = conn.prepareStatement(sql);

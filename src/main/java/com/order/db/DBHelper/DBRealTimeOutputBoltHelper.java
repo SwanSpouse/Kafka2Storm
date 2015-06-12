@@ -2,6 +2,7 @@ package com.order.db.DBHelper;
 
 import com.order.bolt.StatisticsBolt;
 import com.order.db.JDBCUtil;
+import com.order.util.StormConf;
 import com.order.util.TimeParaser;
 import org.apache.log4j.Logger;
 
@@ -19,7 +20,6 @@ public class DBRealTimeOutputBoltHelper implements Serializable{
     private static final long serialVersionUID = 1L;
 
     private static Logger log = Logger.getLogger(DBRealTimeOutputBoltHelper.class);
-    public static final String TABLE_NAME = "ods_iread.ABN_CTID_CTTP_PARM_PRV_D";
     private transient Connection conn = null;
 
     //Key: date|provinceId|channelCode|context|contextType|
@@ -113,7 +113,7 @@ public class DBRealTimeOutputBoltHelper implements Serializable{
         }
 
         String checkAbnormalOrderSql =
-                "SELECT \"channelcode\",\"realfee\" FROM " + this.TABLE_NAME +
+                "SELECT \"channelcode\",\"realfee\" FROM " + StormConf.realTimeOutputTable +
                         " WHERE \"record_time\">=" + traceBackTime + " AND \"rule_" + rules + "\"=0 " +
                         "AND \"msisdn\"=" + msisdn;
         try {
@@ -141,7 +141,7 @@ public class DBRealTimeOutputBoltHelper implements Serializable{
             log.error("追溯查询sql错误: " + checkAbnormalOrderSql);
             e.printStackTrace();
         }
-        String updateOrderSql = "UPDATE " + this.TABLE_NAME + " SET \"rule_" + rules + "\"=1" +
+        String updateOrderSql = "UPDATE " + StormConf.realTimeOutputTable + " SET \"rule_" + rules + "\"=1" +
                 " WHERE \"record_time\">=" + traceBackTime + " AND \"rule_" + rules + "\"=0 " +
                 "AND \"msisdn\"=" + msisdn;
         //将上一个结果查询出来需要追溯的正常订单设置为异常。防止后续重复计算。
