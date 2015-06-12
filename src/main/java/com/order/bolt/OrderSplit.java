@@ -1,5 +1,6 @@
 package com.order.bolt;
 
+import java.util.Iterator;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
@@ -14,6 +15,9 @@ import backtype.storm.topology.base.BaseBasicBolt;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
+import org.codehaus.jettison.json.JSONException;
+import org.codehaus.jettison.json.JSONObject;
+
 /**
  * 订购话单Topic
  *
@@ -51,9 +55,33 @@ public class OrderSplit extends BaseBasicBolt {
 		super.prepare(conf, context);
 	}
 
+    ////将订单数据从json中解析出来
+    private String splitJson(String msg) {
+        try {
+            JSONObject msgJson = new JSONObject(msg);
+            Iterator<String> msgIt = msgJson.keys();
+            while (msgIt.hasNext()) {
+                String msgKey = msgIt.next();
+                if (msgKey.equals("body")) {
+                    JSONObject cdrJson = new JSONObject(msgJson.getString(msgKey));
+                    Iterator<String> cdrIt = cdrJson.keys();
+                    while (cdrIt.hasNext()) {
+                        String cdrkey = cdrIt.next();
+                        if (cdrkey.equals("cdr")) {
+                            return cdrJson.getString(cdrkey);
+                        }
+                    }
+                }
+            }
+        } catch (JSONException e) {
+            log.equals("订单消息格式错误");
+        }
+        return null;
+    }
+
 	@Override
 	public void execute(Tuple input, BasicOutputCollector collector) {
-		String line = input.getString(0);
+		String line = splitJson(input.getString(0));
 		String[] words = line.split("\\|", -1);
 		if (words.length >= 49) {
 			String msisdn = words[0]; // msisdnID Varchar2(20)
@@ -75,7 +103,7 @@ public class OrderSplit extends BaseBasicBolt {
                     recordTime, terminal, platform, orderType, productID, bookID, chapterID,
                     channelCode, cost, provinceId, wapIp, sessionId, promotionid));
         } else {
-			log.info("Error data: " + line);
+			log.info("订单数据错误: " + line);
 		}
 	}
 
