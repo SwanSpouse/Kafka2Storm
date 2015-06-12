@@ -1,6 +1,7 @@
 package com.order.db;
 
 import com.order.db.DBHelper.DBRealTimeOutputBoltHelper;
+import com.order.util.StormConf;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -16,7 +17,7 @@ public class DBTest {
         int abnormalFeeNew = 886;
         int orderFeeNew = 886;
         double rateNew = 0.886;
-        String updateSql = " UPDATE " + DBRealTimeOutputBoltHelper.TABLE_NAME
+        String updateSql = " UPDATE " + StormConf.realTimeOutputTable
                 +" SET ODR_ABN_FEE=\'"+abnormalFeeNew+"\', ODR_FEE=\'"+orderFeeNew+"\',"+
                 "ABN_RAT=\'"+rateNew+
                 " \' WHERE RECORD_DAY=? AND PROVINCE_ID=? AND CONTENT_ID=?" +

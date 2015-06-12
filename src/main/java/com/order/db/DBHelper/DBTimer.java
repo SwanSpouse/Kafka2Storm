@@ -2,6 +2,7 @@ package com.order.db.DBHelper;
 
 import com.order.bolt.StatisticsBolt;
 import com.order.constant.Constant;
+import com.order.util.StormConf;
 import org.apache.log4j.Logger;
 
 import java.sql.Connection;
@@ -77,7 +78,7 @@ public class DBTimer extends Thread {
 
     private boolean checkExists(String date, String provinceId, String contentID, String contentType,
                                 String channelCode, String ruleId) {
-        String checkExistsSql = "SELECT COUNT(*) recordTimes FROM "+ DBRealTimeOutputBoltHelper.TABLE_NAME
+        String checkExistsSql = "SELECT COUNT(*) recordTimes FROM "+ StormConf.realTimeOutputTable
                 + " WHERE RECORD_DAY=? AND PROVINCE_ID=? AND CONTENT_ID=?" +
                      " AND SALE_PARM=? AND CONTENT_TYPE=? AND RULE_ID=?";
         try {
@@ -111,7 +112,7 @@ public class DBTimer extends Thread {
         String chl1 = chls[0];
         String chl2 = chls[1];
         String chl3 = chls[2];
-        String insertDataSql = "INSERT INTO "+DBRealTimeOutputBoltHelper.TABLE_NAME+
+        String insertDataSql = "INSERT INTO "+StormConf.realTimeOutputTable+
                 "( RECORD_DAY,PROVINCE_ID,CHL1,CHL2,CHL3," +
                 "  CONTENT_ID,SALE_PARM,ODR_ABN_FEE,ODR_FEE," +
                 "  ABN_RAT,CONTENT_TYPE,RULE_ID) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)";
@@ -143,7 +144,7 @@ public class DBTimer extends Thread {
 
     private void updateDate(String date, String provinceId, String contentID, String contentType,
                             String channelCode, String ruleId, double abnormalFee, double totalFee) {
-        String checkExistsSql = "SELECT ODR_ABN_FEE,ODR_FEE FROM " + DBRealTimeOutputBoltHelper.TABLE_NAME
+        String checkExistsSql = "SELECT ODR_ABN_FEE,ODR_FEE FROM " + StormConf.realTimeOutputTable
                 + " WHERE RECORD_DAY=? AND PROVINCE_ID=? AND CONTENT_ID=?"+
                 " AND SALE_PARM=? AND CONTENT_TYPE=? AND RULE_ID=?";
 
@@ -167,7 +168,7 @@ public class DBTimer extends Thread {
             double orderFeeNew = orderFeeOld + totalFee;
             double rateNew = abnormalFeeNew / orderFeeNew;
 
-            String updateSql = " UPDATE " + DBRealTimeOutputBoltHelper.TABLE_NAME
+            String updateSql = " UPDATE " + StormConf.realTimeOutputTable
                     +" SET ODR_ABN_FEE=\'"+abnormalFeeNew+"\', ODR_FEE=\'"+orderFeeNew+"\',"+
                     "ABN_RAT=\'"+rateNew+
                     " \' WHERE RECORD_DAY=? AND PROVINCE_ID=? AND CONTENT_ID=?" +
