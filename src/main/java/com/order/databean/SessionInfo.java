@@ -217,8 +217,8 @@ public class SessionInfo implements Serializable{
                 }
             }
         });
-        rule123Checker.start();
         rule123Checker.setDaemon(true);
+        rule123Checker.start();
     }
 
     /**
@@ -352,8 +352,8 @@ public class SessionInfo implements Serializable{
                 }
             }
         });
-        rule12Checker.start();
         rule12Checker.setDaemon(true);
+        rule12Checker.start();
     }
 
     public void clean() {

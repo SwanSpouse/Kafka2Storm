@@ -48,6 +48,6 @@ public class OrderCheck {
 
         // Run Topo on Cluster
         conf.setNumWorkers(2);
-        StormSubmitter.submitTopology(StormConf.TOPONAME, conf, builder.createTopology());
+        StormSubmitter.submitTopology("OrderCheck", conf, builder.createTopology());
     }
 }

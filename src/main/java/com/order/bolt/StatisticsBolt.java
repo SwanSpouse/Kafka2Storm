@@ -69,8 +69,8 @@ public class StatisticsBolt extends BaseBasicBolt {
                     }
                 }
             });
-            cleaner.start();
             cleaner.setDaemon(true);
+            cleaner.start();
         }
         if (loader == null) {
             //启动线程每天3点准时load数据
@@ -90,8 +90,8 @@ public class StatisticsBolt extends BaseBasicBolt {
                     }
                 }
             });
-            loader.start();
             loader.setDaemon(true);
+            loader.start();
         }
         if (input.getSourceStreamId().equals(StreamId.BROWSEDATA.name())) {
             //阅读浏览话单

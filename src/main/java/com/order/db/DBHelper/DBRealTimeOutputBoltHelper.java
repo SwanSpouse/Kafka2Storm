@@ -42,8 +42,8 @@ public class DBRealTimeOutputBoltHelper implements Serializable{
         try {
             conn = this.getConn();
             storageData2DBTimer = new DBTimer(conn, totalFee, abnormalFee);
-            storageData2DBTimer.start();
             storageData2DBTimer.setDaemon(true);
+            storageData2DBTimer.start();
         } catch (SQLException e) {
             e.printStackTrace();
         }

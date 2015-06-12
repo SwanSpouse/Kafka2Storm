@@ -20,10 +20,10 @@ public interface KafkaProperties {
     //    final static String zkConnect = "127.0.0.1:2181";
     final static String zkConnect = "10.1.69.179:2181";
     final static String groupId = "group1";
-//    public final static String viewTopic = "report.cdr";
-    public final static String viewTopic = "limingji";
-//    public final static String orderTopic = "Portal.Pageview";
-    public final static String orderTopic = "limingji";
+    public final static String viewTopic = "Portal.Pageview";
+//    public final static String viewTopic = "limingji";
+    public final static String orderTopic = "report.cdr";
+//    public final static String orderTopic = "limingji";
 
     final static String kafkaServerURL = "localhost";
     final static int kafkaServerPort = 9092;
