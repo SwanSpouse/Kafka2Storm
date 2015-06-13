@@ -180,7 +180,7 @@ public class StatisticsBolt extends BaseBasicBolt {
 
         //所有订单数据先统一发送正常数据流。用作数据统计。
         collector.emit(StreamId.DATASTREAM.name(), new Values(msisdn, sessionId, recordTime,
-                realInfoFee, channelCode, productId, provinceId, orderType));
+                realInfoFee, channelCode, productId, provinceId, orderType, bookId));
 
         //更新订购话单的SessionInfos信息
         Pair<String, SessionInfo> sessionInfoPair = new Pair<String, SessionInfo>(sessionId, null);
@@ -244,7 +244,7 @@ public class StatisticsBolt extends BaseBasicBolt {
         declarer.declareStream(StreamId.DATASTREAM.name(),
                 new Fields(FName.MSISDN.name(), FName.SESSIONID.name(), FName.RECORDTIME.name(),
                         FName.REALINFORFEE.name(), FName.CHANNELCODE.name(), FName.PRODUCTID.name(),
-                        FName.PROVINCEID.name(), FName.ORDERTYPE.name()));
+                        FName.PROVINCEID.name(), FName.ORDERTYPE.name(), FName.BOOKID.name()));
 
         declarer.declareStream(StreamId.ABNORMALDATASTREAM.name(),
                 new Fields(FName.MSISDN.name(), FName.SESSIONID.name(), FName.RECORDTIME.name(),
