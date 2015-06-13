@@ -14,6 +14,7 @@ public class Main {
         FileReader fileReader = new FileReader(file);
         BufferedReader br = new BufferedReader(fileReader);
         String line = "";
+        int num = 1;
         while ((line = br.readLine()) != null) {
             String[] params = line.split("==>");
             if (params.length != 2) {
@@ -28,7 +29,8 @@ public class Main {
             }else if (topic.equals("second")) {
                 msgProducer.sendMsg(KafkaProperties.orderTopic, msg);
             }
-            System.out.println(msg);
+            System.out.println(num + " => " + msg);
+            num += 1;
         }
     }
 }

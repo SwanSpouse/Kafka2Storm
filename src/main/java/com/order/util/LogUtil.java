@@ -13,7 +13,13 @@ public class LogUtil {
     public static void printLog(Object obj, String msg, Boolean isObey) {
         if (StatisticsBolt.isDebug) {
             String tmp = isObey ? " obey " : " disobey ";
-            log.info(tmp + msg+"  "+ obj.toString());
+            log.error(tmp + msg + "  " + obj.toString());
+        }
+    }
+
+    public static void printLog(String msg) {
+        if (StatisticsBolt.isDebug) {
+            log.error(msg);
         }
     }
 }

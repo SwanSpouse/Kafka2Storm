@@ -6,6 +6,7 @@ import backtype.storm.topology.base.BaseBasicBolt;
 import backtype.storm.tuple.Tuple;
 import com.order.db.DBHelper.DBDataWarehouseBoltHelper;
 import com.order.util.FName;
+import com.order.util.LogUtil;
 import com.order.util.StreamId;
 import com.order.util.TimeParaser;
 
@@ -57,6 +58,9 @@ public class DataWarehouseBolt extends BaseBasicBolt {
         Long recordTime = input.getLongByField(FName.RECORDTIME.name());
         double realInfoFee = input.getDoubleByField(FName.REALINFORFEE.name());
         String channelCode = input.getStringByField(FName.CHANNELCODE.name());
+
+        LogUtil.printLog("接收正常数据流: " + msisdn + " " + recordTime + " " + realInfoFee);
+
         //数据入库
         DBHelper.updateData(msisdn,sessionId,channelCode,
                 TimeParaser.formatTimeInSeconds(recordTime),realInfoFee,"0");
@@ -70,6 +74,9 @@ public class DataWarehouseBolt extends BaseBasicBolt {
         double realInfoFee = input.getDoubleByField(FName.REALINFORFEE.name());
         String channelCode = input.getStringByField(FName.CHANNELCODE.name());
         String rule = input.getStringByField(FName.RULES.name());
+
+        LogUtil.printLog("接收异常数据流: " + msisdn + " " + recordTime + " " + realInfoFee);
+
         //数据入库
         DBHelper.updateData(msisdn,sessionId,channelCode,
                 TimeParaser.formatTimeInSeconds(recordTime),realInfoFee,rule);

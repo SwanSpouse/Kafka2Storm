@@ -15,6 +15,7 @@ import com.order.databean.TimeCacheStructures.RealTimeCacheList;
 import com.order.databean.UserInfo;
 import com.order.db.DBHelper.DBStatisticBoltHelper;
 import com.order.util.FName;
+import com.order.util.LogUtil;
 import com.order.util.StreamId;
 import com.order.util.TimeParaser;
 import org.apache.log4j.Logger;
@@ -94,23 +95,28 @@ public class StatisticsBolt extends BaseBasicBolt {
             loader.start();
         }
         if (input.getSourceStreamId().equals(StreamId.BROWSEDATA.name())) {
+            LogUtil.printLog("阅读浏览话单到达StatisticBolt");
             //阅读浏览话单
             try {
                 this.constructInfoFromBrowseData(input);
             } catch (Exception e) {
                 log.error("阅读浏览话单数据结构异常");
+                e.printStackTrace();
             }
         } else if (input.getSourceStreamId().equals(StreamId.ORDERDATA.name())) {
             // 订购话单
+            LogUtil.printLog("订购话单到达StatisticBolt");
             try {
                 this.constructInfoFromOrderData(input, collector);
             } catch (Exception e) {
                 log.error("订购话单数据结构异常");
+                e.printStackTrace();
             }
         }
     }
 
-    private void constructInfoFromBrowseData(Tuple input) throws Exception {
+    private void constructInfoFromBrowseData(Tuple input) throws NumberFormatException {
+        LogUtil.printLog("===========开始解析浏览话单数据===========");
         Long recordTime = TimeParaser.splitTime(input.getStringByField(FName.RECORDTIME.name()));
         String sessionId = input.getStringByField(FName.SESSIONID.name());
         String pageType = input.getStringByField(FName.PAGETYPE.name());
@@ -119,12 +125,16 @@ public class StatisticsBolt extends BaseBasicBolt {
         String bookId = input.getStringByField(FName.BOOKID.name());
         String chapterId = input.getStringByField(FName.CHAPTERID.name());
 
+        LogUtil.printLog("msisdn: " + msisdn + " recordTime " + recordTime + " bookId " + bookId + " chapterId " + chapterId + " channelCode " + channelCode +
+                " sessionId " + sessionId);
+
         if (sessionId == null || !sessionId.trim().equals("")) {
-            return;
+            //浏览话单若无sessionId则直接丢弃。
+            return ;
         }
-        if (isDebug) {
-            log.info("接收到浏览话单数据，更新数据结构 " + msisdn + " recordTime " + new Date(recordTime));
-        }
+
+        LogUtil.printLog("接收到浏览话单数据，更新数据结构 " + msisdn + " recordTime " + new Date(recordTime));
+
         //更新阅读浏览话单的SessionInfos信息
         Pair<String, SessionInfo> sessionPair = new Pair<String, SessionInfo>(sessionId, null);
         if (sessionInfos.contains(sessionPair)) {
@@ -137,27 +147,37 @@ public class StatisticsBolt extends BaseBasicBolt {
         //浏览话单不需要更新用户信息
     }
 
-    private void constructInfoFromOrderData(Tuple input, final BasicOutputCollector collector) throws Exception {
+    private void constructInfoFromOrderData(Tuple input, final BasicOutputCollector collector) throws NumberFormatException {
+        LogUtil.printLog("===========开始解析订单数据===========");
         String msisdn = input.getStringByField(FName.MSISDN.name());
         Long recordTime = TimeParaser.splitTime(input.getStringByField(FName.RECORDTIME.name()));
         String userAgent = input.getStringByField(FName.TERMINAL.name());
-        int platform = input.getIntegerByField(FName.PLATFORM.name());
-        int orderType = input.getIntegerByField(FName.ORDERTYPE.name());
+        String platform = input.getStringByField(FName.PLATFORM.name());
+        String orderTypeStr = input.getStringByField(FName.ORDERTYPE.name());
         String productId = input.getStringByField(FName.PRODUCTID.name());
         String bookId = input.getStringByField(FName.BOOKID.name());
         String chapterId = input.getStringByField(FName.CHAPTERID.name());
         String channelCode = input.getStringByField(FName.CHANNELCODE.name());
-        double realInfoFee = input.getDoubleByField(FName.COST.name());
-        int provinceId = input.getIntegerByField(FName.PROVINCEID.name());
+        String realInfoFeeStr = input.getStringByField(FName.COST.name());
+        String provinceIdStr = input.getStringByField(FName.PROVINCEID.name());
         String wapIp = input.getStringByField(FName.WAPIP.name());
         String sessionId = input.getStringByField(FName.SESSIONID.name());
 
+        LogUtil.printLog("msisdn: " + msisdn + " recordTime " + recordTime + " UA" + userAgent
+                + " platform " + platform + " orderType " + orderTypeStr + " productId " + productId +
+                " bookId " + bookId + " chapterId " + chapterId + " channelCode " + channelCode + " cost " + realInfoFeeStr
+                + " provinceId " + provinceIdStr + " wapId " + wapIp + " sessionId " + sessionId);
+
+        int orderType = Integer.parseInt(orderTypeStr);
+        double realInfoFee = Double.parseDouble(realInfoFeeStr);
+        int provinceId = Integer.parseInt(provinceIdStr);
+
         if (sessionId == null || sessionId.trim().equals("")) {
-            return;
+            sessionId = "null" + msisdn;
         }
-        if (StatisticsBolt.isDebug) {
-            log.info("接受到订单数据 " + msisdn + " recordTime " + new Date(recordTime));
-        }
+
+        LogUtil.printLog("接受到订单数据 " + msisdn + " recordTime " + new Date(recordTime));
+
         //所有订单数据先统一发送正常数据流。用作数据统计。
         collector.emit(StreamId.DATASTREAM.name(), new Values(msisdn, sessionId, recordTime,
                 realInfoFee, channelCode, productId, provinceId, orderType));
@@ -175,17 +195,20 @@ public class StatisticsBolt extends BaseBasicBolt {
                     chapterId, recordTime, orderType, realInfoFee, channelCode, productId, provinceId);
             sessionInfos.put(new Pair<String, SessionInfo>(sessionId, currentSessionInfo));
         }
-        if (isDebug) {
-            log.info("开始根据各个规则对订单数据进行检测 " + msisdn + " recordTime " + new Date(recordTime));
-        }
+
+        LogUtil.printLog("开始根据各个规则对订单数据进行检测 " + msisdn + " recordTime " + new Date(recordTime));
+
         //检测相应的各个规则。
-        currentSessionInfo.checkRule123(bookId, new EmitDatas(collector));
+        if (!sessionId.startsWith("null")) {
+            //如果用户无sessionId. 无法进行一下相应规则的判断
+            currentSessionInfo.checkRule123(bookId, new EmitDatas(collector));
+            currentSessionInfo.checkRule5(bookId, new EmitDatas(collector));
+            currentSessionInfo.checkRule6(new EmitDatas(collector));
+            currentSessionInfo.checkRule7(new EmitDatas(collector));
+            currentSessionInfo.checkRule8(bookId, new EmitDatas(collector));
+//        currentSessionInfo.checkRule12(platform, new EmitDatas(collector));
+        }
         currentSessionInfo.checkRule4(new EmitDatas(collector));
-        currentSessionInfo.checkRule5(bookId, new EmitDatas(collector));
-        currentSessionInfo.checkRule6(new EmitDatas(collector));
-        currentSessionInfo.checkRule7(new EmitDatas(collector));
-        currentSessionInfo.checkRule8(bookId, new EmitDatas(collector));
-        currentSessionInfo.checkRule12(platform, new EmitDatas(collector));
 
         //更新订购话单UserInfos信息
         Pair<String, UserInfo> userInfoPair = new Pair<String, UserInfo>(msisdn, null);
