@@ -27,13 +27,13 @@ public class UserInfo implements Serializable{
     private long lastUpdateTime;
 
     //统计用户session信息。
-    private RealTimeCacheList<String> seesionInfos = new RealTimeCacheList<String>(Constant.FIVE_MINUTES);
+    private RealTimeCacheList<String> seesionInfos = new RealTimeCacheList<String>(Constant.ONE_HOUR);
 
     //统计用户ip信息。
-    private RealTimeCacheList<String> ipInfos = new RealTimeCacheList<String>(Constant.FIVE_MINUTES);
+    private RealTimeCacheList<String> ipInfos = new RealTimeCacheList<String>(Constant.ONE_HOUR);
 
     //统计用户终端信息。
-    private RealTimeCacheList<String> terminalInfos = new RealTimeCacheList<String>(Constant.FIVE_MINUTES);
+    private RealTimeCacheList<String> terminalInfos = new RealTimeCacheList<String>(Constant.ONE_HOUR);
 
     @Override
     public String toString() {
@@ -51,6 +51,8 @@ public class UserInfo implements Serializable{
         this.seesionInfos.put(sessionInfo, lastUpdateTime);
         this.ipInfos.put(ipInfo, lastUpdateTime);
         this.terminalInfos.put(terminalInfo, lastUpdateTime);
+
+        LogUtil.printLog("新用户插入: " + this);
     }
 
     //更新已存在用户的信息
@@ -65,6 +67,8 @@ public class UserInfo implements Serializable{
         if (terminalInfo != null && !terminalInfo.trim().equals("")) {
             this.terminalInfos.put(terminalInfo, lastUpdateTime);
         }
+
+        LogUtil.printLog("老用户更新: " + this);
     }
 
     /**
