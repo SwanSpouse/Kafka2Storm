@@ -80,7 +80,7 @@ public class UserInfo implements Serializable{
      */
     public boolean[] isObeyRules() {
         boolean[] checkMarkBit = new boolean[3];
-        if (seesionInfos.size() >= Constant.SESSION_CHANGE_THRESHOLD) {
+        if (seesionInfos.size(lastUpdateTime) >= Constant.SESSION_CHANGE_THRESHOLD) {
             LogUtil.printLog(this,"rule9", false);
             checkMarkBit[SESSION_CHECK_BIT] = false;
         } else {
@@ -88,7 +88,7 @@ public class UserInfo implements Serializable{
             checkMarkBit[SESSION_CHECK_BIT] = true;
         }
 
-        if (ipInfos.size() >= Constant.IP_CHANGE_THRESHOLD) {
+        if (ipInfos.size(lastUpdateTime) >= Constant.IP_CHANGE_THRESHOLD) {
             LogUtil.printLog(this,"rule10", false);
             checkMarkBit[IP_CHECK_BIT] = false;
         } else {
@@ -96,7 +96,7 @@ public class UserInfo implements Serializable{
             checkMarkBit[IP_CHECK_BIT] = true;
         }
 
-        if (terminalInfos.size() >= Constant.UA_CHANGE_THRESHOLD) {
+        if (terminalInfos.size(lastUpdateTime) >= Constant.UA_CHANGE_THRESHOLD) {
             LogUtil.printLog(this,"rule11", false);
             checkMarkBit[UA_CHECK_BIT] = false;
         } else {
@@ -118,7 +118,7 @@ public class UserInfo implements Serializable{
 
     //三个容器内均无有效数据且不是异常用户。则用户超时。
     public boolean isTimeout() {
-        return seesionInfos.size() == 0 && ipInfos.size() == 0
-                && terminalInfos.size() == 0 && isNormalUser == true;
+        return seesionInfos.size(lastUpdateTime) == 0 && ipInfos.size(lastUpdateTime) == 0
+                && terminalInfos.size(lastUpdateTime) == 0 && isNormalUser == true;
     }
 }

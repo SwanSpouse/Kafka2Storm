@@ -120,6 +120,7 @@ public class SessionInfo implements Serializable{
         if (secondChannelId != null) {
             this.orderChannelCodeByDay.put(secondChannelId);
         }
+        LogUtil.printLog("新数据插入: " + this);
     }
 
     //对已存在的SessionInfo进行更新。
@@ -169,6 +170,7 @@ public class SessionInfo implements Serializable{
         if (secondChannelId != null) {
             this.orderChannelCodeByDay.put(secondChannelId);
         }
+        LogUtil.printLog("旧数据更新: " + this);
     }
 
     /**
@@ -228,7 +230,7 @@ public class SessionInfo implements Serializable{
      * @param callback
      */
     public void checkRule4(final RulesCallback callback) {
-        if (orderChannelCodeByDay.size() >= 3) {
+        if (orderChannelCodeByDay.size(lastUpdateTime) >= 3) {
             callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee, channelId,
                     productId, Rules.FOUR.name(), provinceId, orderType, bookId);
         }
@@ -342,7 +344,7 @@ public class SessionInfo implements Serializable{
             public void run() {
                 try {
                     rule12Checker.sleep(Constant.FIVE_MINUTES);
-                    if (bookReadPv.size() == 0) {
+                    if (bookReadPv.size(lastUpdateTime) == 0) {
                         LogUtil.printLog(this, "rule12", false);
                         callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
                                 channelId, productId, Rules.TWELVE.name(), provinceId, orderType,bookId);
@@ -363,7 +365,7 @@ public class SessionInfo implements Serializable{
 
     public boolean isOutOfTime() {
         return bookOrderPv.sizeOfOrderBooks() == 0 &&
-                bookReadPv.size() == 0 &&
-                channelOrderpv.size() == 0;
+                bookReadPv.size(lastUpdateTime) == 0 &&
+                channelOrderpv.size(lastUpdateTime) == 0;
     }
 }

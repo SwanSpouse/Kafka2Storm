@@ -77,12 +77,36 @@ public class RealTimeCacheList<T> implements Serializable{
         cleaner.start();
     }
 
-    public int size() {
+    /**
+     * 在获取size之前对oldlist 和 currentlist中的过期数据进行清除
+     * */
+    public int size(long currentTime) {
+        long timeThreashold = currentTime - expiratonSecs * 1000L;
         synchronized (LOCK) {
-            if (currentList != null && oldList != null) {
-                return currentList.size() + oldList.size();
-            } else {
-                return 0;
+            this.removeTimeOutData(oldList, timeThreashold);
+            this.removeTimeOutData(currentList, timeThreashold);
+            return oldList.size() + currentList.size();
+        }
+    }
+
+    //对某个map下的过期数据进行清楚。
+    private void removeTimeOutData(Map<T,LinkedList<Long>> map, long timeThreashold) {
+        Iterator<T> it = map.keySet().iterator();
+        while (it.hasNext()) {
+            T key = it.next();
+            LinkedList<Long> list = map.get(key);
+            if (list == null || list.size() == 0) {
+                map.remove(key);
+                continue;
+            }
+            Iterator<Long> itTime = list.iterator();
+            while (itTime.hasNext()) {
+                long clickTime = itTime.next();
+                if (clickTime < timeThreashold) {
+                    list.remove(clickTime);
+                } else {
+                    continue;
+                }
             }
         }
     }
@@ -135,9 +159,6 @@ public class RealTimeCacheList<T> implements Serializable{
             } else {
                 currentTime = System.currentTimeMillis();
             }
-
-            //clear expired data when insert data
-            removeExpiredData(value, currentTime);
 
             if (oldList.containsKey(value)) {
                 LinkedList<Long> clickTimes = oldList.get(value);
@@ -193,26 +214,7 @@ public class RealTimeCacheList<T> implements Serializable{
         }
     }
 
-    //对某个id下的过期数据进行清楚。
-    private void removeExpiredData(T value, long currentTime) {
-        synchronized (LOCK) {
-            if (!oldList.containsKey(value)) {
-                return;
-            }
-            long timeOutThreshold = currentTime - expiratonSecs * 1000L;
-            Iterator<Long> it = oldList.get(value).iterator();
-            while (it.hasNext()) {
-                Long time = it.next();
-                if (time < timeOutThreshold) {
-                    it.remove();
-                } else {
-                    return;
-                }
-            }
-        }
-    }
-
-    public Set<T> keySet() {
+    public Set<T>  keySet() {
         synchronized (LOCK) {
             HashSet<T> set = new HashSet<T>();
             for (T key : oldList.keySet()) {

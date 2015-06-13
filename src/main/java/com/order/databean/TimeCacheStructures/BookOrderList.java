@@ -61,7 +61,7 @@ public class BookOrderList implements Serializable{
                 return 0;
             }
             RealTimeCacheList<Integer> orderList = map.get(id);
-            return orderList.size();
+            return orderList.size(System.currentTimeMillis());
         }
     }
 
