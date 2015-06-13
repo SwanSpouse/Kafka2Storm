@@ -128,7 +128,7 @@ public class StatisticsBolt extends BaseBasicBolt {
         LogUtil.printLog("msisdn: " + msisdn + " recordTime " + recordTime + " bookId " + bookId + " chapterId " + chapterId + " channelCode " + channelCode +
                 " sessionId " + sessionId);
 
-        if (sessionId == null || !sessionId.trim().equals("")) {
+        if (sessionId == null || sessionId.trim().equals("")) {
             //浏览话单若无sessionId则直接丢弃。
             return ;
         }
