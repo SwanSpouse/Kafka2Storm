@@ -147,7 +147,12 @@ public class RealTimeCacheList<T> implements Serializable{
                 currentList.put(value, newClickTimes);
                 oldList.remove(value);
             } else {
-                LinkedList<Long> clickTimes = new LinkedList<Long>();
+                LinkedList<Long> clickTimes;
+                if (currentList.containsKey(value)) {
+                    clickTimes = currentList.get(value);
+                } else {
+                    clickTimes = new LinkedList<Long>();
+                }
                 clickTimes.add(currentTime);
                 currentList.put(value, clickTimes);
             }
@@ -155,6 +160,9 @@ public class RealTimeCacheList<T> implements Serializable{
     }
 
     public boolean contains(T value) {
+        if (value == null) {
+            return false;
+        }
         synchronized (LOCK) {
             return oldList.containsKey(value) || currentList.containsKey(value);
         }
