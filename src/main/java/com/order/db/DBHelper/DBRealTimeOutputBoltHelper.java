@@ -113,7 +113,7 @@ public class DBRealTimeOutputBoltHelper implements Serializable{
         }
 
         String checkAbnormalOrderSql =
-                "SELECT \"channelcode\",\"realfee\" FROM " + StormConf.realTimeOutputTable +
+                "SELECT \"channelcode\",\"realfee\" FROM " + StormConf.dataWarehouseTable +
                         " WHERE \"record_time\">=" + traceBackTime + " AND \"rule_" + rules + "\"=0 " +
                         "AND \"msisdn\"=" + msisdn;
         try {
@@ -141,7 +141,7 @@ public class DBRealTimeOutputBoltHelper implements Serializable{
             log.error("追溯查询sql错误: " + checkAbnormalOrderSql);
             e.printStackTrace();
         }
-        String updateOrderSql = "UPDATE " + StormConf.realTimeOutputTable + " SET \"rule_" + rules + "\"=1" +
+        String updateOrderSql = "UPDATE " + StormConf.dataWarehouseTable + " SET \"rule_" + rules + "\"=1" +
                 " WHERE \"record_time\">=" + traceBackTime + " AND \"rule_" + rules + "\"=0 " +
                 "AND \"msisdn\"=" + msisdn;
         //将上一个结果查询出来需要追溯的正常订单设置为异常。防止后续重复计算。
