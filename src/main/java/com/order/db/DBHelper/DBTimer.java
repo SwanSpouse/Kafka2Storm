@@ -2,6 +2,7 @@ package com.order.db.DBHelper;
 
 import com.order.bolt.StatisticsBolt;
 import com.order.constant.Constant;
+import com.order.util.LogUtil;
 import com.order.util.StormConf;
 import org.apache.log4j.Logger;
 
@@ -64,6 +65,10 @@ public class DBTimer extends Thread {
             String ruleID = keys[5];
             String totalFeeKey = date + "|" + provinceId + "|" + channelCode + "|"
                     + contentID + "|" + contentType;
+            if ( !totalFee.contains(totalFeeKey)) {
+                LogUtil.printLog("<======错误KEY=====> " + key);
+                continue;
+            }
             double fee = totalFee.get(totalFeeKey);
             String abnormalFeeKey = totalFeeKey + "|" + ruleID;
             double abnFee = abnormalFee.get(abnormalFeeKey);
