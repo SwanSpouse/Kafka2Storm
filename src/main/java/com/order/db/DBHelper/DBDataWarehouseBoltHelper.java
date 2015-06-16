@@ -70,9 +70,12 @@ public class DBDataWarehouseBoltHelper implements Serializable {
     }
 
     private boolean checkExists(String msisdn, String sessionId, String channelCode) {
-        String queryTimesSql = "SELECT COUNT(*) recordTimes FROM "+ StormConf.dataWarehouseTable +
-                " WHERE msisdn=? AND sessionid=? AND channelcode=?";
+        String queryTimesSql = "SELECT COUNT(*) recordTimes FROM AAS.RESULT_TABLE " +
+                "WHERE \"msisdn\"=? AND \"sessionid\"=? AND \"channelcode\"=?";
         try {
+            if (conn == null) {
+                conn = getConn();
+            }
             PreparedStatement stmt = conn.prepareStatement(queryTimesSql);
             stmt.setString(1, msisdn);
             stmt.setString(2, sessionId);
@@ -84,6 +87,7 @@ public class DBDataWarehouseBoltHelper implements Serializable {
             return count != 0;
         } catch (SQLException e) {
             log.error("查询sql错误" + queryTimesSql);
+            e.printStackTrace();
         }
         return false;
     }
@@ -106,14 +110,14 @@ public class DBDataWarehouseBoltHelper implements Serializable {
             }
             prepStmt.execute();
         } catch (SQLException e) {
-            System.out.println(sql);
             log.error("插入sql错误: " + sql);
+            e.printStackTrace();
         }
     }
 
     private void update(String msisdn, String sessionId, String channelCode, int rules) {
         String sql = "UPDATE "+StormConf.dataWarehouseTable+" SET \"rule_" + rules + "\"=1 " +
-                "WHERE msisdn=? AND sessionid=? AND channelcode=?";
+                "WHERE \"msisdn\"=? AND \"sessionid\"=? AND \"channelcode\"=?";
         try {
             PreparedStatement prepStmt = conn.prepareStatement(sql);
             prepStmt.setString(1, msisdn);
@@ -122,7 +126,6 @@ public class DBDataWarehouseBoltHelper implements Serializable {
             prepStmt.execute();
         } catch (SQLException e) {
             e.printStackTrace();
-            System.out.println(sql);
             log.error("更新sql错误: " + sql);
         }
     }
