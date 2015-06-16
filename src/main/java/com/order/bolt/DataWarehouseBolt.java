@@ -59,7 +59,7 @@ public class DataWarehouseBolt extends BaseBasicBolt {
         double realInfoFee = input.getDoubleByField(FName.REALINFORFEE.name());
         String channelCode = input.getStringByField(FName.CHANNELCODE.name());
 
-        LogUtil.printLog("接收正常数据流: " + msisdn + " " + recordTime + " " + realInfoFee);
+        LogUtil.printLog("DataWareHouseBolt 接收正常数据流: " + msisdn + " " + recordTime + " " + realInfoFee);
 
         //数据入库
         DBHelper.updateData(msisdn,sessionId,channelCode,
@@ -75,7 +75,7 @@ public class DataWarehouseBolt extends BaseBasicBolt {
         String channelCode = input.getStringByField(FName.CHANNELCODE.name());
         String rule = input.getStringByField(FName.RULES.name());
 
-        LogUtil.printLog("接收异常数据流: " + msisdn + " " + recordTime + " " + realInfoFee);
+        LogUtil.printLog("DataWareHouseBolt 接收异常数据流: " + msisdn + " " + recordTime + " " + realInfoFee);
 
         //数据入库
         DBHelper.updateData(msisdn,sessionId,channelCode,

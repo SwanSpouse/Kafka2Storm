@@ -1,6 +1,7 @@
 package com.order.db.DBHelper;
 
 import com.order.db.JDBCUtil;
+import com.order.util.LogUtil;
 import com.order.util.StormConf;
 import org.apache.log4j.Logger;
 
@@ -9,6 +10,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Date;
 import java.util.HashMap;
 
 /**
@@ -17,14 +19,14 @@ import java.util.HashMap;
 public class DBStatisticBoltHelper implements Serializable{
     private static final long serialVersionUID = 1L;
     private static Logger log = Logger.getLogger(DBStatisticBoltHelper.class);
-    private transient Connection conn = null;
+    private static transient Connection conn = null;
 
     private static Object LOCK = null;
 
     private static HashMap<String, String> parameterId2SecChannelId = null;
     private static HashMap<String, String> parameterId2ChannelIds = null;
 
-    private Connection getConn() throws SQLException {
+    private static Connection getConn() throws SQLException {
         if (conn == null) {
             log.info("Connection is null!");
             conn = (new JDBCUtil()).getConnection();
@@ -48,13 +50,25 @@ public class DBStatisticBoltHelper implements Serializable{
     /**
      * 获取营销参数 二级渠道维表
      */
-    public void getData() {
+    public static void getData() {
+        LogUtil.printLog("加载二维渠道维表" + new Date());
+        if (LOCK == null) {
+            LOCK = new Object();
+        }
         synchronized (LOCK) {
-            this.parameterId2SecChannelId.clear();
-            this.parameterId2ChannelIds.clear();
+            if (parameterId2ChannelIds == null) {
+                parameterId2ChannelIds = new HashMap<String, String>();
+            } else {
+                parameterId2ChannelIds.clear();
+            }
+            if (parameterId2SecChannelId == null) {
+                parameterId2SecChannelId = new HashMap<String, String>();
+            } else {
+                parameterId2SecChannelId.clear();
+            }
         }
         String sql = "SELECT FIRST_CHANNEL_ID,SECOND_CHANNEL_ID,THIRD_CHANNEL_ID,PARAMETER_ID" +
-                " FROM "+ StormConf.channelCodesTable;
+                " FROM " + StormConf.channelCodesTable;
         try {
             if (conn == null) {
                 conn = getConn();
@@ -68,11 +82,8 @@ public class DBStatisticBoltHelper implements Serializable{
                 String thirdChannelId = resultSet.getString("THIRD_CHANNEL_ID");
                 String parameterId = resultSet.getString("PARAMETER_ID");
                 synchronized (LOCK) {
-                    this.parameterId2SecChannelId.put(parameterId, secondChannelId);
-                    this.parameterId2ChannelIds.put(parameterId, firstChannelId + "|" + secondChannelId + "|" + thirdChannelId);
-                }
-                if (!(parameterId2ChannelIds.size() == 0 || parameterId2SecChannelId.size() == 0)) {
-                    log.info("营销参数二级渠道维表已经加载");
+                    parameterId2SecChannelId.put(parameterId, secondChannelId);
+                    parameterId2ChannelIds.put(parameterId, firstChannelId + "|" + secondChannelId + "|" + thirdChannelId);
                 }
             }
         } catch (SQLException e) {

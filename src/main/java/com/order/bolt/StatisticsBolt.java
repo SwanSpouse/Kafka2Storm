@@ -80,11 +80,11 @@ public class StatisticsBolt extends BaseBasicBolt {
                 public void run() {
                     while (true) {
                         try {
+                            DBhelper.getData();
                             long sleepTime = TimeParaser.getMillisFromNowToThreeOclock();
                             if (sleepTime > 0) {
                                 loader.sleep(sleepTime);
                             }
-                            DBhelper.getData();
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
@@ -139,7 +139,7 @@ public class StatisticsBolt extends BaseBasicBolt {
         Pair<String, SessionInfo> sessionPair = new Pair<String, SessionInfo>(sessionId, null);
         if (sessionInfos.contains(sessionPair)) {
             SessionInfo currentSessionInfo = (SessionInfo) sessionInfos.get(sessionPair).getValue();
-            currentSessionInfo.upDateSeesionInfo(bookId, null, null, recordTime, -1, 0.0, channelCode, null, 0);
+            currentSessionInfo.updateSeesionInfo(bookId, null, null, recordTime, -1, 0.0, channelCode, null, 0);
         } else {
             SessionInfo currentSessionInfo = new SessionInfo(sessionId, msisdn, bookId, null, null, recordTime, -1, 0, channelCode, null, 0);
             sessionInfos.put(new Pair<String, SessionInfo>(sessionId, currentSessionInfo));
@@ -163,7 +163,7 @@ public class StatisticsBolt extends BaseBasicBolt {
         String wapIp = input.getStringByField(FName.WAPIP.name());
         String sessionId = input.getStringByField(FName.SESSIONID.name());
 
-        LogUtil.printLog("msisdn: " + msisdn + " recordTime " + recordTime + " UA" + userAgent
+        LogUtil.printLog("msisdn: " + msisdn + " recordTime " + recordTime + " UA " + userAgent
                 + " platform " + platform + " orderType " + orderTypeStr + " productId " + productId +
                 " bookId " + bookId + " chapterId " + chapterId + " channelCode " + channelCode + " cost " + realInfoFeeStr
                 + " provinceId " + provinceIdStr + " wapId " + wapIp + " sessionId " + sessionId);
@@ -181,13 +181,14 @@ public class StatisticsBolt extends BaseBasicBolt {
         //所有订单数据先统一发送正常数据流。用作数据统计。
         collector.emit(StreamId.DATASTREAM.name(), new Values(msisdn, sessionId, recordTime,
                 realInfoFee, channelCode, productId, provinceId, orderType, bookId));
+        LogUtil.printLog("正常数据流成功发射");
 
         //更新订购话单的SessionInfos信息
         Pair<String, SessionInfo> sessionInfoPair = new Pair<String, SessionInfo>(sessionId, null);
         SessionInfo currentSessionInfo;
         if (sessionInfos.contains(sessionInfoPair)) {
             currentSessionInfo = (SessionInfo) sessionInfos.get(sessionInfoPair).getValue();
-            currentSessionInfo.upDateSeesionInfo(null, bookId, chapterId, recordTime, orderType,
+            currentSessionInfo.updateSeesionInfo(null, bookId, chapterId, recordTime, orderType,
                     realInfoFee, channelCode, productId, provinceId);
             sessionInfos.put(new Pair<String, SessionInfo>(sessionId, currentSessionInfo));
         } else {
@@ -206,7 +207,7 @@ public class StatisticsBolt extends BaseBasicBolt {
             currentSessionInfo.checkRule6(new EmitDatas(collector));
             currentSessionInfo.checkRule7(new EmitDatas(collector));
             currentSessionInfo.checkRule8(bookId, new EmitDatas(collector));
-//        currentSessionInfo.checkRule12(platform, new EmitDatas(collector));
+            currentSessionInfo.checkRule12(platform, new EmitDatas(collector));
         }
         currentSessionInfo.checkRule4(new EmitDatas(collector));
 

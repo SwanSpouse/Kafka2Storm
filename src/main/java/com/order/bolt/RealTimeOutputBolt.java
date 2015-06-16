@@ -66,7 +66,7 @@ public class RealTimeOutputBolt extends BaseBasicBolt {
         int orderType = input.getIntegerByField(FName.ORDERTYPE.name());
         String bookId = input.getStringByField(FName.BOOKID.name());
 
-        LogUtil.printLog("接收正常数据流: " + msisdn + " " + recordTime + " " + realInfoFee);
+        LogUtil.printLog("RealTimeOutputBolt 接收正常数据流: " + msisdn + " " + recordTime + " " + realInfoFee);
 
         DBHelper.updateData(msisdn, recordTime, channelCode, null, null, provinceId + "", productId,
                 "0", realInfoFee, orderType, bookId);
@@ -86,7 +86,7 @@ public class RealTimeOutputBolt extends BaseBasicBolt {
         int orderType = input.getIntegerByField(FName.ORDERTYPE.name());
         String bookId = input.getStringByField(FName.BOOKID.name());
 
-        LogUtil.printLog("接收异常数据流: " + msisdn + " " + recordTime + " " + realInfoFee);
+        LogUtil.printLog("RealTimeOutputBolt 接收异常数据流: " + msisdn + " " + recordTime + " " + realInfoFee);
 
         DBHelper.updateData(msisdn, recordTime, channelCode, null, null, provinceId + "", productId,
                 rule, realInfoFee, orderType, bookId);

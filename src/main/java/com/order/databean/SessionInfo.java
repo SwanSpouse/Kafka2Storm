@@ -116,15 +116,19 @@ public class SessionInfo implements Serializable{
             }
         }
         //将用户channelCode对应的二级渠道进行保存
+        if (DBStatisticBoltHelper.getParameterId2SecChannelId() == null) {
+            DBStatisticBoltHelper.getData();
+        }
         String secondChannelId = DBStatisticBoltHelper.getParameterId2SecChannelId().get(channelId);
         if (secondChannelId != null) {
             this.orderChannelCodeByDay.put(secondChannelId);
         }
         LogUtil.printLog("新数据插入: " + this);
+
     }
 
     //对已存在的SessionInfo进行更新。
-    public void upDateSeesionInfo(String bookReadId, String bookOrderId, String bookChapterOrderId,
+    public void updateSeesionInfo(String bookReadId, String bookOrderId, String bookChapterOrderId,
                                   Long currentTime, int orderType, Double realInfoFee,
                                   String channelId, String productId, int provinceId) {
         if (currentTime != null) {
@@ -134,6 +138,7 @@ public class SessionInfo implements Serializable{
         }
         if (bookReadId != null) {
             bookReadPv.put(bookReadId, lastUpdateTime);
+            LogUtil.printLog("updateSessionInfo 插入BookId " + bookReadId + bookReadPv);
         }
         if (bookOrderId != null) {
             if (orderType == 2 && bookChapterOrderId == null) {
@@ -166,6 +171,9 @@ public class SessionInfo implements Serializable{
             }
         }
         //将用户channelCode对应的二级渠道进行保存
+        if (DBStatisticBoltHelper.getParameterId2SecChannelId() == null) {
+            DBStatisticBoltHelper.getData();
+        }
         String secondChannelId = DBStatisticBoltHelper.getParameterId2SecChannelId().get(channelId);
         if (secondChannelId != null) {
             this.orderChannelCodeByDay.put(secondChannelId);
@@ -335,8 +343,8 @@ public class SessionInfo implements Serializable{
      */
     private transient Thread rule12Checker = null;
 
-    public void checkRule12(int platform, final RulesCallback callback) {
-        if (orderType != 4 || platform == 6) {
+    public void checkRule12(String platform, final RulesCallback callback) {
+        if (orderType != 4 || Integer.parseInt(platform) == 6) {
             return;
         }
         rule123Checker = new Thread(new Runnable() {

@@ -36,7 +36,9 @@ public class DataTestBolt extends BaseBasicBolt {
     @Override
     public void execute(Tuple input, BasicOutputCollector collector) {
         String word = input.getStringByField(STRING_SCHEME_KEY);
-        log.info(name + "==>" + word);
+        if (name.equals("second")) {
+            log.info(name + "==>" + word);
+        }
     }
 
     @Override

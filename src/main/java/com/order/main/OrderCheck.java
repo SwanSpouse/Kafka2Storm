@@ -31,12 +31,12 @@ public class OrderCheck {
         SpoutConfig spoutConfigTopic1 = new SpoutConfig(brokerHosts, topics[0],
                 zkRoot, kafkaZkId);
         spoutConfigTopic1.scheme = new SchemeAsMultiScheme(new StringScheme());
-        spoutConfigTopic1.forceFromStart = true;
+        spoutConfigTopic1.forceFromStart = false;
 
         SpoutConfig spoutConfigTopic2 = new SpoutConfig(brokerHosts, topics[1],
                 zkRoot, kafkaZkId);
         spoutConfigTopic2.scheme = new SchemeAsMultiScheme(new StringScheme());
-        spoutConfigTopic2.forceFromStart = true;
+        spoutConfigTopic2.forceFromStart = false;
 
         Config conf = new Config();
         TopologyBuilder builder = new TopologyBuilder();
