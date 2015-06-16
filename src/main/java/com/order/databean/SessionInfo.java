@@ -138,7 +138,6 @@ public class SessionInfo implements Serializable{
         }
         if (bookReadId != null) {
             bookReadPv.put(bookReadId, lastUpdateTime);
-            LogUtil.printLog("updateSessionInfo 插入BookId " + bookReadId + bookReadPv);
         }
         if (bookOrderId != null) {
             if (orderType == 2 && bookChapterOrderId == null) {

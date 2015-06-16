@@ -2,6 +2,7 @@ package com.order.db.DBHelper;
 
 import com.order.constant.Rules;
 import com.order.db.JDBCUtil;
+import com.order.util.LogUtil;
 import com.order.util.StormConf;
 import org.apache.log4j.Logger;
 
@@ -63,8 +64,10 @@ public class DBDataWarehouseBoltHelper implements Serializable {
                            String reacordTime, double realInfoFee, String rule) {
         int ruleNum = getRuleNumFromString(rule);
         if (checkExists(msisdn, sessionId, channelCode)) {
+            LogUtil.printLog("更新数据成功: " + msisdn + " " + sessionId + " " + channelCode + " rules: " + rule);
             update(msisdn, sessionId, channelCode, ruleNum);
         } else {
+            LogUtil.printLog("插入数据成功: " + msisdn + " " + sessionId + " " + channelCode);
             insert(msisdn, sessionId, channelCode, reacordTime, realInfoFee);
         }
     }
@@ -84,6 +87,8 @@ public class DBDataWarehouseBoltHelper implements Serializable {
             ResultSet rs = stmt.executeQuery();
             rs.next();
             int count = rs.getInt("recordTimes");
+
+            LogUtil.printLog("检查数据是否存在: " + msisdn + " " + sessionId + " " + channelCode);
             return count != 0;
         } catch (SQLException e) {
             log.error("查询sql错误" + queryTimesSql);

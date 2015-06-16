@@ -25,7 +25,7 @@ public class TimeParaser {
             int minute = Integer.parseInt(recordTime.substring(10, 12));
             int seconds = Integer.parseInt(recordTime.substring(12, 14));
 
-            calendar.set(year, month, date, hour, minute, seconds);
+            calendar.set(year, month - 1, date, hour, minute, seconds);
             return calendar.getTimeInMillis();
 
         } catch (Exception e) {
