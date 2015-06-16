@@ -4,6 +4,7 @@ import com.order.bolt.StatisticsBolt;
 import com.order.constant.Constant;
 import com.order.util.LogUtil;
 import com.order.util.StormConf;
+import com.order.util.TimeParaser;
 import org.apache.log4j.Logger;
 
 import java.sql.Connection;
@@ -44,6 +45,9 @@ public class DBTimer extends Thread {
                 this.sleep(Constant.ONE_MINUTE * 1000L);
                 //将map中的数据更新到数据库中。
                 this.updateDB();
+                if (TimeParaser.isTimeToClearData(System.currentTimeMillis())) {
+                    totalFee.clear();
+                }
             }
         } catch (InterruptedException e) {
             e.printStackTrace();

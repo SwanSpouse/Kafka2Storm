@@ -114,6 +114,14 @@ public class TimeParaser {
         return next.getTimeInMillis() - now.getTimeInMillis();
     }
 
+    public static boolean isTimeToClearData(long time) {
+        Calendar now = Calendar.getInstance();
+        now.setTimeInMillis(time);
+        int hour = now.get(Calendar.HOUR);
+        int minute = now.get(Calendar.MINUTE);
+        return hour == 0 && minute == 0;
+    }
+
     public static void main(String[] args) {
 //        Long time =1433494523823L;
 //        System.out.println(formatTimeInDay(time));
@@ -121,7 +129,10 @@ public class TimeParaser {
 
 //        System.out.println(getMillisFromNowToThreeOclock());
 
-        System.out.println(getMillisFromTimeToNetFiveMinutes(System.currentTimeMillis()));
+//        System.out.println(getMillisFromTimeToNetFiveMinutes(System.currentTimeMillis()));
 //        System.out.println(NormalHourAgo(System.currentTimeMillis()));
+
+        System.out.println(isTimeToClearData(System.currentTimeMillis()));
+
     }
 }
