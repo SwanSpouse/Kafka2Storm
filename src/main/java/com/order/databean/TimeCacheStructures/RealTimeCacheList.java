@@ -253,10 +253,7 @@ public class RealTimeCacheList<T> implements Serializable{
         if (oldList.size() == 0 && currentList.size() == 0) {
             return " EMPTY ";
         }
-        String str = "";
-        for (T key : oldList.keySet()) {
-            str += " { " + key + " : " + oldList.get(key) + " " + currentList.get(key) + " } ";
-        }
-        return str;
+        return oldList.toString() + "==" + currentList.toString();
     }
+
 }

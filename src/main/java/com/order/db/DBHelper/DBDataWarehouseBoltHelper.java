@@ -116,7 +116,10 @@ public class DBDataWarehouseBoltHelper implements Serializable {
     }
 
     private void update(String msisdn, String sessionId, String channelCode, int rules) {
-        String sql = "UPDATE "+StormConf.dataWarehouseTable+" SET \"rule_" + rules + "\"=1 " +
+        if (rules == 0) {
+            return ;
+        }
+        String sql = "UPDATE " + StormConf.dataWarehouseTable + " SET \"rule_" + rules + "\"=1 " +
                 "WHERE \"msisdn\"=? AND \"sessionid\"=? AND \"channelcode\"=?";
         try {
             PreparedStatement prepStmt = conn.prepareStatement(sql);
