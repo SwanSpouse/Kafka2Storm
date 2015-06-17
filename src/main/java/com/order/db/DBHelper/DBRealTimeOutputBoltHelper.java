@@ -88,7 +88,7 @@ public class DBRealTimeOutputBoltHelper implements Serializable{
             return;
         }
 
-        String abnormalFeeKey = totalFeeKey + "|" + rules;
+        String abnormalFeeKey = totalFeeKey + "|" + ruleId;
         if (abnormalFee.containsKey(abnormalFeeKey)) {
             double currentAbnormalFee = abnormalFee.get(abnormalFeeKey) + realInfoFee;
             this.abnormalFee.put(abnormalFeeKey, currentAbnormalFee);
@@ -113,7 +113,7 @@ public class DBRealTimeOutputBoltHelper implements Serializable{
 
         String checkAbnormalOrderSql =
                 "SELECT \"channelcode\",\"realfee\" FROM " + StormConf.dataWarehouseTable +
-                        " WHERE \"record_time\">=" + traceBackTime + " AND \"rule_" + rules + "\"=0 " +
+                        " WHERE \"record_time\">=" + traceBackTime + " AND \"rule_" + ruleId + "\"=0 " +
                         "AND \"msisdn\"=" + msisdn;
         try {
             Statement stmt = conn.createStatement();
@@ -128,7 +128,7 @@ public class DBRealTimeOutputBoltHelper implements Serializable{
                 double abnormalInfoFee = rs.getDouble("realfee");
                 totalFeeKey = currentTime + "|" + provinceId + "|" + channelCodeHistory + "|"
                         + contentId + "|" + contentType;
-                abnormalFeeKey = totalFeeKey + "|" + rules;
+                abnormalFeeKey = totalFeeKey + "|" + ruleId;
                 if (abnormalFee.containsKey(abnormalFeeKey)) {
                     double currentAbnormalFee = abnormalFee.get(abnormalFeeKey) + abnormalInfoFee;
                     this.abnormalFee.put(abnormalFeeKey, currentAbnormalFee);
@@ -141,8 +141,8 @@ public class DBRealTimeOutputBoltHelper implements Serializable{
             e.printStackTrace();
         }
         LogUtil.printLog("总费用异常费用为： " + totalFee + " == > " + abnormalFee);
-        String updateOrderSql = "UPDATE " + StormConf.dataWarehouseTable + " SET \"rule_" + rules + "\"=1" +
-                " WHERE \"record_time\">=" + traceBackTime + " AND \"rule_" + rules + "\"=0 " +
+        String updateOrderSql = "UPDATE " + StormConf.dataWarehouseTable + " SET \"rule_" + ruleId + "\"=1" +
+                " WHERE \"record_time\">=" + traceBackTime + " AND \"rule_" + ruleId + "\"=0 " +
                 "AND \"msisdn\"=" + msisdn;
         //将上一个结果查询出来需要追溯的正常订单设置为异常。防止后续重复计算。
         try {
