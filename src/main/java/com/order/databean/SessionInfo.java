@@ -196,6 +196,7 @@ public class SessionInfo implements Serializable{
             @Override
             public void run() {
                 try {
+                    LogUtil.printLog("检测规则123 " + bookId);
                     //延迟5分钟之后对65分钟内的数据进行检测。
                     long sleepTime = TimeParaser.getMillisFromTimeToNetFiveMinutes(lastUpdateTime);
                     if (sleepTime > 0) {
@@ -217,7 +218,7 @@ public class SessionInfo implements Serializable{
                     if (rule != null) {
                         LogUtil.printLog(this, "rule1", false);
                         callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
-                                channelId, productId, rule.name(), provinceId, orderType,bookId);
+                                channelId, productId, rule.name(), provinceId, orderType, bookId);
                     } else {
                         LogUtil.printLog(this, "rule1", true);
                     }
@@ -237,6 +238,7 @@ public class SessionInfo implements Serializable{
      * @param callback
      */
     public void checkRule4(final RulesCallback callback) {
+        LogUtil.printLog("检测规则4 " + bookId);
         if (orderChannelCodeByDay.size(lastUpdateTime) >= 3) {
             callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee, channelId,
                     productId, Rules.FOUR.name(), provinceId, orderType, bookId);
@@ -251,6 +253,7 @@ public class SessionInfo implements Serializable{
      * @param callback
      */
     public void checkRule5(String msisdnId, final RulesCallback callback) {
+        LogUtil.printLog("检测规则5 " + bookId);
         if (orderType != 1) {
             return;
         }
@@ -273,6 +276,7 @@ public class SessionInfo implements Serializable{
      * @param callback
      */
     public void checkRule6(final RulesCallback callback) {
+        LogUtil.printLog("检测规则6 " + bookId);
         if (orderType != 4) {
             return;
         }
@@ -295,6 +299,7 @@ public class SessionInfo implements Serializable{
      * @param callback
      */
     public void checkRule7(final RulesCallback callback) {
+        LogUtil.printLog("检测规则7 " + bookId);
         if (orderType != 1 || orderType != 21) {
             return;
         }
@@ -321,6 +326,7 @@ public class SessionInfo implements Serializable{
      * @param callback
      */
     public void checkRule8(String bookId, final RulesCallback callback) {
+        LogUtil.printLog("检测规则8 " + bookId);
         if (orderType != 2) {
             return;
         }
@@ -341,8 +347,8 @@ public class SessionInfo implements Serializable{
      * @param callback
      */
     private transient Thread rule12Checker = null;
-
     public void checkRule12(String platform, final RulesCallback callback) {
+        LogUtil.printLog("检测规则4 " + bookId);
         if (orderType != 4 || Integer.parseInt(platform) == 6) {
             return;
         }

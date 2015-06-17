@@ -29,7 +29,7 @@ public class DBTimer extends Thread {
 
     private HashMap<String, String> parameterId2ChannelIds = null;
 
-    public DBTimer(Connection conn, ConcurrentHashMap abnormalFee, ConcurrentHashMap totalFee) {
+    public DBTimer(Connection conn, ConcurrentHashMap totalFee, ConcurrentHashMap abnormalFee) {
         this.conn = conn;
         this.abnormalFee = abnormalFee;
         this.totalFee = totalFee;
@@ -69,10 +69,6 @@ public class DBTimer extends Thread {
             String ruleID = keys[5];
             String totalFeeKey = date + "|" + provinceId + "|" + channelCode + "|"
                     + contentID + "|" + contentType;
-            if ( !totalFee.contains(totalFeeKey)) {
-                LogUtil.printLog("<======错误KEY=====> " + key);
-                continue;
-            }
             double fee = totalFee.get(totalFeeKey);
             String abnormalFeeKey = totalFeeKey + "|" + ruleID;
             double abnFee = abnormalFee.get(abnormalFeeKey);
