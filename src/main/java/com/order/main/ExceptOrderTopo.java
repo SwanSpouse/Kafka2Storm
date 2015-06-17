@@ -6,6 +6,7 @@ import backtype.storm.spout.SchemeAsMultiScheme;
 import backtype.storm.topology.TopologyBuilder;
 import backtype.storm.tuple.Fields;
 import com.order.bolt.*;
+import com.order.main.Grouping.DataWarehouseGrouping;
 import com.order.util.FName;
 import com.order.util.StormConf;
 import com.order.util.StreamId;
@@ -46,28 +47,28 @@ public class ExceptOrderTopo {
         TopologyBuilder builder = new TopologyBuilder();
 
         //浏览话单发射、分词bolt
-        builder.setSpout(StreamId.Portal_Pageview.name(), new KafkaSpout(pageViewSpoutConfigTopic), 1);
-        builder.setBolt(StreamId.PageViewSplit.name(), new PageviewSplit(), 2)
+        builder.setSpout(StreamId.Portal_Pageview.name(), new KafkaSpout(pageViewSpoutConfigTopic), 10);
+        builder.setBolt(StreamId.PageViewSplit.name(), new PageviewSplit(), 10)
                 .shuffleGrouping(StreamId.Portal_Pageview.name());
 
         //订购话单发射、分词bolt
-        builder.setSpout(StreamId.report_cdr.name(), new KafkaSpout(orderSpoutConfigTopic), 1);
-        builder.setBolt(StreamId.OrderSplit.name(), new OrderSplit(), 2)
+        builder.setSpout(StreamId.report_cdr.name(), new KafkaSpout(orderSpoutConfigTopic), 10);
+        builder.setBolt(StreamId.OrderSplit.name(), new OrderSplit(), 10)
                 .shuffleGrouping(StreamId.report_cdr.name());
 
         //统计bolt
-        builder.setBolt(StreamId.StatisticsBolt.name(), new StatisticsBolt(), 2)
+        builder.setBolt(StreamId.StatisticsBolt.name(), new StatisticsBolt(), 10)
                 .fieldsGrouping(StreamId.PageViewSplit.name(), StreamId.BROWSEDATA.name(), new Fields(FName.MSISDN.name()))
                 .fieldsGrouping(StreamId.OrderSplit.name(), StreamId.ORDERDATA.name(), new Fields(FName.MSISDN.name()));
 
         //仓库入库bolt
-        builder.setBolt(StreamId.DataWarehouseBolt.name(), new DataWarehouseBolt(), 2)
-                .shuffleGrouping(StreamId.StatisticsBolt.name(), StreamId.DATASTREAM.name())
-                .shuffleGrouping(StreamId.StatisticsBolt.name(), StreamId.ABNORMALDATASTREAM.name());
+        builder.setBolt(StreamId.DataWarehouseBolt.name(), new DataWarehouseBolt(), 10)
+                .customGrouping(StreamId.StatisticsBolt.name(), StreamId.DATASTREAM.name(), new DataWarehouseGrouping())
+                .customGrouping(StreamId.StatisticsBolt.name(), StreamId.ABNORMALDATASTREAM.name(), new DataWarehouseGrouping());
         //实时输出接口bolt
-        builder.setBolt(StreamId.RealTimeOutputBolt.name(), new RealTimeOutputBolt(), 2)
-                .shuffleGrouping(StreamId.StatisticsBolt.name(), StreamId.DATASTREAM.name())
-                .shuffleGrouping(StreamId.StatisticsBolt.name(), StreamId.ABNORMALDATASTREAM.name());
+        builder.setBolt(StreamId.RealTimeOutputBolt.name(), new RealTimeOutputBolt(), 10)
+                .customGrouping(StreamId.StatisticsBolt.name(), StreamId.DATASTREAM.name(), new DataWarehouseGrouping())
+                .customGrouping(StreamId.StatisticsBolt.name(), StreamId.ABNORMALDATASTREAM.name(), new DataWarehouseGrouping());
 
         // Run Topo on Cluster
         conf.setNumWorkers(2);
