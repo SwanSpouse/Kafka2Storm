@@ -24,6 +24,6 @@ public class EmitDatas implements RulesCallback ,Serializable{
                           String channelId, String productId, String rules,
                           int provinceId, int orderType, String bookId) {
         collector.emit(StreamId.ABNORMALDATASTREAM.name(), new Values(msisdnId, sessionId, currentTime,
-                realInfoFee, channelId, productId, rules, provinceId, orderType, bookId));
+                realInfoFee, channelId, productId, provinceId, orderType, bookId, rules));
     }
 }

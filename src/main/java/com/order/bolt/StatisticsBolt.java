@@ -225,18 +225,18 @@ public class StatisticsBolt extends BaseBasicBolt {
         boolean[] isObeyRules = currentUserInfo.isObeyRules();
         if (!isObeyRules[UserInfo.SESSION_CHECK_BIT]) {
             collector.emit(StreamId.ABNORMALDATASTREAM.name(),
-                    new Values(msisdn, sessionId, recordTime, realInfoFee, channelCode, productId, Rules.NINE.name(),
-                            provinceId, orderType, bookId));
+                    new Values(msisdn, sessionId, recordTime, realInfoFee, channelCode, productId,
+                            provinceId, orderType, bookId, Rules.NINE.name()));
         }
         if (!isObeyRules[UserInfo.IP_CHECK_BIT]) {
             collector.emit(StreamId.ABNORMALDATASTREAM.name(),
-                    new Values(msisdn, sessionId, recordTime, realInfoFee, channelCode, productId, Rules.TEN.name(),
-                            provinceId, orderType, bookId));
+                    new Values(msisdn, sessionId, recordTime, realInfoFee, channelCode, productId,
+                            provinceId, orderType, bookId, Rules.TEN.name()));
         }
         if (!isObeyRules[UserInfo.UA_CHECK_BIT]) {
             collector.emit(StreamId.ABNORMALDATASTREAM.name(),
-                    new Values(msisdn, sessionId, recordTime, realInfoFee, channelCode, productId, Rules.ELEVEN.name(),
-                            provinceId, orderType, bookId));
+                    new Values(msisdn, sessionId, recordTime, realInfoFee, channelCode, productId,
+                            provinceId, orderType, bookId, Rules.ELEVEN.name()));
         }
     }
 
@@ -250,7 +250,8 @@ public class StatisticsBolt extends BaseBasicBolt {
         declarer.declareStream(StreamId.ABNORMALDATASTREAM.name(),
                 new Fields(FName.MSISDN.name(), FName.SESSIONID.name(), FName.RECORDTIME.name(),
                         FName.REALINFORFEE.name(), FName.CHANNELCODE.name(), FName.PRODUCTID.name(),
-                        FName.RULES.name(), FName.PROVINCEID.name(), FName.ORDERTYPE.name(),
-                        FName.BOOKID.name()));
+                        FName.PROVINCEID.name(), FName.ORDERTYPE.name(), FName.BOOKID.name(),
+                        FName.RULES.name()));
+
     }
 }
