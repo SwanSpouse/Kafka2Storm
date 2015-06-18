@@ -200,16 +200,13 @@ public class StatisticsBolt extends BaseBasicBolt {
         LogUtil.printLog("开始根据各个规则对订单数据进行检测 " + msisdn + " recordTime " + new Date(recordTime));
 
         //检测相应的各个规则。
-        if (!sessionId.startsWith("null")) {
-            //如果用户无sessionId. 无法进行一下相应规则的判断
-            currentSessionInfo.checkRule123(bookId, new EmitDatas(collector));
-            currentSessionInfo.checkRule5(bookId, new EmitDatas(collector));
-            currentSessionInfo.checkRule6(new EmitDatas(collector));
-            currentSessionInfo.checkRule7(new EmitDatas(collector));
-            currentSessionInfo.checkRule8(bookId, new EmitDatas(collector));
-            currentSessionInfo.checkRule12(platform, new EmitDatas(collector));
-        }
+        currentSessionInfo.checkRule123(bookId, new EmitDatas(collector));
         currentSessionInfo.checkRule4(new EmitDatas(collector));
+        currentSessionInfo.checkRule5(bookId, new EmitDatas(collector));
+        currentSessionInfo.checkRule6(new EmitDatas(collector));
+        currentSessionInfo.checkRule7(new EmitDatas(collector));
+        currentSessionInfo.checkRule8(bookId, new EmitDatas(collector));
+        currentSessionInfo.checkRule12(platform, new EmitDatas(collector));
 
         //更新订购话单UserInfos信息
         Pair<String, UserInfo> userInfoPair = new Pair<String, UserInfo>(msisdn, null);

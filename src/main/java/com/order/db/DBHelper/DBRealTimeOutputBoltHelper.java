@@ -116,6 +116,9 @@ public class DBRealTimeOutputBoltHelper implements Serializable{
                         " WHERE \"record_time\">=" + traceBackTime + " AND \"rule_" + ruleId + "\"=0 " +
                         "AND \"msisdn\"=" + msisdn;
         try {
+            if (conn == null) {
+                conn = (new JDBCUtil()).getConnection();
+            }
             Statement stmt = conn.createStatement();
             ResultSet rs = stmt.executeQuery(checkAbnormalOrderSql);
             if (StatisticsBolt.isDebug) {
@@ -146,6 +149,9 @@ public class DBRealTimeOutputBoltHelper implements Serializable{
                 "AND \"msisdn\"=" + msisdn;
         //将上一个结果查询出来需要追溯的正常订单设置为异常。防止后续重复计算。
         try {
+            if (conn == null) {
+                conn = (new JDBCUtil()).getConnection();
+            }
             Statement stmt = conn.createStatement();
             if (StatisticsBolt.isDebug) {
                 log.error("追溯重置sql: " + updateOrderSql);

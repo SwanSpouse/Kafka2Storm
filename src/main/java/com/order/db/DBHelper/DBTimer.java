@@ -2,6 +2,7 @@ package com.order.db.DBHelper;
 
 import com.order.bolt.StatisticsBolt;
 import com.order.constant.Constant;
+import com.order.db.JDBCUtil;
 import com.order.util.LogUtil;
 import com.order.util.StormConf;
 import com.order.util.TimeParaser;
@@ -87,6 +88,9 @@ public class DBTimer extends Thread {
                 + " WHERE RECORD_DAY=? AND PROVINCE_ID=? AND CONTENT_ID=?" +
                      " AND SALE_PARM=? AND CONTENT_TYPE=? AND RULE_ID=?";
         try {
+            if (conn == null) {
+                conn = (new JDBCUtil()).getConnection();
+            }
             PreparedStatement prepStmt = conn.prepareStatement(checkExistsSql);
             prepStmt.setString(1, date);
             prepStmt.setString(2, provinceId);
@@ -123,6 +127,9 @@ public class DBTimer extends Thread {
                 "  ABN_RAT,CONTENT_TYPE,RULE_ID) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)";
         double abnormalFeeRate = abnormalFee / totalFee;
         try {
+            if (conn == null) {
+                conn = (new JDBCUtil()).getConnection();
+            }
             PreparedStatement prepStmt = conn.prepareStatement(insertDataSql);
             prepStmt.setString(1, recordDay);
             prepStmt.setString(2, provinceId);
@@ -154,6 +161,9 @@ public class DBTimer extends Thread {
                 " AND SALE_PARM=? AND CONTENT_TYPE=? AND RULE_ID=?";
 
         try {
+            if (conn == null) {
+                conn = (new JDBCUtil()).getConnection();
+            }
             PreparedStatement prepStmt = conn.prepareStatement(checkExistsSql);
             prepStmt.setString(1, date);
             prepStmt.setString(2, provinceId);

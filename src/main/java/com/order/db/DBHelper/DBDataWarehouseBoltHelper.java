@@ -104,6 +104,9 @@ public class DBDataWarehouseBoltHelper implements Serializable {
                         " VALUES (?,?,?,?,?," +
                         "?,?,?,?,?,?,?,?,?,?,?,?)";
         try {
+            if (conn == null) {
+                conn = (new JDBCUtil()).getConnection();
+            }
             PreparedStatement prepStmt = conn.prepareStatement(sql);
             prepStmt.setString(1, reacordTime);
             prepStmt.setString(2, msisdn);
@@ -127,6 +130,9 @@ public class DBDataWarehouseBoltHelper implements Serializable {
         String sql = "UPDATE " + StormConf.dataWarehouseTable + " SET \"rule_" + rules + "\"=1 " +
                 "WHERE \"msisdn\"=? AND \"sessionid\"=? AND \"channelcode\"=?";
         try {
+            if (conn == null) {
+                conn = (new JDBCUtil()).getConnection();
+            }
             PreparedStatement prepStmt = conn.prepareStatement(sql);
             prepStmt.setString(1, msisdn);
             prepStmt.setString(2, sessionId);
