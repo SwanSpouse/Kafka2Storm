@@ -13,6 +13,8 @@ import com.order.util.StreamId;
 import org.apache.log4j.Logger;
 import storm.kafka.*;
 
+import java.awt.print.Book;
+
 /**
  * Created by LiMingji on 2015/6/5.
  */
@@ -63,15 +65,20 @@ public class ExceptOrderTopo {
 
         //仓库入库bolt
         builder.setBolt(StreamId.DataWarehouseBolt.name(), new DataWarehouseBolt(), 10)
-                .customGrouping(StreamId.StatisticsBolt.name(), StreamId.DATASTREAM.name(), new DataWarehouseGrouping())
-                .customGrouping(StreamId.StatisticsBolt.name(), StreamId.ABNORMALDATASTREAM.name(), new DataWarehouseGrouping());
+                .fieldsGrouping(StreamId.StatisticsBolt.name(), StreamId.DATASTREAM.name(),
+                        new Fields(FName.MSISDN.name(), FName.CHANNELCODE.name(),FName.ORDERTYPE.name()))
+                .fieldsGrouping(StreamId.StatisticsBolt.name(), StreamId.ABNORMALDATASTREAM.name(),
+                        new Fields(FName.MSISDN.name(), FName.CHANNELCODE.name(),FName.ORDERTYPE.name()));
+
         //实时输出接口bolt
         builder.setBolt(StreamId.RealTimeOutputBolt.name(), new RealTimeOutputBolt(), 10)
-                .customGrouping(StreamId.StatisticsBolt.name(), StreamId.DATASTREAM.name(), new DataWarehouseGrouping())
-                .customGrouping(StreamId.StatisticsBolt.name(), StreamId.ABNORMALDATASTREAM.name(), new DataWarehouseGrouping());
+                .fieldsGrouping(StreamId.StatisticsBolt.name(), StreamId.DATASTREAM.name(),
+                        new Fields(FName.MSISDN.name(), FName.CHANNELCODE.name(),FName.ORDERTYPE.name()))
+                .fieldsGrouping(StreamId.StatisticsBolt.name(), StreamId.ABNORMALDATASTREAM.name(),
+                        new Fields(FName.MSISDN.name(), FName.CHANNELCODE.name(),FName.ORDERTYPE.name()));
 
         // Run Topo on Cluster
-        conf.setNumWorkers(2);
+        conf.setNumWorkers(12);
         StormSubmitter.submitTopology(StormConf.TOPONAME, conf, builder.createTopology());
     }
 }
