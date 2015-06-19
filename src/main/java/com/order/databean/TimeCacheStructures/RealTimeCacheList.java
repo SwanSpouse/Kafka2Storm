@@ -37,7 +37,7 @@ public class RealTimeCacheList<T> implements Serializable{
     protected static Object LOCK = null;
     protected transient Thread cleaner = null;
     protected TimeOutCallback timeOutCallback = null;
-    protected int expiratonSecs = 0;
+    protected int expirationSecs = 0;
 
     public RealTimeCacheList(int expiratonSecs) {
         this(expiratonSecs, null);
@@ -49,9 +49,15 @@ public class RealTimeCacheList<T> implements Serializable{
         currentList = new LinkedHashMap<T, LinkedList<Long>>();
 
         this.timeOutCallback = timeOutCallback;
-        this.expiratonSecs = expirationSecs;
-        final long sleepTime = expirationSecs * 1000L;
+        this.expirationSecs = expirationSecs;
 
+    }
+
+    public void startCleaner() {
+        if (cleaner != null) {
+            return ;
+        }
+        final long sleepTime = expirationSecs * 1000L;
         cleaner = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -82,7 +88,8 @@ public class RealTimeCacheList<T> implements Serializable{
      * 在获取size之前对oldlist 和 currentlist中的过期数据进行清除
      * */
     public int size(long currentTime) {
-        long timeThreashold = currentTime - expiratonSecs * 1000L;
+        startCleaner();
+        long timeThreashold = currentTime - expirationSecs * 1000L;
         synchronized (LOCK) {
             this.removeTimeOutData(oldList, timeThreashold);
             this.removeTimeOutData(currentList, timeThreashold);
@@ -153,6 +160,7 @@ public class RealTimeCacheList<T> implements Serializable{
     }
 
     public void put(T value, Long date) {
+        startCleaner();
         synchronized (LOCK) {
             long currentTime;
             if (date != null) {
