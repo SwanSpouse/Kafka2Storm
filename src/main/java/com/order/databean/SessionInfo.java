@@ -216,11 +216,11 @@ public class SessionInfo implements Serializable{
                         rule = Rules.THREE;
                     }
                     if (rule != null) {
-                        LogUtil.printLog(this, "rule1", false);
+                        LogUtil.printLog(this, rule.name(), false);
                         callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
                                 channelId, productId, rule.name(), provinceId, orderType, bookId);
                     } else {
-                        LogUtil.printLog(this, "rule1", true);
+                        LogUtil.printLog(this, rule.name(), true);
                     }
                 } catch (InterruptedException e) {
                     e.printStackTrace();
