@@ -351,7 +351,7 @@ public class SessionInfo implements Serializable{
         if (orderType != 4 || Integer.parseInt(platform) == 6) {
             return;
         }
-        rule123Checker = new Thread(new Runnable() {
+        rule12Checker = new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
