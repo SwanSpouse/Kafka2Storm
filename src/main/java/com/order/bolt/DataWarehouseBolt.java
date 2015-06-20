@@ -1,12 +1,19 @@
 package com.order.bolt;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+
 import backtype.storm.topology.BasicOutputCollector;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseBasicBolt;
+import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
-import com.order.db.DBHelper.DBDataWarehouseBoltHelper;
+import backtype.storm.tuple.Values;
+
+import com.order.db.DBHelper.DBDataWarehouseCacheHelper;
 import com.order.util.FName;
 import com.order.util.LogUtil;
+import com.order.util.OrderRecord;
 import com.order.util.StreamId;
 import com.order.util.TimeParaser;
 
@@ -40,50 +47,113 @@ import com.order.util.TimeParaser;
  */
 public class DataWarehouseBolt extends BaseBasicBolt {
 
-    private DBDataWarehouseBoltHelper DBHelper = new DBDataWarehouseBoltHelper();
+	private static final long serialVersionUID = 1L;
+	private DBDataWarehouseCacheHelper DBHelper = new DBDataWarehouseCacheHelper();
 
-    @Override
-    public void execute(Tuple input, BasicOutputCollector collector) {
-        if (input.getSourceStreamId().equals(StreamId.DATASTREAM.name())) {
-            handleDataStream(input);
-        }else if (input.getSourceStreamId().equals(StreamId.ABNORMALDATASTREAM.name())) {
-            handleAbnormalDataStream(input);
+	@Override
+	public void execute(Tuple input, BasicOutputCollector collector) {
+		if (input.getSourceStreamId().equals(StreamId.DATASTREAM.name())) {
+			handleDataStream(input, collector);
+		} else if (input.getSourceStreamId().equals(
+				StreamId.ABNORMALDATASTREAM.name())) {
+			handleAbnormalDataStream(input, collector);
+		}
+	}
+
+	// 处理正常数据流
+	private void handleDataStream(Tuple input, BasicOutputCollector collector) {
+		String msisdn = input.getStringByField(FName.MSISDN.name());
+		String sessionId = input.getStringByField(FName.SESSIONID.name());
+		String channelCode = input.getStringByField(FName.CHANNELCODE.name());
+		Long recordTime = input.getLongByField(FName.RECORDTIME.name());
+		String bookId = input.getStringByField(FName.BOOKID.name());
+		String productId = input.getStringByField(FName.PRODUCTID.name());
+		double realInfoFee = input.getDoubleByField(FName.REALINFORFEE.name());
+		int provinceId = input.getIntegerByField(FName.PROVINCEID.name());
+		int orderType = input.getIntegerByField(FName.ORDERTYPE.name());
+
+		LogUtil.printLog("接收正常数据流: " + msisdn + " " + recordTime + " "
+				+ realInfoFee);
+
+		// 数据入库
+		DBHelper.insertData(msisdn, sessionId, channelCode, recordTime, bookId,
+				productId, realInfoFee, provinceId, orderType);
+        // 正常订购直接转发
+        collector.emit(StreamId.DATASTREAM2.name(), new Values(msisdn, sessionId, recordTime,
+                realInfoFee, channelCode, productId, provinceId, orderType, bookId));
+	}
+
+	// 处理异常数据流
+	private void handleAbnormalDataStream(Tuple input, BasicOutputCollector collector) {
+		String msisdn = input.getStringByField(FName.MSISDN.name());
+		String sessionId = input.getStringByField(FName.SESSIONID.name());
+		String channelCode = input.getStringByField(FName.CHANNELCODE.name());
+		Long recordTime = input.getLongByField(FName.RECORDTIME.name());
+		String bookId = input.getStringByField(FName.BOOKID.name());
+		String productId = input.getStringByField(FName.PRODUCTID.name());
+		double realInfoFee = input.getDoubleByField(FName.REALINFORFEE.name());
+		int provinceId = input.getIntegerByField(FName.PROVINCEID.name());
+		int orderType = input.getIntegerByField(FName.ORDERTYPE.name());
+		String rule = input.getStringByField(FName.RULES.name());
+
+		LogUtil.printLog("接收异常数据流: " + msisdn + " " + recordTime + " "
+				+ realInfoFee);
+
+		// 异常订购数据首先入缓存
+		DBHelper.updateData(msisdn, sessionId, channelCode, recordTime, bookId,
+				productId, realInfoFee, provinceId, orderType, rule);
+		// 入缓存后直接转发
+		collector.emit(StreamId.ABNORMALDATASTREAM2.name(), new Values(msisdn, sessionId, recordTime, 
+				realInfoFee, channelCode, productId, rule, provinceId, orderType, bookId));		
+		
+		// 向前追溯准备阶段
+        int ruleId = Integer.parseInt(rule);
+        if (ruleId < 1 || ruleId > 12) {
+            return;
         }
-    }
+        /**
+         * 1 2 3 5 6 7 8 这些规则是向前追溯该渠道下1小时数据。
+           4    追溯一天的数据
+           9 10 11 追溯自然小时的数据。
+         */
+        String traceBackTime = "";  // ?? spout中话单时间为空应直接干掉
+        if (ruleId == 1 || ruleId == 2 || ruleId == 3 ||
+                ruleId == 5 || ruleId == 6 || ruleId == 7 || ruleId == 8) {
+            traceBackTime = TimeParaser.OneHourAgo(recordTime);
+        } else if (ruleId == 4) {
+            traceBackTime = TimeParaser.OneDayAgo(recordTime);
+        } else if (ruleId == 9 || ruleId == 10 || ruleId == 11) {    //?? 无规则12
+            traceBackTime = TimeParaser.NormalHourAgo(recordTime);
+        }
+        
+		// 向前回溯各个规则有不同的追溯参数  ??
+		ArrayList<OrderRecord> list = DBHelper.traceBackOrders(msisdn,
+				channelCode, TimeParaser.splitTime(traceBackTime), ruleId);
+		// 将回溯的订购发送
+		Iterator<OrderRecord> itOrder = list.iterator();
+		while (itOrder.hasNext()) {
+			OrderRecord oneRecord = itOrder.next();
+			collector.emit(
+					StreamId.ABNORMALDATASTREAM2.name(),
+					new Values(oneRecord.getMsisdn(), oneRecord.getSessionId(),
+							oneRecord.getRecordTime(), oneRecord.getRealfee(),
+							oneRecord.getChannelCode(), oneRecord.getProductID(), 
+							rule, oneRecord.getProvinceId(), oneRecord.getOrderType(),
+							oneRecord.getBookID()));
+		}
+	}
 
-    //处理正常数据流
-    private void handleDataStream(Tuple input) {
-        String msisdn = input.getStringByField(FName.MSISDN.name());
-        String sessionId = input.getStringByField(FName.SESSIONID.name());
-        Long recordTime = input.getLongByField(FName.RECORDTIME.name());
-        double realInfoFee = input.getDoubleByField(FName.REALINFORFEE.name());
-        String channelCode = input.getStringByField(FName.CHANNELCODE.name());
-
-        LogUtil.printLog("DataWareHouseBolt 接收正常数据流: " + msisdn + " " + recordTime + " " + realInfoFee);
-
-        //数据入库
-        DBHelper.updateData(msisdn,sessionId,channelCode,
-                TimeParaser.formatTimeInSeconds(recordTime),realInfoFee,"0");
-    }
-
-    //处理异常数据流
-    private void handleAbnormalDataStream(Tuple input) {
-        String msisdn = input.getStringByField(FName.MSISDN.name());
-        String sessionId = input.getStringByField(FName.SESSIONID.name());
-        Long recordTime = input.getLongByField(FName.RECORDTIME.name());
-        double realInfoFee = input.getDoubleByField(FName.REALINFORFEE.name());
-        String channelCode = input.getStringByField(FName.CHANNELCODE.name());
-        String rule = input.getStringByField(FName.RULES.name());
-
-        LogUtil.printLog("DataWareHouseBolt 接收异常数据流: " + msisdn + " " + recordTime + " " + realInfoFee);
-
-        //数据入库
-        DBHelper.updateData(msisdn,sessionId,channelCode,
-                TimeParaser.formatTimeInSeconds(recordTime),realInfoFee,rule);
-    }
-
-    @Override
+	@Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
-        //Do Nothing
+        declarer.declareStream(StreamId.DATASTREAM2.name(),
+                new Fields(FName.MSISDN.name(), FName.SESSIONID.name(), FName.RECORDTIME.name(),
+                        FName.REALINFORFEE.name(), FName.CHANNELCODE.name(), FName.PRODUCTID.name(),
+                        FName.PROVINCEID.name(), FName.ORDERTYPE.name(), FName.BOOKID.name()));
+
+        declarer.declareStream(StreamId.ABNORMALDATASTREAM2.name(),
+                new Fields(FName.MSISDN.name(), FName.SESSIONID.name(), FName.RECORDTIME.name(),
+                        FName.REALINFORFEE.name(), FName.CHANNELCODE.name(), FName.PRODUCTID.name(),
+                        FName.RULES.name(), FName.PROVINCEID.name(), FName.ORDERTYPE.name(),
+                        FName.BOOKID.name()));
     }
 }

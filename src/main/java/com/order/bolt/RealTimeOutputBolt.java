@@ -36,19 +36,19 @@ import com.order.util.StreamId;
  * Created by LiMingji on 2015/5/24.
  */
 public class RealTimeOutputBolt extends BaseBasicBolt {
-
-    private DBRealTimeOutputBoltHelper DBHelper = null;
+	private static final long serialVersionUID = 1L;
+	private DBRealTimeOutputBoltHelper DBHelper = null;
 
     @Override
     public void execute(Tuple input, BasicOutputCollector collector) {
         if (DBHelper == null) {
             DBHelper = new DBRealTimeOutputBoltHelper();
         }
-        if (input.getSourceStreamId().equals(StreamId.DATASTREAM.name())) {
-            //正常统计数据流
+        if (input.getSourceStreamId().equals(StreamId.DATASTREAM2.name())) {
+            //从DataWarehouse发来的正常统计数据流
             dealNormalDate(input);
-        } else if (input.getSourceStreamId().equals(StreamId.ABNORMALDATASTREAM.name())) {
-            //异常订购数据流
+        } else if (input.getSourceStreamId().equals(StreamId.ABNORMALDATASTREAM2.name())) {
+            //从DataWarehouse发来的异常订购数据流
             dealAbnormalData(input);
         }
     }
@@ -66,9 +66,9 @@ public class RealTimeOutputBolt extends BaseBasicBolt {
         int orderType = input.getIntegerByField(FName.ORDERTYPE.name());
         String bookId = input.getStringByField(FName.BOOKID.name());
 
-        LogUtil.printLog("RealTimeOutputBolt 接收正常数据流: " + msisdn + " " + recordTime + " " + realInfoFee);
+        LogUtil.printLog("接收正常数据流: " + msisdn + " " + recordTime + " " + realInfoFee);
 
-        DBHelper.updateDataInMap(msisdn, recordTime, channelCode, null, null, provinceId + "", productId,
+        DBHelper.updateData(msisdn, recordTime, channelCode, null, null, provinceId + "", productId,
                 "0", realInfoFee, orderType, bookId);
     }
 
@@ -86,9 +86,9 @@ public class RealTimeOutputBolt extends BaseBasicBolt {
         int orderType = input.getIntegerByField(FName.ORDERTYPE.name());
         String bookId = input.getStringByField(FName.BOOKID.name());
 
-        LogUtil.printLog("RealTimeOutputBolt 接收异常数据流: " + msisdn + " " + recordTime + " " + realInfoFee);
+        LogUtil.printLog("接收异常数据流: " + msisdn + " " + recordTime + " " + realInfoFee);
 
-        DBHelper.updateDataInMap(msisdn, recordTime, channelCode, null, null, provinceId + "", productId,
+        DBHelper.updateData(msisdn, recordTime, channelCode, null, null, provinceId + "", productId,
                 rule, realInfoFee, orderType, bookId);
     }
 

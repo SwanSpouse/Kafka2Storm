@@ -65,17 +65,27 @@ public class ExceptOrderTopo {
 
         //仓库入库bolt
         builder.setBolt(StreamId.DataWarehouseBolt.name(), new DataWarehouseBolt(), 10)
-                .fieldsGrouping(StreamId.StatisticsBolt.name(), StreamId.DATASTREAM.name(),
-                        new Fields(FName.MSISDN.name(), FName.CHANNELCODE.name(),FName.ORDERTYPE.name()))
-                .fieldsGrouping(StreamId.StatisticsBolt.name(), StreamId.ABNORMALDATASTREAM.name(),
-                        new Fields(FName.MSISDN.name(), FName.CHANNELCODE.name(),FName.ORDERTYPE.name()));
-
+                .fieldsGrouping(StreamId.StatisticsBolt.name(), StreamId.DATASTREAM.name(), new Fields(FName.MSISDN.name()))
+                .fieldsGrouping(StreamId.StatisticsBolt.name(), StreamId.ABNORMALDATASTREAM.name(), new Fields(FName.MSISDN.name()));
         //实时输出接口bolt
         builder.setBolt(StreamId.RealTimeOutputBolt.name(), new RealTimeOutputBolt(), 10)
-                .fieldsGrouping(StreamId.StatisticsBolt.name(), StreamId.DATASTREAM.name(),
-                        new Fields(FName.MSISDN.name(), FName.CHANNELCODE.name(),FName.ORDERTYPE.name()))
-                .fieldsGrouping(StreamId.StatisticsBolt.name(), StreamId.ABNORMALDATASTREAM.name(),
-                        new Fields(FName.MSISDN.name(), FName.CHANNELCODE.name(),FName.ORDERTYPE.name()));
+                .shuffleGrouping(StreamId.DataWarehouseBolt.name(), StreamId.DATASTREAM2.name())
+                .shuffleGrouping(StreamId.DataWarehouseBolt.name(), StreamId.ABNORMALDATASTREAM2.name());
+
+
+        //仓库入库bolt
+//        builder.setBolt(StreamId.DataWarehouseBolt.name(), new DataWarehouseBolt(), 10)
+//                .fieldsGrouping(StreamId.StatisticsBolt.name(), StreamId.DATASTREAM.name(),
+//                        new Fields(FName.MSISDN.name(), FName.CHANNELCODE.name(),FName.ORDERTYPE.name()))
+//                .fieldsGrouping(StreamId.StatisticsBolt.name(), StreamId.ABNORMALDATASTREAM.name(),
+//                        new Fields(FName.MSISDN.name(), FName.CHANNELCODE.name(),FName.ORDERTYPE.name()));
+
+        //实时输出接口bolt
+//        builder.setBolt(StreamId.RealTimeOutputBolt.name(), new RealTimeOutputBolt(), 10)
+//                .fieldsGrouping(StreamId.StatisticsBolt.name(), StreamId.DATASTREAM.name(),
+//                        new Fields(FName.MSISDN.name(), FName.CHANNELCODE.name(),FName.ORDERTYPE.name()))
+//                .fieldsGrouping(StreamId.StatisticsBolt.name(), StreamId.ABNORMALDATASTREAM.name(),
+//                        new Fields(FName.MSISDN.name(), FName.CHANNELCODE.name(),FName.ORDERTYPE.name()));
 
         // Run Topo on Cluster
         conf.setNumWorkers(12);
