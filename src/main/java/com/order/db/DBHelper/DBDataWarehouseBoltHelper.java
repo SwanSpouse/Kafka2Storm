@@ -74,7 +74,7 @@ public class DBDataWarehouseBoltHelper implements Serializable {
 
     private boolean checkExists(String msisdn, String sessionId, String channelCode) {
         String queryTimesSql = "SELECT COUNT(*) recordTimes FROM " + StormConf.dataWarehouseTable +
-                "WHERE \"msisdn\"=? AND \"sessionid\"=? AND \"channelcode\"=?";
+                " WHERE \"msisdn\"=? AND \"sessionid\"=? AND \"channelcode\"=?";
         try {
             if (conn == null) {
                 conn = getConn();

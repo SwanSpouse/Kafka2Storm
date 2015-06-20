@@ -64,7 +64,6 @@ public class StatisticsBolt extends BaseBasicBolt {
                                 Pair<String, SessionInfo> currentPair = iterator.next();
                                 if (currentPair.getValue().isOutOfTime()) {
                                     log.info("sessionID : " + currentPair.getValue() + " is out of time");
-                                    currentPair.getValue().clean();
                                     sessionInfos.remove(currentPair);
                                 }
                             }
