@@ -189,45 +189,28 @@ public class SessionInfo implements Serializable{
      * @param callback
      */
     private transient Thread rule123Checker = null;
-
     public void checkRule123(final String bookId, final RulesCallback callback) {
-        rule123Checker = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    LogUtil.printLog("检测规则123 " + bookId);
-                    //延迟5分钟之后对65分钟内的数据进行检测。
-                    long sleepTime = TimeParaser.getMillisFromTimeToNetFiveMinutes(lastUpdateTime);
-                    if (sleepTime > 0) {
-                        rule123Checker.sleep(sleepTime);
-                    }
-                    if (orderType == 4 || orderType == 5 || orderType == 9 || orderType == 99) {
-                        return;
-                    }
-                    //根据特定图书浏览次数来判断违反的是哪条规则
-                    Rules rule = null;
-                    if (bookReadPv.sizeById(bookId) == Constant.READPV_ZERO_TIMES) {
-                        rule = Rules.ONE;
-                    } else if (bookReadPv.sizeById(bookId) == Constant.READPV_ONE_TIMES) {
-                        rule = Rules.TWO;
-                    } else if (bookReadPv.sizeById(bookId) <= Constant.READPV_THREASHOLD
-                            && bookReadPv.sizeById(bookId) > Constant.READPV_ONE_TIMES) {
-                        rule = Rules.THREE;
-                    }
-                    if (rule != null) {
-                        LogUtil.printLog(this, rule.name(), false);
-                        callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
-                                channelId, productId, rule.name(), provinceId, orderType, bookId);
-                    } else {
-                        LogUtil.printLog(this, rule.name(), true);
-                    }
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-        rule123Checker.setDaemon(true);
-        rule123Checker.start();
+
+        if (orderType == 4 || orderType == 5 || orderType == 9 || orderType == 99) {
+            return;
+        }
+        //根据特定图书浏览次数来判断违反的是哪条规则
+        Rules rule = null;
+        if (bookReadPv.sizeById(bookId) == Constant.READPV_ZERO_TIMES) {
+            rule = Rules.ONE;
+        } else if (bookReadPv.sizeById(bookId) == Constant.READPV_ONE_TIMES) {
+            rule = Rules.TWO;
+        } else if (bookReadPv.sizeById(bookId) <= Constant.READPV_THREASHOLD
+                && bookReadPv.sizeById(bookId) > Constant.READPV_ONE_TIMES) {
+            rule = Rules.THREE;
+        }
+        if (rule != null) {
+            LogUtil.printLog(this, rule.name(), false);
+            callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
+                    channelId, productId, rule.name(), provinceId, orderType, bookId);
+        } else {
+            LogUtil.printLog(this, rule.name(), true);
+        }
     }
 
     /**
@@ -351,28 +334,11 @@ public class SessionInfo implements Serializable{
         if (orderType != 4 || Integer.parseInt(platform) == 6) {
             return;
         }
-        rule12Checker = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    rule12Checker.sleep(Constant.FIVE_MINUTES);
-                    if (bookReadPv.size(lastUpdateTime) == 0) {
-                        LogUtil.printLog(this, "rule12", false);
-                        callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
-                                channelId, productId, Rules.TWELVE.name(), provinceId, orderType,bookId);
-                    }
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-        rule12Checker.setDaemon(true);
-        rule12Checker.start();
-    }
-
-    public void clean() {
-        rule123Checker.interrupt();
-        rule123Checker.interrupt();
+        if (bookReadPv.size(lastUpdateTime) == 0) {
+            LogUtil.printLog(this, "rule12", false);
+            callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
+                    channelId, productId, Rules.TWELVE.name(), provinceId, orderType,bookId);
+        }
     }
 
     public boolean isOutOfTime() {
