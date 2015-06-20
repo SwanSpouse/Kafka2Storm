@@ -4,8 +4,8 @@ import com.order.constant.Constant;
 import com.order.constant.Rules;
 import com.order.databean.RulesCallback.RulesCallback;
 import com.order.databean.TimeCacheStructures.BookOrderList;
+import com.order.databean.TimeCacheStructures.CachedList;
 import com.order.databean.TimeCacheStructures.Pair;
-import com.order.databean.TimeCacheStructures.RealTimeCacheList;
 import com.order.db.DBHelper.DBStatisticBoltHelper;
 import com.order.util.LogUtil;
 import com.order.util.TimeParaser;
@@ -43,16 +43,13 @@ public class SessionInfo implements Serializable{
     private int orderType = 0;
 
     //图书阅读浏览pv，
-    private RealTimeCacheList<String> bookReadPv = new RealTimeCacheList<String>(Constant.SIXTYFIVE_MINUTES);
+    private CachedList<String> bookReadPv = new CachedList<String>(Constant.SIXTYFIVE_MINUTES);
     //图书购买pv,
     private BookOrderList bookOrderPv = new BookOrderList();
-    //图书章节购买pv，存放章节对应的bookId。
-    // !!!(废弃）。现在只需要知道订购的章节属于哪本书就可以了。不需要知道章节ID
-    private RealTimeCacheList<String> bookChapterOrderPv = new RealTimeCacheList<String>(Constant.FIVE_MINUTES);
     //各个渠道下的日购买费用 Pair值为用户msisdn 和 orderType=1的 信息费。
-    private RealTimeCacheList<Pair<String, Double>> channelOrderpv = new RealTimeCacheList<Pair<String, Double>>(Constant.ONE_DAY);
+    private CachedList<Pair<String, Double>> channelOrderpv = new CachedList<Pair<String, Double>>(Constant.ONE_DAY);
     //用户营销Id对应的扣费二级渠道。
-    private RealTimeCacheList<String> orderChannelCodeByDay = new RealTimeCacheList<String>(Constant.ONE_DAY);
+    private CachedList<String> orderChannelCodeByDay = new CachedList<String>(Constant.ONE_DAY);
 
     @Override
 
@@ -64,7 +61,7 @@ public class SessionInfo implements Serializable{
         return context;
     }
 
-    //对应浏览pv 和 订购pv 构建SeesionInfo
+    //对应浏览pv 和 订购pv 构建SessionInfo
     public SessionInfo(String sessionId, String msisdnId, String bookReadId,
                        String bookOrderId, String bookChapterOrderId, Long currentTime,
                        int orderType, double realInfoFee, String channelId, String productId, int provinceId) {
@@ -98,9 +95,6 @@ public class SessionInfo implements Serializable{
             }
             bookOrderPv.put(bookOrderId, orderType, lastUpdateTime);
         }
-        if (bookChapterOrderId != null) {
-            bookChapterOrderPv.put(bookOrderId, lastUpdateTime);
-        }
 
         this.provinceId = provinceId;
 
@@ -110,9 +104,9 @@ public class SessionInfo implements Serializable{
             if (channelOrderpv.contains(pair)) {
                 Pair<String, Double> currentPair = channelOrderpv.get(pair);
                 currentPair.setValue(currentPair.getValue() + realInfoFee);
-                channelOrderpv.put(currentPair);
+                channelOrderpv.put(currentPair, lastUpdateTime);
             } else {
-                channelOrderpv.put(pair);
+                channelOrderpv.put(pair, lastUpdateTime);
             }
         }
         //将用户channelCode对应的二级渠道进行保存
@@ -121,14 +115,14 @@ public class SessionInfo implements Serializable{
         }
         String secondChannelId = DBStatisticBoltHelper.getParameterId2SecChannelId().get(channelId);
         if (secondChannelId != null) {
-            this.orderChannelCodeByDay.put(secondChannelId);
+            this.orderChannelCodeByDay.put(secondChannelId, lastUpdateTime);
         }
         LogUtil.printLog("新数据插入: " + this);
 
     }
 
     //对已存在的SessionInfo进行更新。
-    public void updateSeesionInfo(String bookReadId, String bookOrderId, String bookChapterOrderId,
+    public void updateSessionInfo(String bookReadId, String bookOrderId, String bookChapterOrderId,
                                   Long currentTime, int orderType, Double realInfoFee,
                                   String channelId, String productId, int provinceId) {
         if (currentTime != null) {
@@ -144,9 +138,6 @@ public class SessionInfo implements Serializable{
                 this.orderType = 21;
             }
             bookOrderPv.put(bookOrderId, orderType, lastUpdateTime);
-        }
-        if (bookChapterOrderId != null) {
-            bookChapterOrderPv.put(bookOrderId, lastUpdateTime);
         }
 
         this.bookId = bookOrderId;
@@ -164,9 +155,9 @@ public class SessionInfo implements Serializable{
             if (channelOrderpv.contains(pair)) {
                 Pair<String, Double> currentPair = channelOrderpv.get(pair);
                 currentPair.setValue(currentPair.getValue() + realInfoFee);
-                channelOrderpv.put(currentPair);
+                channelOrderpv.put(currentPair, lastUpdateTime);
             } else {
-                channelOrderpv.put(pair);
+                channelOrderpv.put(pair, lastUpdateTime);
             }
         }
         //将用户channelCode对应的二级渠道进行保存
@@ -175,9 +166,17 @@ public class SessionInfo implements Serializable{
         }
         String secondChannelId = DBStatisticBoltHelper.getParameterId2SecChannelId().get(channelId);
         if (secondChannelId != null) {
-            this.orderChannelCodeByDay.put(secondChannelId);
+            this.orderChannelCodeByDay.put(secondChannelId, lastUpdateTime);
         }
         LogUtil.printLog("旧数据更新: " + this);
+    }
+
+    public boolean clear() {
+        //size 自带清理功能。
+        return bookReadPv.size(lastUpdateTime) == 0 &&
+                channelOrderpv.size(lastUpdateTime) == 0 &&
+                orderChannelCodeByDay.size(lastUpdateTime) == 0 &&
+                bookOrderPv.sizeOfOrderBooks(lastUpdateTime) == 0;
     }
 
     /**
@@ -287,7 +286,7 @@ public class SessionInfo implements Serializable{
         if (orderTimes >= Constant.ORDER_BY_MONTH_THRESHOLD) {
             LogUtil.printLog(this, "rule6", false);
             callback.hanleData(msisdnId, sessionId, lastUpdateTime,
-                    realInfoFee, channelId, productId, Rules.SIX.name(), provinceId, orderType,bookId);
+                    realInfoFee, channelId, productId, Rules.SIX.name(), provinceId, orderType, bookId);
         }
     }
 
@@ -377,7 +376,7 @@ public class SessionInfo implements Serializable{
     }
 
     public boolean isOutOfTime() {
-        return bookOrderPv.sizeOfOrderBooks() == 0 &&
+        return bookOrderPv.sizeOfOrderBooks(lastUpdateTime) == 0 &&
                 bookReadPv.size(lastUpdateTime) == 0 &&
                 channelOrderpv.size(lastUpdateTime) == 0;
     }

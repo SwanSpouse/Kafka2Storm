@@ -244,10 +244,6 @@ public class RealTimeCacheList<T> implements Serializable{
         }
     }
 
-    public void clear() {
-        cleaner.interrupt();
-    }
-
     @Override
     public String toString() {
         if (oldList.size() == 0 && currentList.size() == 0) {

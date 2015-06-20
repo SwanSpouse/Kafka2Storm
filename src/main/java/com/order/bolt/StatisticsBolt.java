@@ -13,6 +13,8 @@ import com.order.databean.SessionInfo;
 import com.order.databean.TimeCacheStructures.Pair;
 import com.order.databean.TimeCacheStructures.RealTimeCacheList;
 import com.order.databean.UserInfo;
+import com.order.databean.cleaner.SessionInfoCleaner;
+import com.order.databean.cleaner.UserInfoCleaner;
 import com.order.db.DBHelper.DBStatisticBoltHelper;
 import com.order.util.FName;
 import com.order.util.LogUtil;
@@ -30,15 +32,17 @@ public class StatisticsBolt extends BaseBasicBolt {
     public static boolean isDebug = true;
     private static Logger log = Logger.getLogger(StatisticsBolt.class);
 
-    private DBStatisticBoltHelper DBhelper = new DBStatisticBoltHelper();
+    private DBStatisticBoltHelper DBHelper = new DBStatisticBoltHelper();
 
     //存储字段为msisdn 和 UserInfo
     private RealTimeCacheList<Pair<String, UserInfo>> userInfos =
             new RealTimeCacheList<Pair<String, UserInfo>>(Constant.ONE_HOUR);
+    private UserInfoCleaner userInfoCleaner = null;
 
     //存储字段为seesionId 和 SessionInfo
     private RealTimeCacheList<Pair<String, SessionInfo>> sessionInfos =
             new RealTimeCacheList<Pair<String, SessionInfo>>(Constant.ONE_DAY);
+    private SessionInfoCleaner sessionInfoCleaner = null;
 
     //负责SeesionInfo数据的清理
     private transient Thread cleaner = null;
@@ -80,7 +84,7 @@ public class StatisticsBolt extends BaseBasicBolt {
                 public void run() {
                     while (true) {
                         try {
-                            DBhelper.getData();
+                            DBHelper.getData();
                             long sleepTime = TimeParaser.getMillisFromNowToThreeOclock();
                             if (sleepTime > 0) {
                                 loader.sleep(sleepTime);
@@ -94,6 +98,17 @@ public class StatisticsBolt extends BaseBasicBolt {
             loader.setDaemon(true);
             loader.start();
         }
+        if (userInfoCleaner == null) {
+            userInfoCleaner = new UserInfoCleaner(this.userInfos);
+            userInfoCleaner.setDaemon(true);
+            userInfoCleaner.start();
+        }
+        if (sessionInfos == null) {
+            sessionInfoCleaner = new SessionInfoCleaner(this.sessionInfos);
+            sessionInfoCleaner.setDaemon(true);
+            sessionInfoCleaner.start();
+        }
+
         if (input.getSourceStreamId().equals(StreamId.BROWSEDATA.name())) {
             LogUtil.printLog("阅读浏览话单到达StatisticBolt");
             //阅读浏览话单
@@ -139,7 +154,7 @@ public class StatisticsBolt extends BaseBasicBolt {
         Pair<String, SessionInfo> sessionPair = new Pair<String, SessionInfo>(sessionId, null);
         if (sessionInfos.contains(sessionPair)) {
             SessionInfo currentSessionInfo = (SessionInfo) sessionInfos.get(sessionPair).getValue();
-            currentSessionInfo.updateSeesionInfo(bookId, null, null, recordTime, -1, 0.0, channelCode, null, 0);
+            currentSessionInfo.updateSessionInfo(bookId, null, null, recordTime, -1, 0.0, channelCode, null, 0);
         } else {
             SessionInfo currentSessionInfo = new SessionInfo(sessionId, msisdn, bookId, null, null, recordTime, -1, 0, channelCode, null, 0);
             sessionInfos.put(new Pair<String, SessionInfo>(sessionId, currentSessionInfo));
@@ -188,7 +203,7 @@ public class StatisticsBolt extends BaseBasicBolt {
         SessionInfo currentSessionInfo;
         if (sessionInfos.contains(sessionInfoPair)) {
             currentSessionInfo = (SessionInfo) sessionInfos.get(sessionInfoPair).getValue();
-            currentSessionInfo.updateSeesionInfo(null, bookId, chapterId, recordTime, orderType,
+            currentSessionInfo.updateSessionInfo(null, bookId, chapterId, recordTime, orderType,
                     realInfoFee, channelCode, productId, provinceId);
             sessionInfos.put(new Pair<String, SessionInfo>(sessionId, currentSessionInfo));
         } else {
