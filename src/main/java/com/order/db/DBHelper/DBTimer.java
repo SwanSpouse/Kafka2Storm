@@ -44,6 +44,7 @@ public class DBTimer extends Thread {
         try {
             while (true) {
                 this.sleep(Constant.ONE_MINUTE * 1000L);
+                LogUtil.printLog("===将map中的数据更新到数据库中===");
                 //将map中的数据更新到数据库中。
                 this.updateDB();
                 if (TimeParaser.isTimeToClearData(System.currentTimeMillis())) {
@@ -102,8 +103,9 @@ public class DBTimer extends Thread {
             ResultSet rs = prepStmt.executeQuery();
             rs.next();
             int count = rs.getInt("recordTimes");
+            rs.close();
+            prepStmt.close();
             return count != 0;
-
         } catch (SQLException e) {
             log.error("查询sql错误" + checkExistsSql);
             e.printStackTrace();
@@ -145,6 +147,7 @@ public class DBTimer extends Thread {
             prepStmt.setInt(12,Integer.parseInt(ruleId));
             prepStmt.execute();
             prepStmt.execute("commit");
+            prepStmt.close();
             if (StatisticsBolt.isDebug) {
                 log.info("数据插入成功" + insertDataSql);
             }
@@ -198,6 +201,7 @@ public class DBTimer extends Thread {
             prepStmt.setString(6, ruleId);
             prepStmt.executeUpdate();
             prepStmt.execute("commit");
+            prepStmt.close();
         } catch (SQLException e) {
             log.error("查询sql错误" + checkExistsSql);
             e.printStackTrace();

@@ -8,7 +8,8 @@ import com.order.db.DBHelper.DBDataWarehouseBoltHelper;
 import com.order.util.FName;
 import com.order.util.LogUtil;
 import com.order.util.StreamId;
-import com.order.util.TimeParaser;
+
+import java.sql.Date;
 
 
 /**
@@ -58,12 +59,14 @@ public class DataWarehouseBolt extends BaseBasicBolt {
         Long recordTime = input.getLongByField(FName.RECORDTIME.name());
         double realInfoFee = input.getDoubleByField(FName.REALINFORFEE.name());
         String channelCode = input.getStringByField(FName.CHANNELCODE.name());
+        String bookId = input.getStringByField(FName.BOOKID.name());
+        String productId = input.getStringByField(FName.PRODUCTID.name());
 
         LogUtil.printLog("DataWareHouseBolt 接收正常数据流: " + msisdn + " " + recordTime + " " + realInfoFee);
 
         //数据入库
-        DBHelper.updateData(msisdn,sessionId,channelCode,
-                TimeParaser.formatTimeInSeconds(recordTime),realInfoFee,"0");
+        DBHelper.updateData(msisdn, sessionId, channelCode,
+                new Date(recordTime), realInfoFee, "0", bookId, productId);
     }
 
     //处理异常数据流
@@ -74,12 +77,14 @@ public class DataWarehouseBolt extends BaseBasicBolt {
         double realInfoFee = input.getDoubleByField(FName.REALINFORFEE.name());
         String channelCode = input.getStringByField(FName.CHANNELCODE.name());
         String rule = input.getStringByField(FName.RULES.name());
+        String bookId = input.getStringByField(FName.BOOKID.name());
+        String productId = input.getStringByField(FName.PRODUCTID.name());
 
         LogUtil.printLog("DataWareHouseBolt 接收异常数据流: " + msisdn + " " + recordTime + " " + realInfoFee);
 
         //数据入库
-        DBHelper.updateData(msisdn,sessionId,channelCode,
-                TimeParaser.formatTimeInSeconds(recordTime),realInfoFee,rule);
+        DBHelper.updateData(msisdn, sessionId, channelCode,
+                new Date(recordTime), realInfoFee, rule, bookId, productId);
     }
 
     @Override

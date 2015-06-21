@@ -7,10 +7,7 @@ import com.order.util.StormConf;
 import org.apache.log4j.Logger;
 
 import java.io.Serializable;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 
 /**
  * 用于实现DataWarehouseBolt中的数据库操作。
@@ -61,20 +58,23 @@ public class DBDataWarehouseBoltHelper implements Serializable {
     }
 
     public void updateData(String msisdn, String sessionId, String channelCode,
-                           String reacordTime, double realInfoFee, String rule) {
+                           Date reacordTime, double realInfoFee, String rule,
+                           String bookId, String productId) {
         int ruleNum = getRuleNumFromString(rule);
-        if (checkExists(msisdn, sessionId, channelCode)) {
+        if (checkExists(msisdn, sessionId, channelCode, bookId, productId)) {
             LogUtil.printLog("更新数据成功: " + msisdn + " " + sessionId + " " + channelCode + " rules: " + rule);
-            update(msisdn, sessionId, channelCode, ruleNum);
+            update(msisdn, sessionId, channelCode, ruleNum, bookId, productId);
         } else {
             LogUtil.printLog("插入数据成功: " + msisdn + " " + sessionId + " " + channelCode);
-            insert(msisdn, sessionId, channelCode, reacordTime, realInfoFee);
+            insert(msisdn, sessionId, channelCode, reacordTime, realInfoFee, bookId, productId);
         }
     }
 
-    private boolean checkExists(String msisdn, String sessionId, String channelCode) {
+    private boolean checkExists(String msisdn, String sessionId, String channelCode,
+                                String bookId, String productId) {
         String queryTimesSql = "SELECT COUNT(*) recordTimes FROM " + StormConf.dataWarehouseTable +
-                " WHERE \"msisdn\"=? AND \"sessionid\"=? AND \"channelcode\"=?";
+                " WHERE \"MSISDN\"=? AND \"SESSIONID\"=? AND \"CHANNELCODE\"=? " +
+                " AND \"BOOKID\"=? AND \"PRODUCTID\"=? ";
         try {
             if (conn == null) {
                 conn = getConn();
@@ -83,13 +83,17 @@ public class DBDataWarehouseBoltHelper implements Serializable {
             stmt.setString(1, msisdn);
             stmt.setString(2, sessionId);
             stmt.setString(3, channelCode);
+            stmt.setString(4, bookId);
+            stmt.setString(5, productId);
 
             ResultSet rs = stmt.executeQuery();
             rs.next();
             int count = rs.getInt("recordTimes");
-
             LogUtil.printLog("检查数据是否存在: " + msisdn + " " + sessionId + " " + channelCode);
-            return count != 0;
+
+            rs.close();
+            stmt.close();
+            return count != 0 ? true : false;
         } catch (SQLException e) {
             log.error("查询sql错误" + queryTimesSql);
             e.printStackTrace();
@@ -98,37 +102,44 @@ public class DBDataWarehouseBoltHelper implements Serializable {
     }
 
     private void insert(String msisdn, String sessionId, String channelCode,
-                        String reacordTime, double realInfoFee) {
+                        Date reacordTime, double realInfoFee,
+                        String bookId, String productId) {
         String sql =
                 "INSERT INTO " + StormConf.dataWarehouseTable+
-                        " VALUES (?,?,?,?,?," +
-                        "?,?,?,?,?,?,?,?,?,?,?,?)";
+                        " VALUES (?,?,?,?, ?,?, ?," +
+                        /*后面全是rules*/"?,?,?,?,?,?,?,?,?,?,?,?)";
         try {
             if (conn == null) {
                 conn = (new JDBCUtil()).getConnection();
             }
             PreparedStatement prepStmt = conn.prepareStatement(sql);
-            prepStmt.setString(1, reacordTime);
+            prepStmt.setDate(1, reacordTime);
             prepStmt.setString(2, msisdn);
             prepStmt.setString(3, sessionId);
             prepStmt.setString(4, channelCode);
-            prepStmt.setDouble(5, realInfoFee);
-            for (int i = 6; i <= 17; i++) {
+            prepStmt.setString(5, bookId);
+            prepStmt.setString(6, productId);
+            prepStmt.setDouble(7, realInfoFee);
+            for (int i = 8; i <= 19; i++) {
                 prepStmt.setString(i, 0 + "");
             }
             prepStmt.execute();
+            prepStmt.execute("commit");
+            prepStmt.close();
         } catch (SQLException e) {
             log.error("插入sql错误: " + sql);
             e.printStackTrace();
         }
     }
 
-    private void update(String msisdn, String sessionId, String channelCode, int rules) {
+    private void update(String msisdn, String sessionId, String channelCode, int rules,
+                        String bookId, String productId) {
         if (rules == 0) {
-            return ;
+            return;
         }
-        String sql = "UPDATE " + StormConf.dataWarehouseTable + " SET \"rule_" + rules + "\"=1 " +
-                "WHERE \"msisdn\"=? AND \"sessionid\"=? AND \"channelcode\"=?";
+        String sql = "UPDATE " + StormConf.dataWarehouseTable + " SET \"RULE_" + rules + "\"=1 " +
+                "WHERE \"MSISDN\"=? AND \"SESSIONID\"=? AND \"CHANNELCODE\"=? " +
+                " AND \"BOOKID\"=? AND \"PRODUCTID\"=? ";
         try {
             if (conn == null) {
                 conn = (new JDBCUtil()).getConnection();
@@ -137,7 +148,12 @@ public class DBDataWarehouseBoltHelper implements Serializable {
             prepStmt.setString(1, msisdn);
             prepStmt.setString(2, sessionId);
             prepStmt.setString(3, channelCode);
+            prepStmt.setString(4, bookId);
+            prepStmt.setString(5, productId);
+
             prepStmt.execute();
+            prepStmt.execute("commit");
+            prepStmt.close();
         } catch (SQLException e) {
             e.printStackTrace();
             log.error("更新sql错误: " + sql);

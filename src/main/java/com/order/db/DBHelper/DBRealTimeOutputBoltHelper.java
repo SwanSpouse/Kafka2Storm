@@ -139,6 +139,8 @@ public class DBRealTimeOutputBoltHelper implements Serializable{
                     this.abnormalFee.put(abnormalFeeKey, realInfoFee);
                 }
             }
+            rs.close();
+            stmt.close();
         } catch (SQLException e) {
             log.error("追溯查询sql错误: " + checkAbnormalOrderSql);
             e.printStackTrace();
@@ -158,6 +160,7 @@ public class DBRealTimeOutputBoltHelper implements Serializable{
             }
             stmt.executeUpdate(updateOrderSql);
             stmt.execute("commit");
+            stmt.close();
         } catch (SQLException e) {
             log.error("追溯重置sql错误" + updateOrderSql);
             e.printStackTrace();
