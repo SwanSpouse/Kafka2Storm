@@ -23,8 +23,8 @@ public class DBStatisticBoltHelper implements Serializable{
 
     private static Object LOCK = null;
 
-    private static HashMap<String, String> parameterId2SecChannelId = null;
-    private static HashMap<String, String> parameterId2ChannelIds = null;
+    public static HashMap<String, String> parameterId2SecChannelId = null;
+    public static HashMap<String, String> parameterId2ChannelIds = null;
 
     private static Connection getConn() throws SQLException {
         if (conn == null) {
@@ -90,13 +90,5 @@ public class DBStatisticBoltHelper implements Serializable{
             log.error(sql + ":insert data to DB is failed.");
             e.printStackTrace();
         }
-    }
-
-    public static HashMap<String, String> getParameterId2SecChannelId() {
-        return parameterId2SecChannelId;
-    }
-
-    public static HashMap<String, String> getParameterId2ChannelIds() {
-        return parameterId2ChannelIds;
     }
 }
