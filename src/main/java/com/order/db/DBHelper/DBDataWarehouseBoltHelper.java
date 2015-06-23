@@ -93,6 +93,7 @@ public class DBDataWarehouseBoltHelper implements Serializable {
 
             rs.close();
             stmt.close();
+            conn.close();
             return count != 0 ? true : false;
         } catch (SQLException e) {
             log.error("查询sql错误" + queryTimesSql);
@@ -126,6 +127,7 @@ public class DBDataWarehouseBoltHelper implements Serializable {
             prepStmt.execute();
             prepStmt.execute("commit");
             prepStmt.close();
+            conn.close();
         } catch (SQLException e) {
             log.error("插入sql错误: " + sql);
             e.printStackTrace();
@@ -154,6 +156,7 @@ public class DBDataWarehouseBoltHelper implements Serializable {
             prepStmt.execute();
             prepStmt.execute("commit");
             prepStmt.close();
+            conn.close();
         } catch (SQLException e) {
             e.printStackTrace();
             log.error("更新sql错误: " + sql);

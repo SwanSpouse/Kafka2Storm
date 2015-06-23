@@ -142,6 +142,7 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
             }
             rs.close();
             stmt.close();
+            conn.close();
         } catch (SQLException e) {
             log.error("追溯查询sql错误: " + checkAbnormalOrderSql);
             e.printStackTrace();
@@ -164,6 +165,7 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
             stmt.executeUpdate(updateOrderSql);
             stmt.execute("commit");
             stmt.close();
+            conn.close();
         } catch (SQLException e) {
             log.error("追溯重置sql错误" + updateOrderSql);
             e.printStackTrace();

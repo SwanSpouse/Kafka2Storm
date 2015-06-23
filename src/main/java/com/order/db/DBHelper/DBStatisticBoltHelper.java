@@ -86,6 +86,9 @@ public class DBStatisticBoltHelper implements Serializable{
                     parameterId2ChannelIds.put(parameterId, firstChannelId + "|" + secondChannelId + "|" + thirdChannelId);
                 }
             }
+            resultSet.close();
+            stmt.close();
+            conn.close();
         } catch (SQLException e) {
             log.error(sql + ":insert data to DB is failed.");
             e.printStackTrace();

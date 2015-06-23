@@ -100,6 +100,7 @@ public class DBTimer extends Thread {
             int count = rs.getInt("recordTimes");
             rs.close();
             prepStmt.close();
+            conn.close();
             LogUtil.printLog("DBTimer 检查数据是否存在");
             return count != 0;
         } catch (SQLException e) {
@@ -147,6 +148,7 @@ public class DBTimer extends Thread {
             prepStmt.execute();
             prepStmt.execute("commit");
             prepStmt.close();
+            conn.close();
             if (StatisticsBolt.isDebug) {
                 log.info("数据插入成功" + insertDataSql);
             }
@@ -201,6 +203,7 @@ public class DBTimer extends Thread {
             prepStmt.executeUpdate();
             prepStmt.execute("commit");
             prepStmt.close();
+            conn.close();
             LogUtil.printLog("DBTimer 更新数据成功");
         } catch (SQLException e) {
             log.error("查询sql错误" + checkExistsSql);
