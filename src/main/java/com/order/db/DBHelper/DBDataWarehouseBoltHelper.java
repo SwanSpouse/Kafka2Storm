@@ -44,7 +44,7 @@ public class DBDataWarehouseBoltHelper implements Serializable {
     private Connection getConn() throws SQLException {
         if (conn == null) {
             log.info("Connection is null!");
-            conn = (new JDBCUtil()).getConnection();
+            conn = (JDBCUtil.getConnection());
         }
         return conn;
     }
@@ -93,7 +93,6 @@ public class DBDataWarehouseBoltHelper implements Serializable {
 
             rs.close();
             stmt.close();
-            conn.close();
             return count != 0 ? true : false;
         } catch (SQLException e) {
             log.error("查询sql错误" + queryTimesSql);
@@ -111,7 +110,7 @@ public class DBDataWarehouseBoltHelper implements Serializable {
                         /*后面全是rules*/"?,?,?,?,?,?,?,?,?,?,?,?)";
         try {
             if (conn == null) {
-                conn = (new JDBCUtil()).getConnection();
+                conn = JDBCUtil.getConnection();
             }
             PreparedStatement prepStmt = conn.prepareStatement(sql);
             prepStmt.setDate(1, reacordTime);
@@ -127,7 +126,6 @@ public class DBDataWarehouseBoltHelper implements Serializable {
             prepStmt.execute();
             prepStmt.execute("commit");
             prepStmt.close();
-            conn.close();
         } catch (SQLException e) {
             log.error("插入sql错误: " + sql);
             e.printStackTrace();
@@ -144,7 +142,7 @@ public class DBDataWarehouseBoltHelper implements Serializable {
                 " AND \"BOOKID\"=? AND \"PRODUCTID\"=? ";
         try {
             if (conn == null) {
-                conn = (new JDBCUtil()).getConnection();
+                conn = JDBCUtil.getConnection();
             }
             PreparedStatement prepStmt = conn.prepareStatement(sql);
             prepStmt.setString(1, msisdn);
@@ -156,7 +154,6 @@ public class DBDataWarehouseBoltHelper implements Serializable {
             prepStmt.execute();
             prepStmt.execute("commit");
             prepStmt.close();
-            conn.close();
         } catch (SQLException e) {
             e.printStackTrace();
             log.error("更新sql错误: " + sql);

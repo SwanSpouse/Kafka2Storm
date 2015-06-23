@@ -28,7 +28,7 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
     private Connection getConn() throws SQLException {
         if (conn == null) {
             log.info("Connection is null!");
-            conn = (new JDBCUtil()).getConnection();
+            conn = JDBCUtil.getConnection();
         }
         return conn;
     }
@@ -116,7 +116,7 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
                         "AND \"MSISDN\"=" + msisdn;
         try {
             if (conn == null) {
-                conn = (new JDBCUtil()).getConnection();
+                conn = JDBCUtil.getConnection();
             }
             Statement stmt = conn.createStatement();
             String dateFormatSql = "alter session set nls_date_format= 'YYYY-MM-DD' ";
@@ -142,7 +142,6 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
             }
             rs.close();
             stmt.close();
-            conn.close();
         } catch (SQLException e) {
             log.error("追溯查询sql错误: " + checkAbnormalOrderSql);
             e.printStackTrace();
@@ -154,7 +153,7 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
         //将上一个结果查询出来需要追溯的正常订单设置为异常。防止后续重复计算。
         try {
             if (conn == null) {
-                conn = (new JDBCUtil()).getConnection();
+                conn = JDBCUtil.getConnection();
             }
             String dateFormatSql = "alter session set nls_date_format= 'YYYY-MM-DD' ";
             Statement stmt = conn.createStatement();
@@ -165,7 +164,6 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
             stmt.executeUpdate(updateOrderSql);
             stmt.execute("commit");
             stmt.close();
-            conn.close();
         } catch (SQLException e) {
             log.error("追溯重置sql错误" + updateOrderSql);
             e.printStackTrace();

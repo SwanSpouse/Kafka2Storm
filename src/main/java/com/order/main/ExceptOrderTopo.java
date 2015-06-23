@@ -48,14 +48,21 @@ public class ExceptOrderTopo {
         Config conf = new Config();
         TopologyBuilder builder = new TopologyBuilder();
 
+        /**
+         *   这里有意将浏览话单的并行度设置大于订购话单。是防止订购话单消费过快而浏览话单赶不上订购话单的速度。
+         * e.g. 20150623130510的话单消费的时候有可能几秒前的浏览话单还没有消费。这样就会产生错误。因为话单消
+         * 费的时候浏览记录还没有到达。
+         *                                         2015-06-23 李洺吉  注
+         *
+         */
         //浏览话单发射、分词bolt
         builder.setSpout(StreamId.Portal_Pageview.name(), new KafkaSpout(pageViewSpoutConfigTopic), 10);
-        builder.setBolt(StreamId.PageViewSplit.name(), new PageviewSplit(), 10)
+        builder.setBolt(StreamId.PageViewSplit.name(), new PageviewSplit(), 3)
                 .shuffleGrouping(StreamId.Portal_Pageview.name());
 
         //订购话单发射、分词bolt
         builder.setSpout(StreamId.report_cdr.name(), new KafkaSpout(orderSpoutConfigTopic), 10);
-        builder.setBolt(StreamId.OrderSplit.name(), new OrderSplit(), 10)
+        builder.setBolt(StreamId.OrderSplit.name(), new OrderSplit(), 1)
                 .shuffleGrouping(StreamId.report_cdr.name());
 
         //统计bolt

@@ -85,7 +85,7 @@ public class DBTimer extends Thread {
                      " AND SALE_PARM=? AND CONTENT_TYPE=? AND RULE_ID=?";
         try {
             if (conn == null) {
-                conn = (new JDBCUtil()).getConnection();
+                conn = JDBCUtil.getConnection();
             }
             PreparedStatement prepStmt = conn.prepareStatement(checkExistsSql);
             prepStmt.setString(1, date);
@@ -100,7 +100,6 @@ public class DBTimer extends Thread {
             int count = rs.getInt("recordTimes");
             rs.close();
             prepStmt.close();
-            conn.close();
             LogUtil.printLog("DBTimer 检查数据是否存在");
             return count != 0;
         } catch (SQLException e) {
@@ -119,6 +118,9 @@ public class DBTimer extends Thread {
             log.error("营销参数维表更新错误:" + new Date() + "==>" + channelCode);
             return;
         }
+        if (Integer.parseInt(ruleId) == 0) {
+            return;
+        }
         String[] chls = DBStatisticBoltHelper.parameterId2ChannelIds.get(channelCode).split("\\|");
         String chl1 = chls[0];
         String chl2 = chls[1];
@@ -130,7 +132,7 @@ public class DBTimer extends Thread {
         double abnormalFeeRate = abnormalFee / totalFee;
         try {
             if (conn == null) {
-                conn = (new JDBCUtil()).getConnection();
+                conn = JDBCUtil.getConnection();
             }
             PreparedStatement prepStmt = conn.prepareStatement(insertDataSql);
             prepStmt.setString(1, recordDay);
@@ -148,7 +150,6 @@ public class DBTimer extends Thread {
             prepStmt.execute();
             prepStmt.execute("commit");
             prepStmt.close();
-            conn.close();
             if (StatisticsBolt.isDebug) {
                 log.info("数据插入成功" + insertDataSql);
             }
@@ -166,7 +167,7 @@ public class DBTimer extends Thread {
 
         try {
             if (conn == null) {
-                conn = (new JDBCUtil()).getConnection();
+                conn = JDBCUtil.getConnection();
             }
             PreparedStatement prepStmt = conn.prepareStatement(checkExistsSql);
             prepStmt.setString(1, date);
@@ -203,7 +204,6 @@ public class DBTimer extends Thread {
             prepStmt.executeUpdate();
             prepStmt.execute("commit");
             prepStmt.close();
-            conn.close();
             LogUtil.printLog("DBTimer 更新数据成功");
         } catch (SQLException e) {
             log.error("查询sql错误" + checkExistsSql);

@@ -29,7 +29,7 @@ public class DBStatisticBoltHelper implements Serializable{
     private static Connection getConn() throws SQLException {
         if (conn == null) {
             log.info("Connection is null!");
-            conn = (new JDBCUtil()).getConnection();
+            conn = JDBCUtil.getConnection();
         }
         return conn;
     }
@@ -88,7 +88,6 @@ public class DBStatisticBoltHelper implements Serializable{
             }
             resultSet.close();
             stmt.close();
-            conn.close();
         } catch (SQLException e) {
             log.error(sql + ":insert data to DB is failed.");
             e.printStackTrace();
