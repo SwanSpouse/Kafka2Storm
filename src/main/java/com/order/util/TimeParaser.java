@@ -61,14 +61,13 @@ public class TimeParaser {
      * @param time
      * @return
      */
-    public static long OneHourAgo(Long time) {
+    public static String OneHourAgo(Long time) {
         Calendar calendar = Calendar.getInstance();
         calendar.setTimeInMillis(time);
         calendar.add(Calendar.HOUR, -1);
-//        Date date = calendar.getTime();
-//        SimpleDateFormat sFormat = new SimpleDateFormat("yyyyMMddHHmmss");
-//        return sFormat.format(date);
-        return calendar.getTimeInMillis();
+        Date date = calendar.getTime();
+        SimpleDateFormat sFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+        return sFormat.format(date);
     }
 
     /**
@@ -76,16 +75,15 @@ public class TimeParaser {
      * @param time
      * @return
      */
-    public static long OneDayAgo(Long time) {
+    public static String OneDayAgo(Long time) {
         Calendar calendar = Calendar.getInstance();
         calendar.setTimeInMillis(time);
         calendar.set(Calendar.HOUR_OF_DAY, 0);
         calendar.set(Calendar.MINUTE, 0);
         calendar.set(Calendar.SECOND, 0);
-//        Date date = calendar.getTime();
-//        SimpleDateFormat sFormat = new SimpleDateFormat("yyyyMMddHHmmss");
-//        return sFormat.format(date);
-        return calendar.getTimeInMillis();
+        Date date = calendar.getTime();
+        SimpleDateFormat sFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+        return sFormat.format(date);
     }
 
     /**
@@ -93,15 +91,14 @@ public class TimeParaser {
      * @param time
      * @return
      */
-    public static long NormalHourAgo(Long time) {
+    public static String NormalHourAgo(Long time) {
         Calendar calendar = Calendar.getInstance();
         calendar.setTimeInMillis(time);
         calendar.set(Calendar.MINUTE, 0);
         calendar.set(Calendar.SECOND, 0);
-//        Date date = calendar.getTime();
-//        SimpleDateFormat sFormat = new SimpleDateFormat("yyyyMMddHHmmss");
-//        return sFormat.format(date);
-        return calendar.getTimeInMillis();
+        Date date = calendar.getTime();
+        SimpleDateFormat sFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+        return sFormat.format(date);
     }
 
     //获取从当前时间到明天凌晨三天的毫秒数

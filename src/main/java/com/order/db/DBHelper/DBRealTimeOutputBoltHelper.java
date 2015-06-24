@@ -1,32 +1,27 @@
 package com.order.db.DBHelper;
 
-import com.order.bolt.StatisticsBolt;
 import com.order.db.JDBCUtil;
-import com.order.util.LogUtil;
-import com.order.util.StormConf;
 import com.order.util.TimeParaser;
 import org.apache.log4j.Logger;
 
 import java.io.Serializable;
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by LiMingji on 2015/6/4.
  */
-public class DBRealTimeOutputBoltHelper implements Serializable{
+public class DBRealTimeOutputBoltHelper implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private static Logger log = Logger.getLogger(DBRealTimeOutputBoltHelper.class);
     private transient Connection conn = null;
 
     //Key: date|provinceId|channelCode|content|contextType|
-    private ConcurrentHashMap<String, Double> abnormalFee = null;
+    public static ConcurrentHashMap<String, Double> abnormalFee = null;
     //Key: date|provinceId|channelCode|content|contextType|ruleID
-    private ConcurrentHashMap<String, Double> totalFee = null;
+    public static ConcurrentHashMap<String, Double> totalFee = null;
 
     private Connection getConn() throws SQLException {
         if (conn == null) {
@@ -37,6 +32,7 @@ public class DBRealTimeOutputBoltHelper implements Serializable{
     }
 
     private transient Thread storageData2DBTimer = null;
+
     public DBRealTimeOutputBoltHelper() {
         totalFee = new ConcurrentHashMap<String, Double>();
         abnormalFee = new ConcurrentHashMap<String, Double>();
@@ -58,16 +54,16 @@ public class DBRealTimeOutputBoltHelper implements Serializable{
      * ordertype 非4、5 内容id里填写图书id，内容类型填图书
      * 可以建立一个内容类型维表，1 包月 2 促销包 3 图书
      */
-    public void updateData(String msisdn, Long time, String channelCode, String contextId, String contextType,
+    public void updateData(String msisdn, Long time, String channelCode, String contentId, String contentType,
                            String provinceId, String productId, String rules,
                            double realInfoFee, int orderType, String bookId) {
         String currentTime = TimeParaser.formatTimeInDay(time);
         if (orderType == 1 || orderType == 2 || orderType == 21 || orderType == 3) {
-            contextType = 3 + "";
-            contextId = bookId;
+            contentType = 3 + "";
+            contentId = bookId;
         } else if (orderType == 4) {
-            contextType = 1 + "";
-            contextId = productId;
+            contentType = 1 + "";
+            contentId = productId;
         } else if (orderType == 5) {
             contentType = 2 + "";
             contentId = productId;
@@ -82,34 +78,26 @@ public class DBRealTimeOutputBoltHelper implements Serializable{
             this.totalFee.put(totalFeeKey, realInfoFee);
         }
 
-            contextType = 2 + "";
-            contextId = productId;
+        int ruleId = Integer.parseInt(rules);
+        // 统计正常费用
+        if (ruleId == 0) {
+            if (totalFee.containsKey(totalFeeKey)) {
+                double currentFee = totalFee.get(totalFeeKey) + realInfoFee;
+                this.totalFee.put(totalFeeKey, currentFee);
+            } else {
+                this.totalFee.put(totalFeeKey, realInfoFee);
+            }
+            return;
         }
-        // 找到key
-		String totalFeeKey = currentTime + "|" + provinceId + "|"
-				+ channelCode + "|" + contextId + "|" + contextType;
-		int ruleId = Integer.parseInt(rules);
-		
-		// 统计正常费用
-		if (ruleId == 0) {
-			if (totalFee.containsKey(totalFeeKey)) {
-				double currentFee = totalFee.get(totalFeeKey) + realInfoFee;
-				this.totalFee.put(totalFeeKey, currentFee);
-			} else {
-				this.totalFee.put(totalFeeKey, realInfoFee);
-			}
-			return;
-		}
 
         // 统计异常费用
-		String abnormalFeeKey = totalFeeKey + "|" + rules;
-		if (abnormalFee.containsKey(abnormalFeeKey)) {
-			double currentAbnormalFee = abnormalFee.get(abnormalFeeKey) + realInfoFee;
-			this.abnormalFee.put(abnormalFeeKey, currentAbnormalFee);
-		}
-		else {
-			this.abnormalFee.put(abnormalFeeKey, realInfoFee);
-		}
+        String abnormalFeeKey = totalFeeKey + "|" + rules;
+        if (abnormalFee.containsKey(abnormalFeeKey)) {
+            double currentAbnormalFee = abnormalFee.get(abnormalFeeKey) + realInfoFee;
+            this.abnormalFee.put(abnormalFeeKey, currentAbnormalFee);
+        } else {
+            this.abnormalFee.put(abnormalFeeKey, realInfoFee);
+        }
     }
 //        //将一小时以内统计正常的记录取出来，更新异常费用，并修改为异常。
 //        /**

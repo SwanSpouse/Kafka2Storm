@@ -64,14 +64,13 @@ public class DBDataWarehouseCacheHelper implements Serializable {
     private Connection getConn() throws SQLException {
         if (conn == null) {
             log.info("Connection is null!");
-            conn = (new JDBCUtil()).getConnection();
+            conn = JDBCUtil.getConnection();
         }
         return conn;
     }
 
     public DBDataWarehouseCacheHelper() {
         LOCK = new Object();
-
 		/* 连接数据库 */
         try {
             conn = this.getConn();
@@ -146,6 +145,9 @@ public class DBDataWarehouseCacheHelper implements Serializable {
         order.setProvinceId(provinceId);
         order.setOrderType(orderType);
         synchronized (LOCK) {
+            if (LOCK == null) {
+                LOCK = new Object();
+            }
             if (orderMap.containsKey(msisdn)) {
                 Iterator<OrderRecord> itOrder = orderMap.get(msisdn).iterator();
                 while (itOrder.hasNext()) {
