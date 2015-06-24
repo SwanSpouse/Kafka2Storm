@@ -12,9 +12,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by LiMingji on 2015/6/9.
@@ -23,31 +22,22 @@ public class DBTimer extends Thread {
     private static Logger log = Logger.getLogger(DBTimer.class);
 
     private Connection conn = null;
-    //Key: date|provinceId|channelCode|context|contextType|
-    private ConcurrentHashMap<String, Double> totalFee = null;
-    //Key: date|provinceId|channelCode|context|contextType|ruleID
-    private ConcurrentHashMap<String, Double> abnormalFee = null;
 
-    private HashMap<String, String> parameterId2ChannelIds = null;
-
-    public DBTimer(Connection conn, ConcurrentHashMap totalFee, ConcurrentHashMap abnormalFee) {
+    public DBTimer(Connection conn) {
         this.conn = conn;
-        this.abnormalFee = abnormalFee;
-        this.totalFee = totalFee;
-        parameterId2ChannelIds = DBStatisticBoltHelper.getParameterId2ChannelIds();
     }
-
 
     @Override
     public void run() {
         super.run();
         try {
             while (true) {
-                this.sleep(Constant.ONE_MINUTE * 1000L);
+                Thread.sleep(Constant.ONE_MINUTE * 1000L);
+                LogUtil.printLog("===将map中的数据更新到数据库中===");
                 //将map中的数据更新到数据库中。
                 this.updateDB();
                 if (TimeParaser.isTimeToClearData(System.currentTimeMillis())) {
-                    totalFee.clear();
+                    DBRealTimeOutputBoltHelper.totalFee.clear();
                 }
             }
         } catch (InterruptedException e) {
@@ -56,8 +46,8 @@ public class DBTimer extends Thread {
     }
 
     private void updateDB() {
-        for (String key : abnormalFee.keySet()) {
-            String[] keys = key.split("|");
+        for (String key : DBRealTimeOutputBoltHelper.abnormalFee.keySet()) {
+            String[] keys = key.split("\\|");
             if (keys.length < 6) {
                 log.error("字段错误: " + key);
                 continue;
@@ -70,16 +60,22 @@ public class DBTimer extends Thread {
             String ruleID = keys[5];
             String totalFeeKey = date + "|" + provinceId + "|" + channelCode + "|"
                     + contentID + "|" + contentType;
-            double fee = totalFee.get(totalFeeKey);
+            if (!DBRealTimeOutputBoltHelper.totalFee.containsKey(totalFeeKey)) {
+                LogUtil.printLog("费用列表异常：" + DBRealTimeOutputBoltHelper.totalFee + " : "
+                        + DBRealTimeOutputBoltHelper.abnormalFee + " : " + totalFeeKey +
+                        " " + Arrays.asList(keys));
+                continue;
+            }
+            double fee = DBRealTimeOutputBoltHelper.totalFee.get(totalFeeKey);
             String abnormalFeeKey = totalFeeKey + "|" + ruleID;
-            double abnFee = abnormalFee.get(abnormalFeeKey);
+            double abnFee = DBRealTimeOutputBoltHelper.abnormalFee.get(abnormalFeeKey);
             if (checkExists(date, provinceId, contentID, contentType, channelCode, ruleID)) {
                 this.updateDate(date, provinceId, contentID, contentType, channelCode, ruleID, abnFee, fee);
             } else {
                 this.insertData(date, provinceId, contentID, contentType, channelCode, ruleID, abnFee, fee);
             }
         }
-        abnormalFee.clear();
+        DBRealTimeOutputBoltHelper.abnormalFee.clear();
     }
 
     private boolean checkExists(String date, String provinceId, String contentID, String contentType,
@@ -89,7 +85,7 @@ public class DBTimer extends Thread {
                      " AND SALE_PARM=? AND CONTENT_TYPE=? AND RULE_ID=?";
         try {
             if (conn == null) {
-                conn = (new JDBCUtil()).getConnection();
+                conn = JDBCUtil.getConnection();
             }
             PreparedStatement prepStmt = conn.prepareStatement(checkExistsSql);
             prepStmt.setString(1, date);
@@ -102,8 +98,10 @@ public class DBTimer extends Thread {
             ResultSet rs = prepStmt.executeQuery();
             rs.next();
             int count = rs.getInt("recordTimes");
+            rs.close();
+            prepStmt.close();
+            LogUtil.printLog("DBTimer 检查数据是否存在");
             return count != 0;
-
         } catch (SQLException e) {
             log.error("查询sql错误" + checkExistsSql);
             e.printStackTrace();
@@ -113,22 +111,28 @@ public class DBTimer extends Thread {
 
     private void insertData(String recordDay,String provinceId, String contentId, String contentType,
                             String channelCode, String ruleId, double abnormalFee, double totalFee) {
-        if (!parameterId2ChannelIds.containsKey(channelCode)) {
-            log.error("营销参数维表更新错误:" + new Date());
+        if (DBStatisticBoltHelper.parameterId2ChannelIds == null) {
+            DBStatisticBoltHelper.getData();
+        }
+        if (!DBStatisticBoltHelper.parameterId2ChannelIds.containsKey(channelCode)) {
+            log.error("营销参数维表更新错误:" + new Date() + "==>" + channelCode);
             return;
         }
-        String[] chls = parameterId2ChannelIds.get(channelCode).split("|");
+        if (Integer.parseInt(ruleId) == 0) {
+            return;
+        }
+        String[] chls = DBStatisticBoltHelper.parameterId2ChannelIds.get(channelCode).split("\\|");
         String chl1 = chls[0];
         String chl2 = chls[1];
         String chl3 = chls[2];
-        String insertDataSql = "INSERT INTO "+StormConf.realTimeOutputTable+
+        String insertDataSql = "INSERT INTO " + StormConf.realTimeOutputTable +
                 "( RECORD_DAY,PROVINCE_ID,CHL1,CHL2,CHL3," +
                 "  CONTENT_ID,SALE_PARM,ODR_ABN_FEE,ODR_FEE," +
                 "  ABN_RAT,CONTENT_TYPE,RULE_ID) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)";
         double abnormalFeeRate = abnormalFee / totalFee;
         try {
             if (conn == null) {
-                conn = (new JDBCUtil()).getConnection();
+                conn = JDBCUtil.getConnection();
             }
             PreparedStatement prepStmt = conn.prepareStatement(insertDataSql);
             prepStmt.setString(1, recordDay);
@@ -142,9 +146,10 @@ public class DBTimer extends Thread {
             prepStmt.setDouble(9, totalFee);
             prepStmt.setDouble(10, abnormalFeeRate);
             prepStmt.setString(11, contentType);
-            prepStmt.setInt(12,Integer.parseInt(ruleId));
+            prepStmt.setInt(12, Integer.parseInt(ruleId));
             prepStmt.execute();
             prepStmt.execute("commit");
+            prepStmt.close();
             if (StatisticsBolt.isDebug) {
                 log.info("数据插入成功" + insertDataSql);
             }
@@ -162,7 +167,7 @@ public class DBTimer extends Thread {
 
         try {
             if (conn == null) {
-                conn = (new JDBCUtil()).getConnection();
+                conn = JDBCUtil.getConnection();
             }
             PreparedStatement prepStmt = conn.prepareStatement(checkExistsSql);
             prepStmt.setString(1, date);
@@ -198,6 +203,8 @@ public class DBTimer extends Thread {
             prepStmt.setString(6, ruleId);
             prepStmt.executeUpdate();
             prepStmt.execute("commit");
+            prepStmt.close();
+            LogUtil.printLog("DBTimer 更新数据成功");
         } catch (SQLException e) {
             log.error("查询sql错误" + checkExistsSql);
             e.printStackTrace();

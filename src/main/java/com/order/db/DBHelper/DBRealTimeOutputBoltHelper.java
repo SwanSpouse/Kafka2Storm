@@ -1,12 +1,17 @@
 package com.order.db.DBHelper;
 
+import com.order.bolt.StatisticsBolt;
 import com.order.db.JDBCUtil;
+import com.order.util.LogUtil;
+import com.order.util.StormConf;
 import com.order.util.TimeParaser;
 import org.apache.log4j.Logger;
 
 import java.io.Serializable;
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -18,15 +23,15 @@ public class DBRealTimeOutputBoltHelper implements Serializable{
     private static Logger log = Logger.getLogger(DBRealTimeOutputBoltHelper.class);
     private transient Connection conn = null;
 
-    //Key: date|provinceId|channelCode|context|contextType|
+    //Key: date|provinceId|channelCode|content|contextType|
     private ConcurrentHashMap<String, Double> abnormalFee = null;
-    //Key: date|provinceId|channelCode|context|contextType|ruleID
+    //Key: date|provinceId|channelCode|content|contextType|ruleID
     private ConcurrentHashMap<String, Double> totalFee = null;
 
     private Connection getConn() throws SQLException {
         if (conn == null) {
             log.info("Connection is null!");
-            conn = (new JDBCUtil()).getConnection();
+            conn = JDBCUtil.getConnection();
         }
         return conn;
     }
@@ -37,7 +42,7 @@ public class DBRealTimeOutputBoltHelper implements Serializable{
         abnormalFee = new ConcurrentHashMap<String, Double>();
         try {
             conn = this.getConn();
-            storageData2DBTimer = new DBTimer(conn, totalFee, abnormalFee);
+            storageData2DBTimer = new DBTimer(conn);
             storageData2DBTimer.setDaemon(true);
             storageData2DBTimer.start();
         } catch (SQLException e) {
@@ -64,6 +69,18 @@ public class DBRealTimeOutputBoltHelper implements Serializable{
             contextType = 1 + "";
             contextId = productId;
         } else if (orderType == 5) {
+            contentType = 2 + "";
+            contentId = productId;
+        }
+        //统计正常费用。
+        String totalFeeKey = currentTime + "|" + provinceId + "|" + channelCode + "|"
+                + contentId + "|" + contentType;
+        if (totalFee.containsKey(totalFeeKey)) {
+            double currentFee = totalFee.get(totalFeeKey) + realInfoFee;
+            this.totalFee.put(totalFeeKey, currentFee);
+        } else {
+            this.totalFee.put(totalFeeKey, realInfoFee);
+        }
 
             contextType = 2 + "";
             contextId = productId;

@@ -34,13 +34,22 @@ public class TimeParaser {
         return -1L;
     }
 
-    //根据long型构造符合条件的日期格式
+    /**
+     *根据long型构造符合条件的日期格式
+     * @param inputTime  1433494523823L
+     * @return 输出为20150621
+     */
     public static String formatTimeInDay(Long inputTime) {
         SimpleDateFormat sFormat = new SimpleDateFormat("yyyyMMdd");
         Date date = new Date(inputTime);
         return sFormat.format(date);
     }
 
+    /**
+     *根据long型构造符合条件的日期格式
+     * @param inputTime  1433494523823L
+     * @return 输出为20150621121500
+     */
     public static String formatTimeInSeconds(Long inputTime) {
         SimpleDateFormat sFormat = new SimpleDateFormat("yyyyMMddHHmmss");
         Date date = new Date(inputTime);
@@ -52,13 +61,14 @@ public class TimeParaser {
      * @param time
      * @return
      */
-    public static String OneHourAgo(Long time) {
+    public static long OneHourAgo(Long time) {
         Calendar calendar = Calendar.getInstance();
         calendar.setTimeInMillis(time);
         calendar.add(Calendar.HOUR, -1);
-        Date date = calendar.getTime();
-        SimpleDateFormat sFormat = new SimpleDateFormat("yyyyMMddHHmmss");
-        return sFormat.format(date);
+//        Date date = calendar.getTime();
+//        SimpleDateFormat sFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+//        return sFormat.format(date);
+        return calendar.getTimeInMillis();
     }
 
     /**
@@ -66,15 +76,16 @@ public class TimeParaser {
      * @param time
      * @return
      */
-    public static String OneDayAgo(Long time) {
+    public static long OneDayAgo(Long time) {
         Calendar calendar = Calendar.getInstance();
         calendar.setTimeInMillis(time);
         calendar.set(Calendar.HOUR_OF_DAY, 0);
         calendar.set(Calendar.MINUTE, 0);
         calendar.set(Calendar.SECOND, 0);
-        Date date = calendar.getTime();
-        SimpleDateFormat sFormat = new SimpleDateFormat("yyyyMMddHHmmss");
-        return sFormat.format(date);
+//        Date date = calendar.getTime();
+//        SimpleDateFormat sFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+//        return sFormat.format(date);
+        return calendar.getTimeInMillis();
     }
 
     /**
@@ -82,14 +93,15 @@ public class TimeParaser {
      * @param time
      * @return
      */
-    public static String NormalHourAgo(Long time) {
+    public static long NormalHourAgo(Long time) {
         Calendar calendar = Calendar.getInstance();
         calendar.setTimeInMillis(time);
         calendar.set(Calendar.MINUTE, 0);
         calendar.set(Calendar.SECOND, 0);
-        Date date = calendar.getTime();
-        SimpleDateFormat sFormat = new SimpleDateFormat("yyyyMMddHHmmss");
-        return sFormat.format(date);
+//        Date date = calendar.getTime();
+//        SimpleDateFormat sFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+//        return sFormat.format(date);
+        return calendar.getTimeInMillis();
     }
 
     //获取从当前时间到明天凌晨三天的毫秒数

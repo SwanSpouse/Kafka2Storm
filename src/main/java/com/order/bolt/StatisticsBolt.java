@@ -188,7 +188,7 @@ public class StatisticsBolt extends BaseBasicBolt {
         int provinceId = Integer.parseInt(provinceIdStr);
 
         if (sessionId == null || sessionId.trim().equals("")) {
-            sessionId = "null" + msisdn;
+            sessionId = msisdn;
         }
 
         LogUtil.printLog("接受到订单数据 " + msisdn + " recordTime " + new Date(recordTime));

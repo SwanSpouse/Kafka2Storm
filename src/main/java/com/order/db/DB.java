@@ -75,7 +75,7 @@ public class DB implements java.io.Serializable {
 	private Connection getConn() throws SQLException {
 		if (conn == null) {
 			log.info("Connection is null!");
-			conn = (new JDBCUtil()).getConnection();
+			conn = JDBCUtil.getConnection();
 		}
 		return conn;
 	}

@@ -110,10 +110,10 @@ public class SessionInfo implements Serializable{
             }
         }
         //将用户channelCode对应的二级渠道进行保存
-        if (DBStatisticBoltHelper.getParameterId2SecChannelId() == null) {
+        if (DBStatisticBoltHelper.parameterId2SecChannelId == null) {
             DBStatisticBoltHelper.getData();
         }
-        String secondChannelId = DBStatisticBoltHelper.getParameterId2SecChannelId().get(channelId);
+        String secondChannelId = DBStatisticBoltHelper.parameterId2SecChannelId.get(channelId);
         if (secondChannelId != null) {
             this.orderChannelCodeByDay.put(secondChannelId, lastUpdateTime);
         }
@@ -161,10 +161,10 @@ public class SessionInfo implements Serializable{
             }
         }
         //将用户channelCode对应的二级渠道进行保存
-        if (DBStatisticBoltHelper.getParameterId2SecChannelId() == null) {
+        if (DBStatisticBoltHelper.parameterId2SecChannelId == null) {
             DBStatisticBoltHelper.getData();
         }
-        String secondChannelId = DBStatisticBoltHelper.getParameterId2SecChannelId().get(channelId);
+        String secondChannelId = DBStatisticBoltHelper.parameterId2SecChannelId.get(channelId);
         if (secondChannelId != null) {
             this.orderChannelCodeByDay.put(secondChannelId, lastUpdateTime);
         }
