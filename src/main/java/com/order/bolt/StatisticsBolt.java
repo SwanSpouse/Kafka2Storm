@@ -39,7 +39,7 @@ public class StatisticsBolt extends BaseBasicBolt {
             new RealTimeCacheList<Pair<String, UserInfo>>(Constant.ONE_HOUR);
     private UserInfoCleaner userInfoCleaner = null;
 
-    //存储字段为seesionId 和 SessionInfo
+    //存储字段为msisdn 和 SessionInfo
     private RealTimeCacheList<Pair<String, SessionInfo>> sessionInfos =
             new RealTimeCacheList<Pair<String, SessionInfo>>(Constant.ONE_DAY);
     private SessionInfoCleaner sessionInfoCleaner = null;
@@ -150,13 +150,14 @@ public class StatisticsBolt extends BaseBasicBolt {
         LogUtil.printLog("接收到浏览话单数据，更新数据结构 " + msisdn + " recordTime " + new Date(recordTime));
 
         //更新阅读浏览话单的SessionInfos信息
-        Pair<String, SessionInfo> sessionPair = new Pair<String, SessionInfo>(sessionId, null);
+        Pair<String, SessionInfo> sessionPair = new Pair<String, SessionInfo>(msisdn, null);
         if (sessionInfos.contains(sessionPair)) {
             SessionInfo currentSessionInfo = (SessionInfo) sessionInfos.get(sessionPair).getValue();
             currentSessionInfo.updateSessionInfo(bookId, null, null, recordTime, -1, 0.0, channelCode, null, 0);
+            sessionInfos.put(new Pair<String, SessionInfo>(msisdn, currentSessionInfo));
         } else {
             SessionInfo currentSessionInfo = new SessionInfo(sessionId, msisdn, bookId, null, null, recordTime, -1, 0, channelCode, null, 0);
-            sessionInfos.put(new Pair<String, SessionInfo>(sessionId, currentSessionInfo));
+            sessionInfos.put(new Pair<String, SessionInfo>(msisdn, currentSessionInfo));
         }
         //浏览话单不需要更新用户信息
     }
@@ -198,17 +199,17 @@ public class StatisticsBolt extends BaseBasicBolt {
         LogUtil.printLog("正常数据流成功发射");
 
         //更新订购话单的SessionInfos信息
-        Pair<String, SessionInfo> sessionInfoPair = new Pair<String, SessionInfo>(sessionId, null);
+        Pair<String, SessionInfo> sessionInfoPair = new Pair<String, SessionInfo>(msisdn, null);
         SessionInfo currentSessionInfo;
         if (sessionInfos.contains(sessionInfoPair)) {
             currentSessionInfo = (SessionInfo) sessionInfos.get(sessionInfoPair).getValue();
             currentSessionInfo.updateSessionInfo(null, bookId, chapterId, recordTime, orderType,
                     realInfoFee, channelCode, productId, provinceId);
-            sessionInfos.put(new Pair<String, SessionInfo>(sessionId, currentSessionInfo));
+            sessionInfos.put(new Pair<String, SessionInfo>(msisdn, currentSessionInfo));
         } else {
             currentSessionInfo = new SessionInfo(sessionId, msisdn, null, bookId,
                     chapterId, recordTime, orderType, realInfoFee, channelCode, productId, provinceId);
-            sessionInfos.put(new Pair<String, SessionInfo>(sessionId, currentSessionInfo));
+            sessionInfos.put(new Pair<String, SessionInfo>(msisdn, currentSessionInfo));
         }
 
         LogUtil.printLog("开始根据各个规则对订单数据进行检测 " + msisdn + " recordTime " + new Date(recordTime));
