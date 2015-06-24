@@ -318,7 +318,7 @@ public class DBDataWarehouseCacheHelper implements Serializable {
     }
 
     /* 获取异常规则对应的数字编号 */
-    public int getRuleNumFromString(String rule) {
+    public static int getRuleNumFromString(String rule) {
         if (rule.equals(Rules.ONE.name())) {
             return 1;
         } else if (rule.equals(Rules.TWO.name())) {
