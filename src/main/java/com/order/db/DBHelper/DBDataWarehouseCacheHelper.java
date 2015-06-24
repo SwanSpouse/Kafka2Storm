@@ -80,6 +80,12 @@ public class DBDataWarehouseCacheHelper implements Serializable {
         
     	/* 定时清理内存中的订购记录到数据库中 */
         orderMap = new HashMap<String, ArrayList<OrderRecord>>();
+    }
+
+    /* 插入新的订购记录 */
+    public void insertData(String msisdn, String sessionId, String channelCode,
+                           Long recordTime, String bookID, String productID, double realInfoFee,
+                           int provinceId, int orderType) {
         if (cleaner == null) {
             cleaner = new Thread(new Runnable() {
                 @Override
@@ -99,12 +105,6 @@ public class DBDataWarehouseCacheHelper implements Serializable {
             cleaner.setDaemon(true);
             cleaner.start();
         }
-    }
-
-    /* 插入新的订购记录 */
-    public void insertData(String msisdn, String sessionId, String channelCode,
-                           Long recordTime, String bookID, String productID, double realInfoFee,
-                           int provinceId, int orderType) {
         OrderRecord order = new OrderRecord();
         order.setRecordTime(recordTime);
         order.setMsisdn(msisdn);
@@ -117,6 +117,9 @@ public class DBDataWarehouseCacheHelper implements Serializable {
         order.setOrderType(orderType);
         for (int i = 1; i < 13; i++) {
             order.getRules().put(i, 1);
+        }
+        if (LOCK == null) {
+            LOCK = new Object();
         }
         synchronized (LOCK) {
             if (orderMap.containsKey(msisdn)) {
@@ -134,6 +137,25 @@ public class DBDataWarehouseCacheHelper implements Serializable {
     public void updateData(String msisdn, String sessionId, String channelCode,
                            Long recordTime, String bookID, String productID, double realInfoFee,
                            int provinceId, int orderType, String rule) {
+        if (cleaner == null) {
+            cleaner = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    while (true) {
+                        try {
+                            // 每隔一个一段时间清理一次。
+                            cleaner.sleep(clearTimer * 1000L);
+                            log.info("Begin Clean DataWareHouse cache ...");
+                            cleanAndToDB();
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            });
+            cleaner.setDaemon(true);
+            cleaner.start();
+        }
         OrderRecord order = new OrderRecord();
         order.setRecordTime(recordTime);
         order.setMsisdn(msisdn);
@@ -144,6 +166,9 @@ public class DBDataWarehouseCacheHelper implements Serializable {
         order.setRealfee(realInfoFee);
         order.setProvinceId(provinceId);
         order.setOrderType(orderType);
+        if (LOCK == null) {
+            LOCK = new Object();
+        }
         synchronized (LOCK) {
             if (LOCK == null) {
                 LOCK = new Object();
@@ -164,6 +189,9 @@ public class DBDataWarehouseCacheHelper implements Serializable {
 
     /* 回溯前一段时间的订购，返回之前判断为正常的订购 */
     public ArrayList<OrderRecord> traceBackOrders(String msisdn, String channelCode, Long traceBackTime, int ruleID) {
+        if (LOCK == null) {
+            LOCK = new Object();
+        }
         synchronized (LOCK) {
             if (!orderMap.containsKey(msisdn)) {
                 return null;
@@ -202,6 +230,9 @@ public class DBDataWarehouseCacheHelper implements Serializable {
         log.info("Begin cleanAndToDB before " + TimeParaser.formatTimeInSeconds(currentTime));
         // 要入库的订购记录列表
         ArrayList<OrderRecord> insertList = new ArrayList<OrderRecord>();
+        if (LOCK == null) {
+            LOCK = new Object();
+        }
         synchronized (LOCK) {
             // 遍历
             Iterator<Map.Entry<String, ArrayList<OrderRecord>>> itMsisdn = orderMap.entrySet().iterator();
@@ -316,33 +347,3 @@ public class DBDataWarehouseCacheHelper implements Serializable {
         return 0;
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
