@@ -55,7 +55,7 @@ public class DBDataWarehouseCacheHelper implements Serializable {
     private transient Thread cleaner = null; //  清理线程
     protected static Object LOCK = null;  // 线程锁
 
-    private static final long clearTimer = 10 * 60;    //每10分钟清理一次
+    private static final long clearTimer = 10;    //每10s清理一次
     private static final long historyTimer = 24 * 60 * 60;  //每次清理一天前的所有订购，并入库
 
     // 用户订购记录
@@ -98,7 +98,9 @@ public class DBDataWarehouseCacheHelper implements Serializable {
                             cleanAndToDB();
                         } catch (InterruptedException e) {
                             e.printStackTrace();
-                        }
+                        } catch (Exception e) {
+							e.printStackTrace();
+						}
                     }
                 }
             });
@@ -149,7 +151,9 @@ public class DBDataWarehouseCacheHelper implements Serializable {
                             cleanAndToDB();
                         } catch (InterruptedException e) {
                             e.printStackTrace();
-                        }
+                        } catch (Exception e) {
+							e.printStackTrace();
+						}
                     }
                 }
             });
@@ -222,7 +226,7 @@ public class DBDataWarehouseCacheHelper implements Serializable {
         }
     }
 
-    public void cleanAndToDB() {
+    public void cleanAndToDB() throws Exception {
         long currentTime = System.currentTimeMillis();
         currentTime = currentTime - 1000 * historyTimer;
 
@@ -263,13 +267,17 @@ public class DBDataWarehouseCacheHelper implements Serializable {
     }
 
     // 批量入库
-    private void insertOrdersToDB(ArrayList<OrderRecord> orderList) {
+    private void insertOrdersToDB(ArrayList<OrderRecord> orderList) throws Exception {
+        PreparedStatement pst = null;
         try {
             long startTime = System.currentTimeMillis();
             String sql = "insert into " + StormConf.dataWarehouseTable +
                     " VALUES (?,?,?,?,?,?,?," +
                     "?,?,?,?,?,?,?,?,?,?,?,?)";
-            PreparedStatement pst = conn.prepareStatement(sql);
+            if (conn == null) {
+                conn = JDBCUtil.getConnection();
+            }
+            pst = conn.prepareStatement(sql);
             Iterator<OrderRecord> itOrder = orderList.iterator();
             while (itOrder.hasNext()) {
                 OrderRecord oneRecord = itOrder.next();
@@ -286,16 +294,22 @@ public class DBDataWarehouseCacheHelper implements Serializable {
                 pst.addBatch();
                 //log.info("AddBatch: " + oneRecord.toString());
             }
-
             pst.executeBatch();
             conn.commit();
-            pst.close();
             long endTime = System.currentTimeMillis();
             log.info("The patch insert " + String.valueOf(orderList.size()) +
                     " order record taked time ：" + (endTime - startTime) + "ms");
         } catch (SQLException e) {
             e.printStackTrace();
             log.error("insert data to DB is failed.");
+        } catch (Exception e) {
+        	e.printStackTrace();
+        } finally {
+            if (pst != null) {
+                pst.close();
+            }
+            conn.close();
+            conn = null;
         }
     }
 

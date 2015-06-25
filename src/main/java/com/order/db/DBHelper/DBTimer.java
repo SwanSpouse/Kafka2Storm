@@ -69,25 +69,31 @@ public class DBTimer extends Thread {
             double fee = DBRealTimeOutputBoltHelper.totalFee.get(totalFeeKey);
             String abnormalFeeKey = totalFeeKey + "|" + ruleID;
             double abnFee = DBRealTimeOutputBoltHelper.abnormalFee.get(abnormalFeeKey);
-            if (checkExists(date, provinceId, contentID, contentType, channelCode, ruleID)) {
-                this.updateDate(date, provinceId, contentID, contentType, channelCode, ruleID, abnFee, fee);
-            } else {
-                this.insertData(date, provinceId, contentID, contentType, channelCode, ruleID, abnFee, fee);
+            try {
+                if (checkExists(date, provinceId, contentID, contentType, channelCode, ruleID)) {
+                    this.updateDate(date, provinceId, contentID, contentType, channelCode, ruleID, abnFee, fee);
+                } else {
+                    this.insertData(date, provinceId, contentID, contentType, channelCode, ruleID, abnFee, fee);
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
         }
         DBRealTimeOutputBoltHelper.abnormalFee.clear();
     }
 
     private boolean checkExists(String date, String provinceId, String contentID, String contentType,
-                                String channelCode, String ruleId) {
+                                String channelCode, String ruleId) throws SQLException {
         String checkExistsSql = "SELECT COUNT(*) recordTimes FROM "+ StormConf.realTimeOutputTable
                 + " WHERE RECORD_DAY=? AND PROVINCE_ID=? AND CONTENT_ID=?" +
                      " AND SALE_PARM=? AND CONTENT_TYPE=? AND RULE_ID=?";
+        ResultSet rs = null;
+        PreparedStatement prepStmt = null;
         try {
             if (conn == null) {
                 conn = JDBCUtil.getConnection();
             }
-            PreparedStatement prepStmt = conn.prepareStatement(checkExistsSql);
+            prepStmt = conn.prepareStatement(checkExistsSql);
             prepStmt.setString(1, date);
             prepStmt.setString(2, provinceId);
             prepStmt.setString(3, contentID);
@@ -95,7 +101,7 @@ public class DBTimer extends Thread {
             prepStmt.setString(5, contentType);
             prepStmt.setString(6, ruleId);
 
-            ResultSet rs = prepStmt.executeQuery();
+            rs = prepStmt.executeQuery();
             rs.next();
             int count = rs.getInt("recordTimes");
             rs.close();
@@ -105,12 +111,21 @@ public class DBTimer extends Thread {
         } catch (SQLException e) {
             log.error("查询sql错误" + checkExistsSql);
             e.printStackTrace();
+        } finally {
+            if (rs != null) {
+                rs.close();
+            }
+            if (prepStmt != null) {
+                prepStmt.close();
+            }
+            conn.close();
+            conn = null;
         }
         return false;
     }
 
     private void insertData(String recordDay,String provinceId, String contentId, String contentType,
-                            String channelCode, String ruleId, double abnormalFee, double totalFee) {
+                            String channelCode, String ruleId, double abnormalFee, double totalFee) throws SQLException {
         if (DBStatisticBoltHelper.parameterId2ChannelIds == null) {
             DBStatisticBoltHelper.getData();
         }
@@ -130,11 +145,12 @@ public class DBTimer extends Thread {
                 "  CONTENT_ID,SALE_PARM,ODR_ABN_FEE,ODR_FEE," +
                 "  ABN_RAT,CONTENT_TYPE,RULE_ID) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)";
         double abnormalFeeRate = abnormalFee / totalFee;
+        PreparedStatement prepStmt = null;
         try {
             if (conn == null) {
                 conn = JDBCUtil.getConnection();
             }
-            PreparedStatement prepStmt = conn.prepareStatement(insertDataSql);
+            prepStmt = conn.prepareStatement(insertDataSql);
             prepStmt.setString(1, recordDay);
             prepStmt.setString(2, provinceId);
             prepStmt.setString(3, chl1);
@@ -149,27 +165,33 @@ public class DBTimer extends Thread {
             prepStmt.setInt(12, Integer.parseInt(ruleId));
             prepStmt.execute();
             prepStmt.execute("commit");
-            prepStmt.close();
             if (StatisticsBolt.isDebug) {
                 log.info("数据插入成功" + insertDataSql);
             }
         } catch (SQLException e) {
             log.error("插入sql错误" + insertDataSql);
             e.printStackTrace();
+        } finally {
+            if (prepStmt != null) {
+                prepStmt.close();
+            }
+            conn.close();
+            conn = null;
         }
     }
 
     private void updateDate(String date, String provinceId, String contentID, String contentType,
-                            String channelCode, String ruleId, double abnormalFee, double totalFee) {
+                            String channelCode, String ruleId, double abnormalFee, double totalFee) throws SQLException {
         String checkExistsSql = "SELECT ODR_ABN_FEE,ODR_FEE FROM " + StormConf.realTimeOutputTable
                 + " WHERE RECORD_DAY=? AND PROVINCE_ID=? AND CONTENT_ID=?"+
                 " AND SALE_PARM=? AND CONTENT_TYPE=? AND RULE_ID=?";
 
+        PreparedStatement prepStmt = null;
         try {
             if (conn == null) {
                 conn = JDBCUtil.getConnection();
             }
-            PreparedStatement prepStmt = conn.prepareStatement(checkExistsSql);
+            prepStmt = conn.prepareStatement(checkExistsSql);
             prepStmt.setString(1, date);
             prepStmt.setString(2, provinceId);
             prepStmt.setString(3, contentID);
@@ -204,11 +226,16 @@ public class DBTimer extends Thread {
             prepStmt.setString(6, ruleId);
             prepStmt.executeUpdate();
             prepStmt.execute("commit");
-            prepStmt.close();
             LogUtil.printLog("DBTimer 更新数据成功");
         } catch (SQLException e) {
             log.error("查询sql错误" + checkExistsSql);
             e.printStackTrace();
+        }finally {
+            if (prepStmt != null) {
+                prepStmt.close();
+            }
+            conn.close();
+            conn = null ;
         }
     }
 }
