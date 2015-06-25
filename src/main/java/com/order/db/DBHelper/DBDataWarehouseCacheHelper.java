@@ -56,7 +56,7 @@ public class DBDataWarehouseCacheHelper implements Serializable {
     protected static Object LOCK = null;  // 线程锁
 
     private static final long clearTimer = 10;    //每10s清理一次
-    private static final long historyTimer = 24 * 60 * 60;  //每次清理一天前的所有订购，并入库
+    private static final long historyTimer = 5 * 60;  //每次清理一天前的所有订购，并入库
 
     // 用户订购记录
     private HashMap<String, ArrayList<OrderRecord>> orderMap;

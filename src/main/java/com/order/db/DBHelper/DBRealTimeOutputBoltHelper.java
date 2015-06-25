@@ -39,9 +39,6 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
         abnormalFee = new ConcurrentHashMap<String, Double>();
         try {
             conn = this.getConn();
-            storageData2DBTimer = new DBTimer(conn);
-            storageData2DBTimer.setDaemon(true);
-            storageData2DBTimer.start();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -58,6 +55,11 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
     public void updateData(String msisdn, Long time, String channelCode, String contentId, String contentType,
                            String provinceId, String productId, String rules,
                            double realInfoFee, int orderType, String bookId) {
+        if (storageData2DBTimer == null) {
+            storageData2DBTimer = new DBTimer(conn);
+            storageData2DBTimer.setDaemon(true);
+            storageData2DBTimer.start();
+        }
         String currentTime = TimeParaser.formatTimeInDay(time);
         if (orderType == 1 || orderType == 2 || orderType == 21 || orderType == 3) {
             contentType = 3 + "";
