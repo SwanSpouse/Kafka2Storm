@@ -193,12 +193,13 @@ public class DBDataWarehouseCacheHelper implements Serializable {
             LOCK = new Object();
         }
         synchronized (LOCK) {
-            if (!orderMap.containsKey(msisdn)) {
-                return null;
-            }
+
 
             ArrayList<OrderRecord> relist = new ArrayList<OrderRecord>();
-
+            if (!orderMap.containsKey(msisdn)) {
+                return relist;
+            }
+            
             Iterator<OrderRecord> itOrder = orderMap.get(msisdn).iterator();
             while (itOrder.hasNext()) {
                 OrderRecord oneRecord = itOrder.next();
