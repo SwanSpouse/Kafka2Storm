@@ -291,6 +291,7 @@ public class DBDataWarehouseCacheHelper implements Serializable {
 
             pst.executeBatch();
             conn.commit();
+            pst.close();
             long endTime = System.currentTimeMillis();
             log.info("The patch insert " + String.valueOf(orderList.size()) +
                     " order record taked time ：" + (endTime - startTime) + "ms");

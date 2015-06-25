@@ -184,6 +184,7 @@ public class DBTimer extends Thread {
                 abnormalFeeOld = rs.getDouble("ODR_ABN_FEE");
                 orderFeeOld = rs.getDouble("ODR_FEE");
             }
+            rs.close();
             double abnormalFeeNew = abnormalFeeOld + abnormalFee;
             double orderFeeNew = orderFeeOld + totalFee;
             double rateNew = abnormalFeeNew / orderFeeNew;
