@@ -92,7 +92,7 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
         }
 
         // 统计异常费用
-        String abnormalFeeKey = totalFeeKey + "|" + rules;
+        String abnormalFeeKey = totalFeeKey + "|" + ruleId;
         if (abnormalFee.containsKey(abnormalFeeKey)) {
             double currentAbnormalFee = abnormalFee.get(abnormalFeeKey) + realInfoFee;
             this.abnormalFee.put(abnormalFeeKey, currentAbnormalFee);
