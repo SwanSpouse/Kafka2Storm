@@ -27,7 +27,7 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
     private Connection getConn() throws SQLException {
         if (conn == null) {
             log.info("Connection is null!");
-            conn = JDBCUtil.getConnection();
+            conn = (new JDBCUtil()).getConnection();
         }
         return conn;
     }

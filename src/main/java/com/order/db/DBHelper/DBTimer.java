@@ -91,7 +91,7 @@ public class DBTimer extends Thread {
         PreparedStatement prepStmt = null;
         try {
             if (conn == null) {
-                conn = JDBCUtil.getConnection();
+                conn = (new JDBCUtil()).getConnection();
             }
             prepStmt = conn.prepareStatement(checkExistsSql);
             prepStmt.setString(1, date);
@@ -148,7 +148,7 @@ public class DBTimer extends Thread {
         PreparedStatement prepStmt = null;
         try {
             if (conn == null) {
-                conn = JDBCUtil.getConnection();
+                conn = (new JDBCUtil()).getConnection();
             }
             prepStmt = conn.prepareStatement(insertDataSql);
             prepStmt.setString(1, recordDay);
@@ -189,7 +189,7 @@ public class DBTimer extends Thread {
         PreparedStatement prepStmt = null;
         try {
             if (conn == null) {
-                conn = JDBCUtil.getConnection();
+                conn = (new JDBCUtil()).getConnection();
             }
             prepStmt = conn.prepareStatement(checkExistsSql);
             prepStmt.setString(1, date);

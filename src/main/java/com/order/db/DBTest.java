@@ -13,14 +13,14 @@ public class DBTest {
 
         Date traceBackTime = new Date(1433494523823L);
         Connection conn = null;
-        conn = JDBCUtil.getConnection();
+        conn = (new JDBCUtil()).getConnection();
         String updateOrderSql = "UPDATE " + StormConf.dataWarehouseTable + " SET \"RULE_" + 1 + "\"=1" +
                 " WHERE \"RECORDTIME\">=\'" + traceBackTime + "\' AND \"RULE_" + 1 + "\"=0 " +
                 "AND \"MSISDN\"=" + "80086409468";
         //将上一个结果查询出来需要追溯的正常订单设置为异常。防止后续重复计算。
         try {
             if (conn == null) {
-                conn = JDBCUtil.getConnection();
+                conn = (new JDBCUtil()).getConnection();
             }
             String dateFormatSql = "alter session set nls_date_format= 'YYYY-MM-DD' ";
             Statement stmt = conn.createStatement();
