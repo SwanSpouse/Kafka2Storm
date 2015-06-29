@@ -119,7 +119,7 @@ public class OrderRecord implements Serializable {
 	}
 	
 	public String toString() {
-		String mainString =  TimeParaser.formatTimeInSeconds(recordTime) + " " + msisdn 
+		String mainString =  String.valueOf(recordTime) + " " + TimeParaser.formatTimeInSeconds(recordTime) + " " + msisdn 
 				+ " " + sessionId + " " + channelCode + " " + bookID + " " + productID 
 				+ " " + provinceId + " " + orderType;
 		for (int i = 1; i < 13; i++) {

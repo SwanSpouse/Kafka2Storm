@@ -96,13 +96,16 @@ public class DataWarehouseBolt extends BaseBasicBolt {
 
         LogUtil.printLog("DataWareHouseBolt 接收异常数据流: " + msisdn + " " + recordTime + " " + realInfoFee);
 
-		// 异常订购数据首先入缓存
-		DBHelper.updateData(msisdn, sessionId, channelCode, recordTime, bookId,
-				productId, realInfoFee, provinceId, orderType, rule);
+		// 异常订购记录首先更新到缓存，如果找不到则退出
+		if (!DBHelper.updateData(msisdn, sessionId, channelCode, recordTime, bookId,
+				productId, realInfoFee, provinceId, orderType, rule))
+		{
+			return;
+		}
 		// 入缓存后直接转发
 		collector.emit(StreamId.ABNORMALDATASTREAM2.name(), new Values(msisdn, sessionId, recordTime, 
 				realInfoFee, channelCode, productId, rule, provinceId, orderType, bookId));		
-		
+
 		// 向前追溯准备阶段
         int ruleId = DBDataWarehouseCacheHelper.getRuleNumFromString(rule);
         if (ruleId < 1 || ruleId > 12) {
@@ -121,7 +124,9 @@ public class DataWarehouseBolt extends BaseBasicBolt {
             traceBackTime = TimeParaser.OneDayAgo(recordTime);
         } else if (ruleId == 9 || ruleId == 10 || ruleId == 11) {    //?? 无规则12
             traceBackTime = TimeParaser.NormalHourAgo(recordTime);
-        }
+        } else {
+			return;
+		}
         
 		// 向前回溯各个规则有不同的追溯参数  ??
 		ArrayList<OrderRecord> list = DBHelper.traceBackOrders(msisdn,

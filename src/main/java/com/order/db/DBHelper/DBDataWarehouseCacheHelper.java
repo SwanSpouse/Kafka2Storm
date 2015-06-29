@@ -5,6 +5,7 @@ import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Time;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -55,8 +56,8 @@ public class DBDataWarehouseCacheHelper implements Serializable {
     private transient Thread cleaner = null; //  清理线程
     protected static Object LOCK = null;  // 线程锁
 
-    private static final long clearTimer = 10;    //每10s清理一次
-    private static final long historyTimer = 5 * 60;  //每次清理一天前的所有订购，并入库
+    private static final long clearTimer = 1000;    //每N毫秒清理一次
+    private static final long historyTimer = 24 * 60 * 60;  //每次清理一天前的所有订购，并入库
 
     // 用户订购记录
     private HashMap<String, ArrayList<OrderRecord>> orderMap;
@@ -93,7 +94,7 @@ public class DBDataWarehouseCacheHelper implements Serializable {
                     while (true) {
                         try {
                             // 每隔一个一段时间清理一次。
-                            cleaner.sleep(clearTimer * 1000L);
+                            cleaner.sleep(clearTimer);
                             log.info("Begin Clean DataWareHouse cache ...");
                             cleanAndToDB();
                         } catch (InterruptedException e) {
@@ -131,12 +132,12 @@ public class DBDataWarehouseCacheHelper implements Serializable {
                 list.add(order);
                 orderMap.put(msisdn, list);
             }
-            // log.info("insert result: " + this.toString());
+            //log.info("insert result: " + this.toString());
         }
     }
 
     /* 更新订购记录某一个规则的异常状态 */
-    public void updateData(String msisdn, String sessionId, String channelCode,
+    public boolean updateData(String msisdn, String sessionId, String channelCode,
                            Long recordTime, String bookID, String productID, double realInfoFee,
                            int provinceId, int orderType, String rule) {
         if (cleaner == null) {
@@ -146,7 +147,7 @@ public class DBDataWarehouseCacheHelper implements Serializable {
                     while (true) {
                         try {
                             // 每隔一个一段时间清理一次。
-                            cleaner.sleep(clearTimer * 1000L);
+                            cleaner.sleep(clearTimer);
                             log.info("Begin Clean DataWareHouse cache ...");
                             cleanAndToDB();
                         } catch (InterruptedException e) {
@@ -183,11 +184,13 @@ public class DBDataWarehouseCacheHelper implements Serializable {
                     OrderRecord oneRecord = itOrder.next();
                     if (oneRecord.equals(order)) {
                         oneRecord.getRules().put(getRuleNumFromString(rule), 0);
-                        // log.info("update result: " + this.toString());
-                        return;
+                        //log.info("update find result: " + this.toString());
+                        return true;
                     }
                 }
             }
+            //log.info("update result: " + this.toString());
+            return false;
         }
     }
 
@@ -222,6 +225,7 @@ public class DBDataWarehouseCacheHelper implements Serializable {
                     relist.add(oneRecord);
                 }
             }
+            //log.info("trackback result: " + this.toString());
             return relist;
         }
     }
@@ -262,7 +266,7 @@ public class DBDataWarehouseCacheHelper implements Serializable {
             }
             // 将删除的订购记录批量入库
             insertOrdersToDB(insertList);
-            // log.info("cleanAndToDB result: " + this.toString());
+            log.info("cleanAndToDB result size: " + String.valueOf(orderMap.size()));
         }
     }
 

@@ -26,7 +26,7 @@ public class TimeParaser {
             int seconds = Integer.parseInt(recordTime.substring(12, 14));
 
             calendar.set(year, month - 1, date, hour, minute, seconds);
-            return calendar.getTimeInMillis();
+            return (calendar.getTimeInMillis()/1000)*1000;
 
         } catch (Exception e) {
             log.error("时间输入格式有问题: " + e);

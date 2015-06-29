@@ -8,6 +8,8 @@ import org.apache.log4j.Logger;
 import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -74,12 +76,6 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
         //统计正常费用。
         String totalFeeKey = currentTime + "|" + provinceId + "|" + channelCode + "|"
                 + contentId + "|" + contentType;
-        if (totalFee.containsKey(totalFeeKey)) {
-            double currentFee = totalFee.get(totalFeeKey) + realInfoFee;
-            this.totalFee.put(totalFeeKey, currentFee);
-        } else {
-            this.totalFee.put(totalFeeKey, realInfoFee);
-        }
 
         int ruleId = getRuleNumFromString(rules);
         // 统计正常费用
@@ -90,6 +86,7 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
             } else {
                 this.totalFee.put(totalFeeKey, realInfoFee);
             }
+            //log.info(this.toString());
             return;
         }
 
@@ -101,6 +98,7 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
         } else {
             this.abnormalFee.put(abnormalFeeKey, realInfoFee);
         }
+        //log.info(this.toString());
     }
     
     /* 获取异常规则对应的数字编号 */
@@ -131,5 +129,24 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
             return 12;
         }
         return 0;
+    }
+    
+    public String toString() {
+        String result = "\n size of totalFee is " + String.valueOf(totalFee.size()) + "\n";
+        // 遍历
+        Iterator<Map.Entry<String, Double>> it = totalFee.entrySet().iterator();
+        while (it.hasNext()) {      	
+            Map.Entry<String, Double> entry = it.next();
+            result +=  entry.getKey() + " " + String.valueOf(entry.getValue()) + "\n";
+        }
+        
+        result += "\n size of ABFee is " + String.valueOf(abnormalFee.size()) + "\n";
+        Iterator<Map.Entry<String, Double>> it2 = abnormalFee.entrySet().iterator();
+        while (it2.hasNext()) {      	
+            Map.Entry<String, Double> entry2 = it2.next();
+            result +=  entry2.getKey() + " " + String.valueOf(entry2.getValue()) + "\n";
+        }
+        
+        return result;
     }
 }
