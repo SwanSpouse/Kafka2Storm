@@ -29,7 +29,7 @@ import java.util.Iterator;
  * Created by LiMingji on 2015/5/24.
  */
 public class StatisticsBolt extends BaseBasicBolt {
-    public static boolean isDebug = true;
+    public static boolean isDebug = false;
     private static Logger log = Logger.getLogger(StatisticsBolt.class);
 
     private DBStatisticBoltHelper DBHelper = new DBStatisticBoltHelper();
