@@ -1,12 +1,5 @@
 package com.order.bolt;
 
-import java.util.Map;
-
-import org.apache.log4j.Logger;
-
-import com.order.util.FName;
-import com.order.util.StreamId;
-
 import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.BasicOutputCollector;
 import backtype.storm.topology.OutputFieldsDeclarer;
@@ -14,6 +7,11 @@ import backtype.storm.topology.base.BaseBasicBolt;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
+import com.order.util.FName;
+import com.order.util.StreamId;
+import org.apache.log4j.Logger;
+
+import java.util.Map;
 
 
 /**
@@ -43,6 +41,7 @@ import backtype.storm.tuple.Values;
 public class PageviewSplit extends BaseBasicBolt {
 
 	private static final long serialVersionUID = 1L;
+  private static long msgCount = 0l;
 	static Logger log = Logger.getLogger(PageviewSplit.class);
 
 	@Override
@@ -69,6 +68,10 @@ public class PageviewSplit extends BaseBasicBolt {
 		} else {
 			log.info("Error data: " + line);
 		}
+    msgCount++;
+    if (msgCount % 50000 == 0) {
+      log.info("收到消息msg条数：" + msgCount);
+    }
 	}
 
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
