@@ -47,13 +47,15 @@ import org.codehaus.jettison.json.JSONObject;
  */
 public class OrderSplit extends BaseBasicBolt {
 
-	private static final long serialVersionUID = 1L;
-	static Logger log = Logger.getLogger(OrderSplit.class);
+    private static final long serialVersionUID = 1L;
+    private static long msgCount = 1l;
+    private static long totalCount = 1l;
+    static Logger log = Logger.getLogger(OrderSplit.class);
 
-	@Override
-	public void prepare(Map conf, TopologyContext context) {
-		super.prepare(conf, context);
-	}
+    @Override
+    public void prepare(Map conf, TopologyContext context) {
+        super.prepare(conf, context);
+    }
 
     ////将订单数据从json中解析出来
     private String splitJson(String msg) {
@@ -79,13 +81,14 @@ public class OrderSplit extends BaseBasicBolt {
         return null;
     }
 
-	@Override
-	public void execute(Tuple input, BasicOutputCollector collector) {
-		String line = splitJson(input.getString(0));
-		String[] words = line.split("\\|", -1);
-		if (words.length >= 49) {
-			String msisdn = words[0]; // msisdnID Varchar2(20)
-			String recordTime = words[1]; // Recordtime Varchar2(14)
+    @Override
+    public void execute(Tuple input, BasicOutputCollector collector) {
+        String line = splitJson(input.getString(0));
+        String[] words = line.split("\\|", -1);
+        totalCount++;
+        if (words.length >= 49) {
+            String msisdn = words[0]; // msisdnID Varchar2(20)
+            String recordTime = words[1]; // Recordtime Varchar2(14)
             String terminal = words[2];// UA Varchar2(255)
             String platform = words[3];// 门户类型numbser(2)
             String orderType = words[4]; // 订购类型  number(2)
@@ -99,15 +102,19 @@ public class OrderSplit extends BaseBasicBolt {
             String sessionId = words[39];// sessionId Varchar2(255)
             String promotionid = words[40]; // 促销互动ID (废弃) 2015-06-05
 
+            msgCount++;
+            if (msgCount % 50000 == 0) {
+                log.info("收到订购消息msg条数：" + msgCount + " 总条数: " + totalCount);
+            }
             collector.emit(StreamId.ORDERDATA.name(), new Values(msisdn,
                     recordTime, terminal, platform, orderType, productID, bookID, chapterID,
                     channelCode, cost, provinceId, wapIp, sessionId, promotionid));
         } else {
-			log.info("订单数据错误: " + line);
-		}
-	}
+            log.info("订单数据错误: " + line);
+        }
+    }
 
-	public void declareOutputFields(OutputFieldsDeclarer declarer) {
+    public void declareOutputFields(OutputFieldsDeclarer declarer) {
 
         declarer.declareStream(StreamId.ORDERDATA.name(),
                 new Fields(FName.MSISDN.name(), FName.RECORDTIME.name(),

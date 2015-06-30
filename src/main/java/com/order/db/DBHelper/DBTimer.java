@@ -144,7 +144,12 @@ public class DBTimer extends Thread {
                 "( RECORD_DAY,PROVINCE_ID,CHL1,CHL2,CHL3," +
                 "  CONTENT_ID,SALE_PARM,ODR_ABN_FEE,ODR_FEE," +
                 "  ABN_RAT,CONTENT_TYPE,RULE_ID) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)";
-        double abnormalFeeRate = abnormalFee / totalFee;
+        double abnormalFeeRate ;
+        if (totalFee != 0) {
+            abnormalFeeRate = abnormalFee / totalFee;
+        } else {
+            abnormalFeeRate = 0;
+        }
         PreparedStatement prepStmt = null;
         try {
             if (conn == null) {

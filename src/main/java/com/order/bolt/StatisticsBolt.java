@@ -32,6 +32,10 @@ public class StatisticsBolt extends BaseBasicBolt {
     public static boolean isDebug = false;
     private static Logger log = Logger.getLogger(StatisticsBolt.class);
 
+    private static long viewMsgCount = 1l;
+    private static long orderMsgCount = 1l;
+    private static long normalCount = 1l;
+
     private DBStatisticBoltHelper DBHelper = new DBStatisticBoltHelper();
 
     //存储字段为msisdn 和 UserInfo
@@ -109,6 +113,7 @@ public class StatisticsBolt extends BaseBasicBolt {
         }
 
         if (input.getSourceStreamId().equals(StreamId.BROWSEDATA.name())) {
+            viewMsgCount += 1;
             LogUtil.printLog("阅读浏览话单到达StatisticBolt");
             //阅读浏览话单
             try {
@@ -118,6 +123,7 @@ public class StatisticsBolt extends BaseBasicBolt {
                 e.printStackTrace();
             }
         } else if (input.getSourceStreamId().equals(StreamId.ORDERDATA.name())) {
+            orderMsgCount += 1;
             // 订购话单
             LogUtil.printLog("订购话单到达StatisticBolt");
             try {
@@ -126,6 +132,9 @@ public class StatisticsBolt extends BaseBasicBolt {
                 log.error("订购话单数据结构异常");
                 e.printStackTrace();
             }
+        }
+        if (orderMsgCount % 50000 == 0 || viewMsgCount % 50000 == 0) {
+            log.info("StatisticBolt收到订购消息为: " + orderMsgCount + " 收到阅读消息为 " + viewMsgCount);
         }
     }
 
@@ -191,7 +200,10 @@ public class StatisticsBolt extends BaseBasicBolt {
         }
 
         LogUtil.printLog("接受到订单数据 " + msisdn + " recordTime " + new Date(recordTime));
-
+        normalCount++;
+        if (normalCount % 50000 == 0) {
+            log.info("正常订购话单发射数： " + normalCount);
+        }
         //所有订单数据先统一发送正常数据流。用作数据统计。
         collector.emit(StreamId.DATASTREAM.name(), new Values(msisdn, sessionId, recordTime,
                 realInfoFee, channelCode, productId, provinceId, orderType, bookId));

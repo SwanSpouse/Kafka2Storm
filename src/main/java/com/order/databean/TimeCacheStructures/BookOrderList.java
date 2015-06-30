@@ -32,6 +32,9 @@ public class BookOrderList implements Serializable{
     }
 
     public void put(String bookId, int orderType, Long currentTime) {
+        if (LOCK == null) {
+            LOCK = new Object();
+        }
         synchronized (LOCK) {
             if (map.containsKey(bookId)) {
                 CachedList<Integer> orderTypeList = map.get(bookId);
@@ -54,17 +57,25 @@ public class BookOrderList implements Serializable{
      * @param currentTime 当前时间
      */
     public void removeTimeOutData(long currentTime) {
-        for (String key : map.keySet()) {
-            CachedList<Integer> list = map.get(key);
-            //这个size()方法自带清理功能。
-            if (list.size(currentTime) == 0) {
-                map.remove(key);
+        if (LOCK == null) {
+            LOCK = new Object();
+        }
+        synchronized (LOCK) {
+            for (String key : map.keySet()) {
+                CachedList<Integer> list = map.get(key);
+                //这个size()方法自带清理功能。
+                if (list.size(currentTime) == 0) {
+                    map.remove(key);
+                }
             }
         }
     }
 
     //获取所有订购的图书本数
     public int sizeOfOrderBooks(long lastUpdateTime) {
+        if (LOCK == null) {
+            LOCK = new Object();
+        }
         removeTimeOutData(lastUpdateTime);
         synchronized (LOCK) {
             return map.size();
@@ -73,6 +84,9 @@ public class BookOrderList implements Serializable{
 
     //特定图书的订购次数
     public int sizeOfBookOrderTimes(String id) {
+        if (LOCK == null) {
+            LOCK = new Object();
+        }
         synchronized (LOCK) {
             if (!map.containsKey(id)) {
                 return 0;
@@ -84,6 +98,9 @@ public class BookOrderList implements Serializable{
 
     //特定orderType下的图书订购次数
     public int sizeOfBookOrderTimesWithOrderType(String id, int orderType) {
+        if (LOCK == null) {
+            LOCK = new Object();
+        }
         synchronized (LOCK) {
             if (!map.containsKey(id)) {
                 return 0;
@@ -94,6 +111,11 @@ public class BookOrderList implements Serializable{
     }
 
     public Set<String> keySet() {
-        return map.keySet();
+        if (LOCK == null) {
+            LOCK = new Object();
+        }
+        synchronized (LOCK) {
+            return map.keySet();
+        }
     }
 }

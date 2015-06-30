@@ -40,41 +40,47 @@ import java.util.Map;
  */
 public class PageviewSplit extends BaseBasicBolt {
 
-	private static final long serialVersionUID = 1L;
-  private static long msgCount = 0l;
-	static Logger log = Logger.getLogger(PageviewSplit.class);
+    private static final long serialVersionUID = 1L;
+    private static long msgCount = 1l;
+    private static long totalCount = 1l;
+    static Logger log = Logger.getLogger(PageviewSplit.class);
 
-	@Override
-	public void prepare(Map conf, TopologyContext context) {
-		super.prepare(conf, context);
-	}
+    @Override
+    public void prepare(Map conf, TopologyContext context) {
+        super.prepare(conf, context);
+    }
 
-	@Override
-	public void execute(Tuple input, BasicOutputCollector collector) {
-		String line = input.getString(0);
-		String[] words = line.split("\\|", -1);
-		if (words.length >= 57) {
-			String recordTime = words[2]; // Recordtime Varchar2(20)
-			String sessionId = words[6];// sessionId Varchar2(255)
-			String pageType = words[15];// pageType Varchar2(8)
-			String msisdn = words[27];// msisdn Varchar2(20)
-			String channelCode = words[33]; // channelCode Varchar2(8)
+    @Override
+    public void execute(Tuple input, BasicOutputCollector collector) {
+        String line = input.getString(0);
+        String[] words = line.split("\\|", -1);
+        totalCount++;
+        if (words.length >= 57) {
+            String recordTime = words[2]; // Recordtime Varchar2(20)
+            String sessionId = words[6];// sessionId Varchar2(255)
+            String pageType = words[15];// pageType Varchar2(8)
+            String msisdn = words[27];// msisdn Varchar2(20)
+            String channelCode = words[33]; // channelCode Varchar2(8)
             String bookId = words[47]; //exColumn1 扩展字段1 Varchar2(255)
             String chapterId = words[48]; //exColumn2 扩展字段2
-
+            if (pageType.trim().equals("2") || pageType.trim().equals("3")) {
+                collector.emit(StreamId.BROWSEDATA.name(), new Values(
+                        recordTime, sessionId, pageType, msisdn,
+                        channelCode, bookId, chapterId));
+            }
+            msgCount++;
+            if (msgCount % 50000 == 0) {
+                log.info("收到浏览消息msg条数：" + msgCount + " 总条数: " + totalCount);
+            }
             collector.emit(StreamId.BROWSEDATA.name(), new Values(
-					recordTime, sessionId, pageType, msisdn,
-					channelCode, bookId, chapterId));
-		} else {
-			log.info("Error data: " + line);
-		}
-    msgCount++;
-    if (msgCount % 50000 == 0) {
-      log.info("收到消息msg条数：" + msgCount);
+                    recordTime, sessionId, pageType, msisdn,
+                    channelCode, bookId, chapterId));
+        } else {
+            log.info("Error data: " + line);
+        }
     }
-	}
 
-	public void declareOutputFields(OutputFieldsDeclarer declarer) {
+    public void declareOutputFields(OutputFieldsDeclarer declarer) {
         declarer.declareStream(StreamId.BROWSEDATA.name(),
                 new Fields(FName.RECORDTIME.name(),
                         FName.SESSIONID.name(), FName.PAGETYPE.name(), FName.MSISDN.name(),
