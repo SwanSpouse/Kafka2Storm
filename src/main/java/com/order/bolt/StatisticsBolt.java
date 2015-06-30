@@ -153,10 +153,10 @@ public class StatisticsBolt extends BaseBasicBolt {
         Pair<String, SessionInfo> sessionPair = new Pair<String, SessionInfo>(msisdn, null);
         if (sessionInfos.contains(sessionPair)) {
             SessionInfo currentSessionInfo = (SessionInfo) sessionInfos.get(sessionPair).getValue();
-            currentSessionInfo.updateSessionInfo(bookId, null, null, recordTime, -1, 0.0, channelCode, null, 0);
+            currentSessionInfo.updateSessionInfo(bookId, null, null, recordTime, -1, 0.0, channelCode, null, "");
             sessionInfos.put(new Pair<String, SessionInfo>(msisdn, currentSessionInfo));
         } else {
-            SessionInfo currentSessionInfo = new SessionInfo(sessionId, msisdn, bookId, null, null, recordTime, -1, 0, channelCode, null, 0);
+            SessionInfo currentSessionInfo = new SessionInfo(sessionId, msisdn, bookId, null, null, recordTime, -1, 0, channelCode, null, "");
             sessionInfos.put(new Pair<String, SessionInfo>(msisdn, currentSessionInfo));
         }
         //浏览话单不需要更新用户信息
@@ -174,18 +174,17 @@ public class StatisticsBolt extends BaseBasicBolt {
         String chapterId = input.getStringByField(FName.CHAPTERID.name());
         String channelCode = input.getStringByField(FName.CHANNELCODE.name());
         String realInfoFeeStr = input.getStringByField(FName.COST.name());
-        String provinceIdStr = input.getStringByField(FName.PROVINCEID.name());
+        String provinceId = input.getStringByField(FName.PROVINCEID.name());
         String wapIp = input.getStringByField(FName.WAPIP.name());
         String sessionId = input.getStringByField(FName.SESSIONID.name());
 
         LogUtil.printLog("msisdn: " + msisdn + " recordTime " + recordTime + " UA " + userAgent
                 + " platform " + platform + " orderType " + orderTypeStr + " productId " + productId +
                 " bookId " + bookId + " chapterId " + chapterId + " channelCode " + channelCode + " cost " + realInfoFeeStr
-                + " provinceId " + provinceIdStr + " wapId " + wapIp + " sessionId " + sessionId);
+                + " provinceId " + provinceId + " wapId " + wapIp + " sessionId " + sessionId);
 
         int orderType = Integer.parseInt(orderTypeStr);
         double realInfoFee = Double.parseDouble(realInfoFeeStr);
-        int provinceId = Integer.parseInt(provinceIdStr);
 
         if (sessionId == null || sessionId.trim().equals("")) {
             sessionId = msisdn;

@@ -86,7 +86,7 @@ public class DBDataWarehouseCacheHelper implements Serializable {
     /* 插入新的订购记录 */
     public void insertData(String msisdn, String sessionId, String channelCode,
                            Long recordTime, String bookID, String productID, double realInfoFee,
-                           int provinceId, int orderType) {
+                           String provinceId, int orderType) {
         if (cleaner == null) {
             cleaner = new Thread(new Runnable() {
                 @Override
@@ -139,7 +139,7 @@ public class DBDataWarehouseCacheHelper implements Serializable {
     /* 更新订购记录某一个规则的异常状态 */
     public boolean updateData(String msisdn, String sessionId, String channelCode,
                            Long recordTime, String bookID, String productID, double realInfoFee,
-                           int provinceId, int orderType, String rule) {
+                           String provinceId, int orderType, String rule) {
         if (cleaner == null) {
             cleaner = new Thread(new Runnable() {
                 @Override

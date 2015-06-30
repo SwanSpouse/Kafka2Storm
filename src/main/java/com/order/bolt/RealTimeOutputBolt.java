@@ -61,14 +61,14 @@ public class RealTimeOutputBolt extends BaseBasicBolt {
         Long recordTime = input.getLongByField(FName.RECORDTIME.name());
         double realInfoFee = input.getDoubleByField(FName.REALINFORFEE.name());
         String channelCode = input.getStringByField(FName.CHANNELCODE.name());
-        int provinceId = input.getIntegerByField(FName.PROVINCEID.name());
+        String provinceId = input.getStringByField(FName.PROVINCEID.name());
         String productId = input.getStringByField(FName.PRODUCTID.name());
         int orderType = input.getIntegerByField(FName.ORDERTYPE.name());
         String bookId = input.getStringByField(FName.BOOKID.name());
 
         LogUtil.printLog("接收正常数据流: " + msisdn + " " + recordTime + " " + realInfoFee);
 
-        DBHelper.updateData(msisdn, recordTime, channelCode, null, null, provinceId + "", productId,
+        DBHelper.updateData(msisdn, recordTime, channelCode, null, null, provinceId, productId,
                 "0", realInfoFee, orderType, bookId);
     }
 
@@ -81,14 +81,14 @@ public class RealTimeOutputBolt extends BaseBasicBolt {
         double realInfoFee = input.getDoubleByField(FName.REALINFORFEE.name());
         String channelCode = input.getStringByField(FName.CHANNELCODE.name());
         String rule = input.getStringByField(FName.RULES.name());
-        int provinceId = input.getIntegerByField(FName.PROVINCEID.name());
+        String provinceId = input.getStringByField(FName.PROVINCEID.name());
         String productId = input.getStringByField(FName.PRODUCTID.name());
         int orderType = input.getIntegerByField(FName.ORDERTYPE.name());
         String bookId = input.getStringByField(FName.BOOKID.name());
 
         LogUtil.printLog("接收异常数据流: " + msisdn + " " + recordTime + " " + realInfoFee);
 
-        DBHelper.updateData(msisdn, recordTime, channelCode, null, null, provinceId + "", productId,
+        DBHelper.updateData(msisdn, recordTime, channelCode, null, null, provinceId, productId,
                 rule, realInfoFee, orderType, bookId);
     }
 

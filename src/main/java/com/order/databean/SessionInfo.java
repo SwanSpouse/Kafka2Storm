@@ -38,7 +38,7 @@ public class SessionInfo implements Serializable{
     //图书ID
     private String bookId = null;
     //手机号码对应的省ID
-    private int provinceId = 0;
+    private String provinceId = "";
     //订单类型
     private int orderType = 0;
 
@@ -64,7 +64,7 @@ public class SessionInfo implements Serializable{
     //对应浏览pv 和 订购pv 构建SessionInfo
     public SessionInfo(String sessionId, String msisdnId, String bookReadId,
                        String bookOrderId, String bookChapterOrderId, Long currentTime,
-                       int orderType, double realInfoFee, String channelId, String productId, int provinceId) {
+                       int orderType, double realInfoFee, String channelId, String productId, String provinceId) {
         if (currentTime != null) {
             this.lastUpdateTime = currentTime;
         } else {
@@ -124,7 +124,7 @@ public class SessionInfo implements Serializable{
     //对已存在的SessionInfo进行更新。
     public void updateSessionInfo(String bookReadId, String bookOrderId, String bookChapterOrderId,
                                   Long currentTime, int orderType, Double realInfoFee,
-                                  String channelId, String productId, int provinceId) {
+                                  String channelId, String productId, String provinceId) {
         if (currentTime != null) {
             lastUpdateTime = currentTime;
         } else {
@@ -208,8 +208,6 @@ public class SessionInfo implements Serializable{
             LogUtil.printLog(this, rule.name(), false);
             callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
                     channelId, productId, rule.name(), provinceId, orderType, bookId);
-        } else {
-            LogUtil.printLog(this, rule.name(), true);
         }
     }
 

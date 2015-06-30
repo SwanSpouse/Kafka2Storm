@@ -68,7 +68,7 @@ public class DataWarehouseBolt extends BaseBasicBolt {
 		String bookId = input.getStringByField(FName.BOOKID.name());
 		String productId = input.getStringByField(FName.PRODUCTID.name());
 		double realInfoFee = input.getDoubleByField(FName.REALINFORFEE.name());
-		int provinceId = input.getIntegerByField(FName.PROVINCEID.name());
+        String provinceId = input.getStringByField(FName.PROVINCEID.name());
 		int orderType = input.getIntegerByField(FName.ORDERTYPE.name());
 
         LogUtil.printLog("DataWareHouseBolt 接收正常数据流: " + msisdn + " " + recordTime + " " + realInfoFee);
@@ -90,7 +90,7 @@ public class DataWarehouseBolt extends BaseBasicBolt {
 		String bookId = input.getStringByField(FName.BOOKID.name());
 		String productId = input.getStringByField(FName.PRODUCTID.name());
 		double realInfoFee = input.getDoubleByField(FName.REALINFORFEE.name());
-		int provinceId = input.getIntegerByField(FName.PROVINCEID.name());
+		String provinceId = input.getStringByField(FName.PROVINCEID.name());
 		int orderType = input.getIntegerByField(FName.ORDERTYPE.name());
 		String rule = input.getStringByField(FName.RULES.name());
 

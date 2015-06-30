@@ -14,7 +14,7 @@ public class OrderRecord implements Serializable {
 	String bookID;
 	String productID;
 	double realfee;
-	int provinceId;
+	String provinceId;
 	int orderType;
 	HashMap<Integer, Integer> rules;
 
@@ -70,11 +70,11 @@ public class OrderRecord implements Serializable {
 		return realfee;
 	}
 
-	public int getProvinceId() {
+	public String getProvinceId() {
 		return provinceId;
 	}
 
-	public void setProvinceId(int provinceId) {
+	public void setProvinceId(String provinceId) {
 		this.provinceId = provinceId;
 	}
 

@@ -23,5 +23,5 @@ public interface RulesCallback {
      */
     public void hanleData(String msisdnId, String sessionId, Long currentTime,
                           double realInfoFee, String channelId, String product, String rules,
-                          int provinceId, int orderType, String bookId);
+                          String provinceId, int orderType, String bookId);
 }
