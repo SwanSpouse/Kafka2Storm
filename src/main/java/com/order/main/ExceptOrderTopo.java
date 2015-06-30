@@ -57,31 +57,32 @@ public class ExceptOrderTopo {
          */
         //浏览话单发射、分词bolt
         builder.setSpout(StreamId.Portal_Pageview.name(), new KafkaSpout(pageViewSpoutConfigTopic), 3);
-        builder.setBolt(StreamId.PageViewSplit.name(), new PageviewSplit(), 20)
+        builder.setBolt(StreamId.PageViewSplit.name(), new PageviewSplit(), 3)
                 .shuffleGrouping(StreamId.Portal_Pageview.name());
 
         //订购话单发射、分词bolt
         builder.setSpout(StreamId.report_cdr.name(), new KafkaSpout(orderSpoutConfigTopic), 1);
-        builder.setBolt(StreamId.OrderSplit.name(), new OrderSplit(), 20)
+        builder.setBolt(StreamId.OrderSplit.name(), new OrderSplit(), 1)
                 .shuffleGrouping(StreamId.report_cdr.name());
 
         //统计bolt
-        builder.setBolt(StreamId.StatisticsBolt.name(), new StatisticsBolt(), 20)
+        builder.setBolt(StreamId.StatisticsBolt.name(), new StatisticsBolt(), 4)
                 .fieldsGrouping(StreamId.PageViewSplit.name(), StreamId.BROWSEDATA.name(), new Fields(FName.MSISDN.name()))
                 .fieldsGrouping(StreamId.OrderSplit.name(), StreamId.ORDERDATA.name(), new Fields(FName.MSISDN.name()));
 
         //仓库入库bolt
-        builder.setBolt(StreamId.DataWarehouseBolt.name(), new DataWarehouseBolt(), 20)
+        builder.setBolt(StreamId.DataWarehouseBolt.name(), new DataWarehouseBolt(), 2)
                 .fieldsGrouping(StreamId.StatisticsBolt.name(), StreamId.DATASTREAM.name(), new Fields(FName.MSISDN.name()))
                 .fieldsGrouping(StreamId.StatisticsBolt.name(), StreamId.ABNORMALDATASTREAM.name(), new Fields(FName.MSISDN.name()));
         //实时输出接口bolt
-        builder.setBolt(StreamId.RealTimeOutputBolt.name(), new RealTimeOutputBolt(), 20)
+        builder.setBolt(StreamId.RealTimeOutputBolt.name(), new RealTimeOutputBolt(), 2)
                 .shuffleGrouping(StreamId.DataWarehouseBolt.name(), StreamId.DATASTREAM2.name())
                 .shuffleGrouping(StreamId.DataWarehouseBolt.name(), StreamId.ABNORMALDATASTREAM2.name());
 
         // Run Topo on Cluster
-        conf.setNumWorkers(10);
+        conf.setNumWorkers(8);
         conf.setNumAckers(0);
+        conf.setMaxSpoutPending(10000);
         StormSubmitter.submitTopology(StormConf.TOPONAME, conf, builder.createTopology());
     }
 }
