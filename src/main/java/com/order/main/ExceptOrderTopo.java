@@ -56,17 +56,17 @@ public class ExceptOrderTopo {
          *
          */
         //浏览话单发射、分词bolt
-        builder.setSpout(StreamId.Portal_Pageview.name(), new KafkaSpout(pageViewSpoutConfigTopic), 8);
-        builder.setBolt(StreamId.PageViewSplit.name(), new PageviewSplit(), 8)
+        builder.setSpout(StreamId.Portal_Pageview.name(), new KafkaSpout(pageViewSpoutConfigTopic), 16);
+        builder.setBolt(StreamId.PageViewSplit.name(), new PageviewSplit(), 16)
                 .shuffleGrouping(StreamId.Portal_Pageview.name());
 
         //订购话单发射、分词bolt
-        builder.setSpout(StreamId.report_cdr.name(), new KafkaSpout(orderSpoutConfigTopic), 4);
-        builder.setBolt(StreamId.OrderSplit.name(), new OrderSplit(), 4)
+        builder.setSpout(StreamId.report_cdr.name(), new KafkaSpout(orderSpoutConfigTopic), 6);
+        builder.setBolt(StreamId.OrderSplit.name(), new OrderSplit(), 6)
                 .shuffleGrouping(StreamId.report_cdr.name());
 
         //统计bolt
-        builder.setBolt(StreamId.StatisticsBolt.name(), new StatisticsBolt(), 12)
+        builder.setBolt(StreamId.StatisticsBolt.name(), new StatisticsBolt(), 30)
                 .fieldsGrouping(StreamId.PageViewSplit.name(), StreamId.BROWSEDATA.name(), new Fields(FName.MSISDN.name()))
                 .fieldsGrouping(StreamId.OrderSplit.name(), StreamId.ORDERDATA.name(), new Fields(FName.MSISDN.name()));
 
@@ -80,7 +80,7 @@ public class ExceptOrderTopo {
                 .shuffleGrouping(StreamId.DataWarehouseBolt.name(), StreamId.ABNORMALDATASTREAM2.name());
 
         // Run Topo on Cluster
-        conf.setNumWorkers(8);
+        conf.setNumWorkers(16);
         conf.setNumAckers(0);
         conf.setMaxSpoutPending(5000);
         StormSubmitter.submitTopology(StormConf.TOPONAME, conf, builder.createTopology());

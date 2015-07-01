@@ -10,6 +10,8 @@ import com.order.util.StormConf;
 import com.order.util.StreamId;
 import org.apache.log4j.Logger;
 
+import testspout.DataWarehouseSpout;
+
 /**
  * Created by ghb on 2015/6/5.
  */
@@ -62,7 +64,7 @@ public class TestTopo {
         //        .fieldsGrouping(StreamId.PageViewSplit.name(), StreamId.BROWSEDATA.name(), new Fields(FName.MSISDN.name()))
         //        .fieldsGrouping(StreamId.OrderSplit.name(), StreamId.ORDERDATA.name(), new Fields(FName.MSISDN.name()));
 
-//        builder.setSpout("testspout", new DataWarehouseSpout(), 1);
+        builder.setSpout("testspout", new DataWarehouseSpout(), 1);
 
         builder.setBolt(StreamId.StatisticsBolt.name(), new StatisticsBolt(), 1);
 

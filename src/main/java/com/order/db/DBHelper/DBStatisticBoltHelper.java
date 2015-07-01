@@ -68,9 +68,10 @@ public class DBStatisticBoltHelper implements Serializable{
         String sql = "SELECT FIRST_CHANNEL_ID,SECOND_CHANNEL_ID,THIRD_CHANNEL_ID,PARAMETER_ID" +
                 " FROM " + StormConf.channelCodesTable;
         try {
-            if (conn == null) {
-                conn = getConn();
-            }
+            //if (conn == null) {
+            //    conn = getConn();
+            //}
+        	Connection conn = DriverManager.getConnection(DBConstant.DBURL, DBConstant.DBUSER, DBConstant.DBPASSWORD);
             conn.setAutoCommit(false);
             Statement stmt = conn.createStatement();
             ResultSet resultSet = stmt.executeQuery(sql);
@@ -86,6 +87,7 @@ public class DBStatisticBoltHelper implements Serializable{
             }
             resultSet.close();
             stmt.close();
+            conn.close();
         } catch (SQLException e) {
             log.error(sql + ":insert data to DB is failed.");
             e.printStackTrace();

@@ -53,7 +53,7 @@ public class DBDataWarehouseCacheHelper implements Serializable {
     protected static Object LOCK = null;  // 线程锁
 
     private static final long clearTimer = 1000;    //每N毫秒清理一次
-    private static final long historyTimer = 24 * 60 * 60;  //每次清理一天前的所有订购，并入库
+    private static final long historyTimer = 1 * 60 * 60;  //每次清理一天前的所有订购，并入库
 
     // 用户订购记录
     private HashMap<String, ArrayList<OrderRecord>> orderMap;
@@ -275,10 +275,8 @@ public class DBDataWarehouseCacheHelper implements Serializable {
             String sql = "insert into " + StormConf.dataWarehouseTable +
                     " VALUES (?,?,?,?,?,?,?," +
                     "?,?,?,?,?,?,?,?,?,?,?,?)";
-            if (conn == null) {
-                conn = DriverManager.getConnection(DBConstant.DBURL, DBConstant.DBUSER, DBConstant.DBPASSWORD);
-                conn.setAutoCommit(false);
-            }
+            conn = DriverManager.getConnection(DBConstant.DBURL, DBConstant.DBUSER, DBConstant.DBPASSWORD);
+            conn.setAutoCommit(false);
             pst = conn.prepareStatement(sql);
             Iterator<OrderRecord> itOrder = orderList.iterator();
             while (itOrder.hasNext()) {

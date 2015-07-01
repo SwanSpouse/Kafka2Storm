@@ -87,10 +87,10 @@ public class DBTimer extends Thread {
         ResultSet rs = null;
         PreparedStatement prepStmt = null;
         try {
-            if (conn == null) {
+            //if (conn == null) {
                 conn = DriverManager.getConnection(DBConstant.DBURL, DBConstant.DBUSER, DBConstant.DBPASSWORD);
                 conn.setAutoCommit(false);
-            }
+            //}
             prepStmt = conn.prepareStatement(checkExistsSql);
             prepStmt.setString(1, date);
             prepStmt.setString(2, provinceId);
@@ -151,10 +151,10 @@ public class DBTimer extends Thread {
         }
         PreparedStatement prepStmt = null;
         try {
-            if (conn == null) {
+            //if (conn == null) {
                 conn = DriverManager.getConnection(DBConstant.DBURL, DBConstant.DBUSER, DBConstant.DBPASSWORD);
                 conn.setAutoCommit(false);
-            }
+            //}
             prepStmt = conn.prepareStatement(insertDataSql);
             prepStmt.setString(1, recordDay);
             prepStmt.setString(2, provinceId);
@@ -194,10 +194,10 @@ public class DBTimer extends Thread {
 
         PreparedStatement prepStmt = null;
         try {
-            if (conn == null) {
+            //if (conn == null) {
                 conn = DriverManager.getConnection(DBConstant.DBURL, DBConstant.DBUSER, DBConstant.DBPASSWORD);
                 conn.setAutoCommit(false);
-            }
+            //}
             prepStmt = conn.prepareStatement(checkExistsSql);
             prepStmt.setString(1, date);
             prepStmt.setString(2, provinceId);
@@ -215,7 +215,7 @@ public class DBTimer extends Thread {
             }
             rs.close();
             double abnormalFeeNew = abnormalFeeOld + abnormalFee;
-            double orderFeeNew = orderFeeOld + totalFee;
+            double orderFeeNew = totalFee;
             double rateNew = abnormalFeeNew / orderFeeNew;
 
             String updateSql = " UPDATE " + StormConf.realTimeOutputTable

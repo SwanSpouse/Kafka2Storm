@@ -110,7 +110,7 @@ public class OrderRecord implements Serializable {
 				&& (channelCode.equals(((OrderRecord) obj).channelCode))
 				&& (bookID.equals(((OrderRecord) obj).bookID))
 				&& (productID.equals(((OrderRecord) obj).productID))
-				&& (provinceId == ((OrderRecord) obj).provinceId)
+				&& (provinceId.equals(((OrderRecord) obj).provinceId))
 				&& (orderType == ((OrderRecord) obj).orderType)) {
 			return true;
 		} else {
