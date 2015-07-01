@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Enumeration;
@@ -75,7 +76,8 @@ public class DB implements java.io.Serializable {
 	private Connection getConn() throws SQLException {
 		if (conn == null) {
 			log.info("Connection is null!");
-			conn = (new JDBCUtil()).getConnection();
+			conn = DriverManager.getConnection(DBConstant.DBURL, DBConstant.DBUSER, DBConstant.DBPASSWORD);
+            conn.setAutoCommit(false);
 		}
 		return conn;
 	}

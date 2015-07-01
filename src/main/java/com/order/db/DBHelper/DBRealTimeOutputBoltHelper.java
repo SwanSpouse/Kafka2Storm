@@ -1,12 +1,13 @@
 package com.order.db.DBHelper;
 
 import com.order.constant.Rules;
-import com.order.db.JDBCUtil;
+import com.order.db.DBConstant;
 import com.order.util.TimeParaser;
 import org.apache.log4j.Logger;
 
 import java.io.Serializable;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.Map;
@@ -29,7 +30,8 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
     private Connection getConn() throws SQLException {
         if (conn == null) {
             log.info("Connection is null!");
-            conn = (new JDBCUtil()).getConnection();
+            conn = DriverManager.getConnection(DBConstant.DBURL, DBConstant.DBUSER, DBConstant.DBPASSWORD);
+            conn.setAutoCommit(false);
         }
         return conn;
     }

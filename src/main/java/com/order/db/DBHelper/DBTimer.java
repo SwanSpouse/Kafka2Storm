@@ -2,16 +2,13 @@ package com.order.db.DBHelper;
 
 import com.order.bolt.StatisticsBolt;
 import com.order.constant.Constant;
-import com.order.db.JDBCUtil;
+import com.order.db.DBConstant;
 import com.order.util.LogUtil;
 import com.order.util.StormConf;
 import com.order.util.TimeParaser;
 import org.apache.log4j.Logger;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.Arrays;
 import java.util.Date;
 
@@ -91,7 +88,8 @@ public class DBTimer extends Thread {
         PreparedStatement prepStmt = null;
         try {
             if (conn == null) {
-                conn = (new JDBCUtil()).getConnection();
+                conn = DriverManager.getConnection(DBConstant.DBURL, DBConstant.DBUSER, DBConstant.DBPASSWORD);
+                conn.setAutoCommit(false);
             }
             prepStmt = conn.prepareStatement(checkExistsSql);
             prepStmt.setString(1, date);
@@ -118,8 +116,9 @@ public class DBTimer extends Thread {
             if (prepStmt != null) {
                 prepStmt.close();
             }
-            conn.close();
-            conn = null;
+            if (conn != null) {
+                conn.close();
+            }
         }
         return false;
     }
@@ -153,7 +152,8 @@ public class DBTimer extends Thread {
         PreparedStatement prepStmt = null;
         try {
             if (conn == null) {
-                conn = (new JDBCUtil()).getConnection();
+                conn = DriverManager.getConnection(DBConstant.DBURL, DBConstant.DBUSER, DBConstant.DBPASSWORD);
+                conn.setAutoCommit(false);
             }
             prepStmt = conn.prepareStatement(insertDataSql);
             prepStmt.setString(1, recordDay);
@@ -180,8 +180,9 @@ public class DBTimer extends Thread {
             if (prepStmt != null) {
                 prepStmt.close();
             }
-            conn.close();
-            conn = null;
+            if (conn != null) {
+                conn.close();
+            }
         }
     }
 
@@ -194,7 +195,8 @@ public class DBTimer extends Thread {
         PreparedStatement prepStmt = null;
         try {
             if (conn == null) {
-                conn = (new JDBCUtil()).getConnection();
+                conn = DriverManager.getConnection(DBConstant.DBURL, DBConstant.DBUSER, DBConstant.DBPASSWORD);
+                conn.setAutoCommit(false);
             }
             prepStmt = conn.prepareStatement(checkExistsSql);
             prepStmt.setString(1, date);
@@ -239,8 +241,9 @@ public class DBTimer extends Thread {
             if (prepStmt != null) {
                 prepStmt.close();
             }
-            conn.close();
-            conn = null ;
+            if (conn != null) {
+                conn.close();
+            }
         }
     }
 }
