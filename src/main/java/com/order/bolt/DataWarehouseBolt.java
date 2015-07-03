@@ -97,11 +97,8 @@ public class DataWarehouseBolt extends BaseBasicBolt {
         LogUtil.printLog("DataWareHouseBolt 接收异常数据流: " + msisdn + " " + recordTime + " " + realInfoFee);
 
 		// 异常订购记录首先更新到缓存，如果找不到则退出
-		if (!DBHelper.updateData(msisdn, sessionId, channelCode, recordTime, bookId,
-				productId, realInfoFee, provinceId, orderType, rule))
-		{
-			return;
-		}
+		DBHelper.updateData(msisdn, sessionId, channelCode, recordTime, bookId,
+				productId, realInfoFee, provinceId, orderType, rule);
 		// 入缓存后直接转发
 		collector.emit(StreamId.ABNORMALDATASTREAM2.name(), new Values(msisdn, sessionId, recordTime, 
 				realInfoFee, channelCode, productId, rule, provinceId, orderType, bookId));		

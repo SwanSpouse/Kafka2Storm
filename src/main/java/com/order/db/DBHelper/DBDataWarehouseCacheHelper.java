@@ -52,8 +52,8 @@ public class DBDataWarehouseCacheHelper implements Serializable {
     private transient Thread cleaner = null; //  清理线程
     protected static Object LOCK = null;  // 线程锁
 
-    private static final long clearTimer = 1000;    //每N毫秒清理一次
-    private static final long historyTimer = 1 * 60 * 60;  //每次清理一天前的所有订购，并入库
+    private static final long clearTimer = 1 * 60 * 60;    //每N秒清理一次
+    private static final long historyTimer = 1 * 60 * 60;  //每次清理1小时前的所有订购，并入库
 
     // 用户订购记录
     private HashMap<String, ArrayList<OrderRecord>> orderMap;
@@ -91,7 +91,7 @@ public class DBDataWarehouseCacheHelper implements Serializable {
                     while (true) {
                         try {
                             // 每隔一个一段时间清理一次。
-                            cleaner.sleep(clearTimer);
+                            cleaner.sleep(clearTimer * 1000);
                             log.info("Begin Clean DataWareHouse cache ...");
                             cleanAndToDB();
                         } catch (InterruptedException e) {

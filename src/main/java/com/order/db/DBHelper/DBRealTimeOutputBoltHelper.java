@@ -2,12 +2,15 @@ package com.order.db.DBHelper;
 
 import com.order.constant.Rules;
 import com.order.db.DBConstant;
+import com.order.util.StormConf;
 import com.order.util.TimeParaser;
 import org.apache.log4j.Logger;
 
 import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.Map;
@@ -39,13 +42,66 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
     private transient Thread storageData2DBTimer = null;
 
     public DBRealTimeOutputBoltHelper() {
-        totalFee = new ConcurrentHashMap<String, Double>();
-        abnormalFee = new ConcurrentHashMap<String, Double>();
-        try {
-            conn = this.getConn();
-        } catch (SQLException e) {
-            e.printStackTrace();
+        if (storageData2DBTimer == null) {
+            storageData2DBTimer = new DBTimer(conn);
+            storageData2DBTimer.setDaemon(true);
+            storageData2DBTimer.start();
         }
+    	totalFee = new ConcurrentHashMap<String, Double>();
+        abnormalFee = new ConcurrentHashMap<String, Double>();
+    	//try {
+		//	getTotalFeeFromDB();
+		//} catch (SQLException e) {
+		//	e.printStackTrace();
+		//}
+    	try {
+			conn = this.getConn();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+    }
+    
+	private double getTotalFeeFromDB(String currentTime, String provinceId, String channelCode, 
+    		String contentId, String contentType)  throws SQLException {
+        String selectSql = "SELECT ODR_FEE FROM " + StormConf.realTimeOutputTable
+        		+ " WHERE RECORD_DAY=? AND PROVINCE_ID=? AND SALE_PARM=? "
+        		+ " AND CONTENT_ID=? AND CONTENT_TYPE=? AND RULE_ID=0 ";
+        ResultSet rs = null;
+        PreparedStatement prepStmt = null;
+        double totalFee = 0;
+        Connection conn = null;
+        try {
+        	conn = DriverManager.getConnection(DBConstant.DBURL, DBConstant.DBUSER, DBConstant.DBPASSWORD);
+            conn.setAutoCommit(false);
+            prepStmt = conn.prepareStatement(selectSql);
+            prepStmt.setString(1, currentTime);
+            prepStmt.setString(2, provinceId);
+            prepStmt.setString(3, channelCode);
+            prepStmt.setString(4, contentId);
+            prepStmt.setString(5, contentType);
+            rs = prepStmt.executeQuery();
+            while (rs.next()) {
+            	totalFee = rs.getFloat("ODR_FEE");
+            }
+            rs.close();
+            prepStmt.close();
+            //log.info("Get fee " + String.valueOf(totalFee));
+            return totalFee;
+        } catch (SQLException e) {
+            log.error("查询sql错误" + selectSql);
+            e.printStackTrace();
+        } finally {
+            if (rs != null) {
+                rs.close();
+            }
+            if (prepStmt != null) {
+                prepStmt.close();
+            }
+            if (conn != null) {
+                conn.close();
+            }
+        }
+        return totalFee;
     }
 
     /**
@@ -65,29 +121,40 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
             storageData2DBTimer.start();
         }
         String currentTime = TimeParaser.formatTimeInDay(time);
-        if (orderType == 1 || orderType == 2 || orderType == 21 || orderType == 3) {
+        if (orderType == 1 || orderType == 2 || orderType == 21 || orderType == 3) {  //图书
             contentType = 3 + "";
             contentId = bookId;
-        } else if (orderType == 4) {
+        } else if (orderType == 4) {  //包月
             contentType = 1 + "";
             contentId = productId;
-        } else if (orderType == 5) {
+        } else if (orderType == 5) {  //促销包
             contentType = 2 + "";
             contentId = productId;
         }
-        //统计正常费用。
+        // 总费用key值
         String totalFeeKey = currentTime + "|" + provinceId + "|" + channelCode + "|"
                 + contentId + "|" + contentType;
-
         int ruleId = getRuleNumFromString(rules);
+        
+        // 获取总费用旧值
+    	double oldTatalFee = 0;
+		if (totalFee.containsKey(totalFeeKey)) {
+			oldTatalFee = totalFee.get(totalFeeKey);
+		} 
+		else {
+			try {
+				oldTatalFee = getTotalFeeFromDB(currentTime, provinceId, channelCode, contentId, contentType);
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+			this.totalFee.put(totalFeeKey, oldTatalFee);
+		}
+
         // 统计正常费用
+		double curTotalFee = 0;
         if (ruleId == 0) {
-            if (totalFee.containsKey(totalFeeKey)) {
-                double currentFee = totalFee.get(totalFeeKey) + realInfoFee;
-                this.totalFee.put(totalFeeKey, currentFee);
-            } else {
-                this.totalFee.put(totalFeeKey, realInfoFee);
-            }
+        	curTotalFee = oldTatalFee + realInfoFee;
+        	this.totalFee.put(totalFeeKey, curTotalFee);
             //log.info(this.toString());
             return;
         }
@@ -101,6 +168,7 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
             this.abnormalFee.put(abnormalFeeKey, realInfoFee);
         }
         //log.info(this.toString());
+        return;
     }
     
     /* 获取异常规则对应的数字编号 */

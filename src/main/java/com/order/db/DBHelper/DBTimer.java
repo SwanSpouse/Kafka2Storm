@@ -1,6 +1,5 @@
 package com.order.db.DBHelper;
 
-import com.order.bolt.StatisticsBolt;
 import com.order.constant.Constant;
 import com.order.db.DBConstant;
 import com.order.util.LogUtil;
@@ -28,21 +27,32 @@ public class DBTimer extends Thread {
     public void run() {
         super.run();
         try {
+        	int num = 0;
             while (true) {
                 Thread.sleep(Constant.ONE_MINUTE * 1000L);
-                LogUtil.printLog("===将map中的数据更新到数据库中===");
-                //将map中的数据更新到数据库中。
+                log.info("===将map中的数据更新到数据库中===");
+                //每分钟将map中异常费用数据更新到数据库中。
                 this.updateDB();
+                //每N分钟将总费用更新到库中
+                if (++num >= 10) {
+                	this.updateTotalDB();
+                	num = 0;
+                }
                 if (TimeParaser.isTimeToClearData(System.currentTimeMillis())) {
+                    this.updateTotalDB();
                     DBRealTimeOutputBoltHelper.totalFee.clear();
                 }
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
-        }
+        } catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
     }
-
-    private void updateDB() {
+ 
+    private void updateDB() throws SQLException {
+    	// 将异常订购费用更新到库里，并清除内存
         for (String key : DBRealTimeOutputBoltHelper.abnormalFee.keySet()) {
             String[] keys = key.split("\\|");
             if (keys.length < 6) {
@@ -64,19 +74,48 @@ public class DBTimer extends Thread {
                 continue;
             }
             double fee = DBRealTimeOutputBoltHelper.totalFee.get(totalFeeKey);
+            if (fee == 0) continue;  // 总费用为0,则无需入库
             String abnormalFeeKey = totalFeeKey + "|" + ruleID;
             double abnFee = DBRealTimeOutputBoltHelper.abnormalFee.get(abnormalFeeKey);
             try {
                 if (checkExists(date, provinceId, contentID, contentType, channelCode, ruleID)) {
-                    this.updateDate(date, provinceId, contentID, contentType, channelCode, ruleID, abnFee, fee);
+                    this.updateAbnormalFee(date, provinceId, contentID, contentType, channelCode, ruleID, abnFee, fee);
                 } else {
-                    this.insertData(date, provinceId, contentID, contentType, channelCode, ruleID, abnFee, fee);
+                    this.insertAbnormalFee(date, provinceId, contentID, contentType, channelCode, ruleID, abnFee, fee);
                 }
             } catch (SQLException e) {
                 e.printStackTrace();
             }
         }
+        log.info("===更新" + String.valueOf(DBRealTimeOutputBoltHelper.abnormalFee.size()) + "条异常统计信息到数据库中===");
         DBRealTimeOutputBoltHelper.abnormalFee.clear();
+    }
+    
+    private void updateTotalDB() throws SQLException {
+        // 将总费用更新到库中（ruleid为0）,不清空内存
+        for (String key : DBRealTimeOutputBoltHelper.totalFee.keySet()) {
+            String[] keys = key.split("\\|");
+            if (keys.length != 5) {
+                log.error("totalfee的key值字段个数错误: " + key);
+                continue;
+            }
+            String date = keys[0];
+            String provinceId = keys[1];
+            String channelCode = keys[2];
+            String contentID = keys[3];
+            String contentType = keys[4];
+            String ruleID = "0";
+            double fee = DBRealTimeOutputBoltHelper.totalFee.get(key);
+            if (fee == 0) continue;  //总费用为0不入库
+            //log.info("Insert Key : " + key);
+            if (checkExists(date, provinceId, contentID, contentType, channelCode, ruleID)) {
+                //this.updateAbnormalFee(date, provinceId, contentID, contentType, channelCode, ruleID, 0, fee);
+                this.updateTotalFee(date, provinceId, contentID, contentType, channelCode, fee);
+            } else {
+                this.insertAbnormalFee(date, provinceId, contentID, contentType, channelCode, ruleID, 0, fee);
+            }
+        }
+        log.info("===更新" + String.valueOf(DBRealTimeOutputBoltHelper.totalFee.size()) + "条总费用统计信息到数据库中===");
     }
 
     private boolean checkExists(String date, String provinceId, String contentID, String contentType,
@@ -87,10 +126,8 @@ public class DBTimer extends Thread {
         ResultSet rs = null;
         PreparedStatement prepStmt = null;
         try {
-            //if (conn == null) {
-                conn = DriverManager.getConnection(DBConstant.DBURL, DBConstant.DBUSER, DBConstant.DBPASSWORD);
-                conn.setAutoCommit(false);
-            //}
+            conn = DriverManager.getConnection(DBConstant.DBURL, DBConstant.DBUSER, DBConstant.DBPASSWORD);
+            conn.setAutoCommit(false);
             prepStmt = conn.prepareStatement(checkExistsSql);
             prepStmt.setString(1, date);
             prepStmt.setString(2, provinceId);
@@ -104,7 +141,7 @@ public class DBTimer extends Thread {
             int count = rs.getInt("recordTimes");
             rs.close();
             prepStmt.close();
-            LogUtil.printLog("DBTimer 检查数据是否存在");
+            //log.info("DBTimer 检查数据是否存在 " + String.valueOf(count));
             return count != 0;
         } catch (SQLException e) {
             log.error("查询sql错误" + checkExistsSql);
@@ -123,7 +160,7 @@ public class DBTimer extends Thread {
         return false;
     }
 
-    private void insertData(String recordDay,String provinceId, String contentId, String contentType,
+    private void insertAbnormalFee(String recordDay,String provinceId, String contentId, String contentType,
                             String channelCode, String ruleId, double abnormalFee, double totalFee) throws SQLException {
         if (DBStatisticBoltHelper.parameterId2ChannelIds == null) {
             DBStatisticBoltHelper.getData();
@@ -132,9 +169,9 @@ public class DBTimer extends Thread {
             log.error("营销参数维表更新错误:" + new Date() + "==>" + channelCode);
             return;
         }
-        if (Integer.parseInt(ruleId) == 0) {
-            return;
-        }
+        //if (Integer.parseInt(ruleId) == 0) {
+        //    return;
+        //}
         String[] chls = DBStatisticBoltHelper.parameterId2ChannelIds.get(channelCode).split("\\|");
         String chl1 = chls[0];
         String chl2 = chls[1];
@@ -151,10 +188,8 @@ public class DBTimer extends Thread {
         }
         PreparedStatement prepStmt = null;
         try {
-            //if (conn == null) {
-                conn = DriverManager.getConnection(DBConstant.DBURL, DBConstant.DBUSER, DBConstant.DBPASSWORD);
-                conn.setAutoCommit(false);
-            //}
+        	conn = DriverManager.getConnection(DBConstant.DBURL, DBConstant.DBUSER, DBConstant.DBPASSWORD);
+        	conn.setAutoCommit(false);
             prepStmt = conn.prepareStatement(insertDataSql);
             prepStmt.setString(1, recordDay);
             prepStmt.setString(2, provinceId);
@@ -170,11 +205,9 @@ public class DBTimer extends Thread {
             prepStmt.setInt(12, Integer.parseInt(ruleId));
             prepStmt.execute();
             prepStmt.execute("commit");
-            if (StatisticsBolt.isDebug) {
-                log.info("数据插入成功" + insertDataSql);
-            }
+            //log.info("数据插入成功:" + insertDataSql);
         } catch (SQLException e) {
-            log.error("插入sql错误" + insertDataSql);
+            log.error("插入sql错误:" + insertDataSql);
             e.printStackTrace();
         } finally {
             if (prepStmt != null) {
@@ -186,56 +219,34 @@ public class DBTimer extends Thread {
         }
     }
 
-    private void updateDate(String date, String provinceId, String contentID, String contentType,
+    private void updateAbnormalFee(String date, String provinceId, String contentID, String contentType,
                             String channelCode, String ruleId, double abnormalFee, double totalFee) throws SQLException {
-        String checkExistsSql = "SELECT ODR_ABN_FEE,ODR_FEE FROM " + StormConf.realTimeOutputTable
-                + " WHERE RECORD_DAY=? AND PROVINCE_ID=? AND CONTENT_ID=?"+
-                " AND SALE_PARM=? AND CONTENT_TYPE=? AND RULE_ID=?";
-
         PreparedStatement prepStmt = null;
+        String updateSql = null;
         try {
-            //if (conn == null) {
-                conn = DriverManager.getConnection(DBConstant.DBURL, DBConstant.DBUSER, DBConstant.DBPASSWORD);
-                conn.setAutoCommit(false);
-            //}
-            prepStmt = conn.prepareStatement(checkExistsSql);
-            prepStmt.setString(1, date);
-            prepStmt.setString(2, provinceId);
-            prepStmt.setString(3, contentID);
-            prepStmt.setString(4, channelCode);
-            prepStmt.setString(5, contentType);
-            prepStmt.setString(6, ruleId);
-
-            double abnormalFeeOld = 0;
-            double orderFeeOld = 0;
-            ResultSet rs = prepStmt.executeQuery();
-            while (rs.next()) {
-                abnormalFeeOld = rs.getDouble("ODR_ABN_FEE");
-                orderFeeOld = rs.getDouble("ODR_FEE");
-            }
-            rs.close();
-            double abnormalFeeNew = abnormalFeeOld + abnormalFee;
-            double orderFeeNew = totalFee;
-            double rateNew = abnormalFeeNew / orderFeeNew;
-
-            String updateSql = " UPDATE " + StormConf.realTimeOutputTable
-                    +" SET ODR_ABN_FEE=\'"+abnormalFeeNew+"\', ODR_FEE=\'"+orderFeeNew+"\',"+
-                    "ABN_RAT=\'"+rateNew+
-                    " \' WHERE RECORD_DAY=? AND PROVINCE_ID=? AND CONTENT_ID=?" +
-                    " AND SALE_PARM=? AND CONTENT_TYPE=? AND RULE_ID=?";
-
+            conn = DriverManager.getConnection(DBConstant.DBURL, DBConstant.DBUSER, DBConstant.DBPASSWORD);
+            conn.setAutoCommit(false);
+            updateSql = " UPDATE " + StormConf.realTimeOutputTable + 
+                    " SET ODR_ABN_FEE=ODR_ABN_FEE+?, ODR_FEE=?, " + 
+                    " ABN_RAT=(ODR_ABN_FEE+?)/?" +
+                    " WHERE RECORD_DAY=? AND PROVINCE_ID=? AND CONTENT_ID=?" +
+                    " AND SALE_PARM=? AND CONTENT_TYPE=? AND RULE_ID=? ";
             prepStmt = conn.prepareStatement(updateSql);
-            prepStmt.setString(1, date);
-            prepStmt.setString(2, provinceId);
-            prepStmt.setString(3, contentID);
-            prepStmt.setString(4, channelCode);
-            prepStmt.setString(5, contentType);
-            prepStmt.setString(6, ruleId);
+            prepStmt.setDouble(1, abnormalFee);
+            prepStmt.setDouble(2, totalFee);
+            prepStmt.setDouble(3, abnormalFee);
+            prepStmt.setDouble(4, totalFee);
+            prepStmt.setString(5, date);
+            prepStmt.setString(6, provinceId);
+            prepStmt.setString(7, contentID);
+            prepStmt.setString(8, channelCode);
+            prepStmt.setString(9, contentType);
+            prepStmt.setString(10, ruleId);
             prepStmt.executeUpdate();
             prepStmt.execute("commit");
-            LogUtil.printLog("DBTimer 更新数据成功");
+            //log.info("DBTimer 更新数据成功" + updateSql);
         } catch (SQLException e) {
-            log.error("查询sql错误" + checkExistsSql);
+            log.error("更新sql错误" + updateSql);
             e.printStackTrace();
         }finally {
             if (prepStmt != null) {
@@ -246,4 +257,43 @@ public class DBTimer extends Thread {
             }
         }
     }
+    
+    private void updateTotalFee(String date, String provinceId, String contentID, String contentType,
+                            String channelCode, double totalFee) throws SQLException {
+        PreparedStatement prepStmt = null;
+        String updateSql = null;
+        try {
+            conn = DriverManager.getConnection(DBConstant.DBURL, DBConstant.DBUSER, DBConstant.DBPASSWORD);
+            conn.setAutoCommit(false);
+            updateSql = " UPDATE " + StormConf.realTimeOutputTable + 
+                    " SET ODR_FEE=?, " + 
+                    " ABN_RAT=ODR_ABN_FEE/?" +
+                    " WHERE RECORD_DAY=? AND PROVINCE_ID=? AND CONTENT_ID=?" +
+                    " AND SALE_PARM=? AND CONTENT_TYPE=? ";
+            prepStmt = conn.prepareStatement(updateSql);
+            prepStmt.setDouble(1, totalFee);
+            prepStmt.setDouble(2, totalFee);
+            prepStmt.setString(3, date);
+            prepStmt.setString(4, provinceId);
+            prepStmt.setString(5, contentID);
+            prepStmt.setString(6, channelCode);
+            prepStmt.setString(7, contentType);
+            prepStmt.executeUpdate();
+            prepStmt.execute("commit");
+            //log.info("DBTimer 更新数据成功" + updateSql);
+        } catch (SQLException e) {
+            log.error("更新sql错误" + updateSql);
+            e.printStackTrace();
+        }finally {
+            if (prepStmt != null) {
+                prepStmt.close();
+            }
+            if (conn != null) {
+                conn.close();
+            }
+        }
+    }
+    
+
+    
 }
