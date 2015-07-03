@@ -104,14 +104,16 @@ public class OrderRecord implements Serializable {
 
 	@Override
 	public boolean equals(Object obj) {
+		// 为解决性能问题临时修改为如下形式
 		if ((recordTime.equals(((OrderRecord) obj).recordTime))
-				&& (msisdn.equals(((OrderRecord) obj).msisdn))
-				&& (sessionId.equals(((OrderRecord) obj).sessionId))
-				&& (channelCode.equals(((OrderRecord) obj).channelCode))
-				&& (bookID.equals(((OrderRecord) obj).bookID))
-				&& (productID.equals(((OrderRecord) obj).productID))
-				&& (provinceId.equals(((OrderRecord) obj).provinceId))
-				&& (orderType == ((OrderRecord) obj).orderType)) {
+				//&& (msisdn.equals(((OrderRecord) obj).msisdn))
+				//&& (sessionId.equals(((OrderRecord) obj).sessionId))
+				//&& (channelCode.equals(((OrderRecord) obj).channelCode))
+				//&& (bookID.equals(((OrderRecord) obj).bookID))
+				//&& (productID.equals(((OrderRecord) obj).productID))
+				//&& (provinceId.equals(((OrderRecord) obj).provinceId))
+				//&& (orderType == ((OrderRecord) obj).orderType)
+				) {
 			return true;
 		} else {
 			return false;
