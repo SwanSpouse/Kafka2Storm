@@ -1,7 +1,7 @@
 package com.order.db.DBHelper;
 
 import com.order.constant.Constant;
-import com.order.db.DBConstant;
+import com.order.db.JDBCUtil;
 import com.order.util.LogUtil;
 import com.order.util.StormConf;
 import com.order.util.TimeParaser;
@@ -126,7 +126,7 @@ public class DBTimer extends Thread {
         ResultSet rs = null;
         PreparedStatement prepStmt = null;
         try {
-            conn = DriverManager.getConnection(DBConstant.DBURL, DBConstant.DBUSER, DBConstant.DBPASSWORD);
+            conn = JDBCUtil.connUtil.getConnection();
             conn.setAutoCommit(false);
             prepStmt = conn.prepareStatement(checkExistsSql);
             prepStmt.setString(1, date);
@@ -155,6 +155,7 @@ public class DBTimer extends Thread {
             }
             if (conn != null) {
                 conn.close();
+                conn = null;
             }
         }
         return false;
@@ -188,8 +189,8 @@ public class DBTimer extends Thread {
         }
         PreparedStatement prepStmt = null;
         try {
-        	conn = DriverManager.getConnection(DBConstant.DBURL, DBConstant.DBUSER, DBConstant.DBPASSWORD);
-        	conn.setAutoCommit(false);
+            conn = JDBCUtil.connUtil.getConnection();
+            conn.setAutoCommit(false);
             prepStmt = conn.prepareStatement(insertDataSql);
             prepStmt.setString(1, recordDay);
             prepStmt.setString(2, provinceId);
@@ -215,6 +216,7 @@ public class DBTimer extends Thread {
             }
             if (conn != null) {
                 conn.close();
+                conn = null;
             }
         }
     }
@@ -224,10 +226,10 @@ public class DBTimer extends Thread {
         PreparedStatement prepStmt = null;
         String updateSql = null;
         try {
-            conn = DriverManager.getConnection(DBConstant.DBURL, DBConstant.DBUSER, DBConstant.DBPASSWORD);
+            conn = JDBCUtil.connUtil.getConnection();
             conn.setAutoCommit(false);
-            updateSql = " UPDATE " + StormConf.realTimeOutputTable + 
-                    " SET ODR_ABN_FEE=ODR_ABN_FEE+?, ODR_FEE=?, " + 
+            updateSql = " UPDATE " + StormConf.realTimeOutputTable +
+                    " SET ODR_ABN_FEE=ODR_ABN_FEE+?, ODR_FEE=?, " +
                     " ABN_RAT=(ODR_ABN_FEE+?)/?" +
                     " WHERE RECORD_DAY=? AND PROVINCE_ID=? AND CONTENT_ID=?" +
                     " AND SALE_PARM=? AND CONTENT_TYPE=? AND RULE_ID=? ";
@@ -254,6 +256,7 @@ public class DBTimer extends Thread {
             }
             if (conn != null) {
                 conn.close();
+                conn = null;
             }
         }
     }
@@ -263,10 +266,10 @@ public class DBTimer extends Thread {
         PreparedStatement prepStmt = null;
         String updateSql = null;
         try {
-            conn = DriverManager.getConnection(DBConstant.DBURL, DBConstant.DBUSER, DBConstant.DBPASSWORD);
+            conn = JDBCUtil.connUtil.getConnection();
             conn.setAutoCommit(false);
-            updateSql = " UPDATE " + StormConf.realTimeOutputTable + 
-                    " SET ODR_FEE=?, " + 
+            updateSql = " UPDATE " + StormConf.realTimeOutputTable +
+                    " SET ODR_FEE=?, " +
                     " ABN_RAT=ODR_ABN_FEE/?" +
                     " WHERE RECORD_DAY=? AND PROVINCE_ID=? AND CONTENT_ID=?" +
                     " AND SALE_PARM=? AND CONTENT_TYPE=? ";
@@ -290,10 +293,8 @@ public class DBTimer extends Thread {
             }
             if (conn != null) {
                 conn.close();
+                conn = null;
             }
         }
     }
-    
-
-    
 }

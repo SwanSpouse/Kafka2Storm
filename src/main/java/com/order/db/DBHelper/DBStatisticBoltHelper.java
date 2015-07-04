@@ -1,6 +1,6 @@
 package com.order.db.DBHelper;
 
-import com.order.db.DBConstant;
+import com.order.db.JDBCUtil;
 import com.order.util.LogUtil;
 import com.order.util.StormConf;
 import org.apache.log4j.Logger;
@@ -26,7 +26,7 @@ public class DBStatisticBoltHelper implements Serializable{
     private static Connection getConn() throws SQLException {
         if (conn == null) {
             log.info("Connection is null!");
-            conn = DriverManager.getConnection(DBConstant.DBURL, DBConstant.DBUSER, DBConstant.DBPASSWORD);
+            conn = JDBCUtil.connUtil.getConnection();
             conn.setAutoCommit(false);
         }
         return conn;
@@ -71,7 +71,7 @@ public class DBStatisticBoltHelper implements Serializable{
             //if (conn == null) {
             //    conn = getConn();
             //}
-        	Connection conn = DriverManager.getConnection(DBConstant.DBURL, DBConstant.DBUSER, DBConstant.DBPASSWORD);
+            Connection conn = JDBCUtil.connUtil.getConnection();
             conn.setAutoCommit(false);
             Statement stmt = conn.createStatement();
             ResultSet resultSet = stmt.executeQuery(sql);

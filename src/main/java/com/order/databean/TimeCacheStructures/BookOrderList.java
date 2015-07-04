@@ -60,6 +60,10 @@ public class BookOrderList implements Serializable{
         if (LOCK == null) {
             LOCK = new Object();
         }
+        if (map == null) {
+            map = new HashMap<String, CachedList<Integer>>();
+            return ;
+        }
         synchronized (LOCK) {
             for (String key : map.keySet()) {
                 CachedList<Integer> list = map.get(key);

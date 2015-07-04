@@ -1,14 +1,13 @@
 package com.order.db.DBHelper;
 
 import com.order.constant.Rules;
-import com.order.db.DBConstant;
+import com.order.db.JDBCUtil;
 import com.order.util.StormConf;
 import com.order.util.TimeParaser;
 import org.apache.log4j.Logger;
 
 import java.io.Serializable;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -33,7 +32,7 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
     private Connection getConn() throws SQLException {
         if (conn == null) {
             log.info("Connection is null!");
-            conn = DriverManager.getConnection(DBConstant.DBURL, DBConstant.DBUSER, DBConstant.DBPASSWORD);
+            conn = JDBCUtil.connUtil.getConnection();
             conn.setAutoCommit(false);
         }
         return conn;
@@ -71,7 +70,7 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
         double totalFee = 0;
         Connection conn = null;
         try {
-        	conn = DriverManager.getConnection(DBConstant.DBURL, DBConstant.DBUSER, DBConstant.DBPASSWORD);
+            conn = JDBCUtil.connUtil.getConnection();
             conn.setAutoCommit(false);
             prepStmt = conn.prepareStatement(selectSql);
             prepStmt.setString(1, currentTime);
@@ -81,7 +80,7 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
             prepStmt.setString(5, contentType);
             rs = prepStmt.executeQuery();
             while (rs.next()) {
-            	totalFee = rs.getFloat("ODR_FEE");
+                totalFee = rs.getFloat("ODR_FEE");
             }
             rs.close();
             prepStmt.close();
@@ -99,6 +98,7 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
             }
             if (conn != null) {
                 conn.close();
+                conn = null;
             }
         }
         return totalFee;

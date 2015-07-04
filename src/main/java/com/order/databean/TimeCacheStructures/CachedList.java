@@ -12,12 +12,14 @@ import java.util.concurrent.ConcurrentHashMap;
 public class CachedList<T> implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    private static int mapSize = 100;
+
     private ConcurrentHashMap<T, LinkedList<Long>> list = new ConcurrentHashMap<T, LinkedList<Long>>();
     protected int expirationSecs = 0;
 
     public CachedList(int expirationSecs) {
         if (list == null) {
-            list = new ConcurrentHashMap<T, LinkedList<Long>>();
+            list = new ConcurrentHashMap<T, LinkedList<Long>>(this.mapSize);
         }
         this.expirationSecs = expirationSecs;
     }

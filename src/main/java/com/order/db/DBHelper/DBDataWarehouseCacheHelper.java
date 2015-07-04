@@ -7,8 +7,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-
-import com.order.db.DBConstant;
+import com.order.db.JDBCUtil;
 import org.apache.log4j.Logger;
 
 import com.order.constant.Rules;
@@ -61,7 +60,7 @@ public class DBDataWarehouseCacheHelper implements Serializable {
     private Connection getConn() throws SQLException {
         if (conn == null) {
             log.info("Connection is null!");
-            conn = DriverManager.getConnection(DBConstant.DBURL, DBConstant.DBUSER, DBConstant.DBPASSWORD);
+            conn = JDBCUtil.connUtil.getConnection();
             conn.setAutoCommit(false);
         }
         return conn;
@@ -275,7 +274,7 @@ public class DBDataWarehouseCacheHelper implements Serializable {
             String sql = "insert into " + StormConf.dataWarehouseTable +
                     " VALUES (?,?,?,?,?,?,?," +
                     "?,?,?,?,?,?,?,?,?,?,?,?)";
-            conn = DriverManager.getConnection(DBConstant.DBURL, DBConstant.DBUSER, DBConstant.DBPASSWORD);
+            conn = JDBCUtil.connUtil.getConnection();
             conn.setAutoCommit(false);
             pst = conn.prepareStatement(sql);
             Iterator<OrderRecord> itOrder = orderList.iterator();
@@ -310,6 +309,7 @@ public class DBDataWarehouseCacheHelper implements Serializable {
             }
             if (conn != null) {
                 conn.close();
+                conn = null;
             }
         }
     }

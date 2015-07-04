@@ -27,6 +27,8 @@ public class RealTimeCacheList<T> implements Serializable{
     private static final long serialVersionUID = 1L;
     private static Logger log = Logger.getLogger(RealTimeCacheList.class);
 
+    private static int mapSize = 30000;
+
     public static interface TimeOutCallback<T> {
         public void expire(T value, LinkedList<Long> pvTimes);
     }
@@ -45,8 +47,8 @@ public class RealTimeCacheList<T> implements Serializable{
 
     public RealTimeCacheList(int expirationSecs, final TimeOutCallback timeOutCallback) {
         LOCK = new Object();
-        oldList = new LinkedHashMap<T, LinkedList<Long>>();
-        currentList = new LinkedHashMap<T, LinkedList<Long>>();
+        oldList = new LinkedHashMap<T, LinkedList<Long>>(this.mapSize);
+        currentList = new LinkedHashMap<T, LinkedList<Long>>(this.mapSize);
 
         this.timeOutCallback = timeOutCallback;
         this.expiratonSecs = expirationSecs;
