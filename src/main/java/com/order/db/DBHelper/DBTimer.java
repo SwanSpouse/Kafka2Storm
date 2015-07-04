@@ -167,17 +167,20 @@ public class DBTimer extends Thread {
         if (DBStatisticBoltHelper.parameterId2ChannelIds == null) {
             DBStatisticBoltHelper.getData();
         }
+        String chl1 = null;
+        String chl2 = null;
+        String chl3 = null;
+
         if (!DBStatisticBoltHelper.parameterId2ChannelIds.containsKey(channelCode)) {
             log.error("营销参数维表更新错误:" + new Date() + "==>" + channelCode);
-            return;
+            chl1 = chl2 = chl3 = "";
+        } else {
+            String[] chls = DBStatisticBoltHelper.parameterId2ChannelIds.get(channelCode).split("\\|");
+            chl1 = chls[0];
+            chl2 = chls[1];
+            chl3 = chls[2];
         }
-        //if (Integer.parseInt(ruleId) == 0) {
-        //    return;
-        //}
-        String[] chls = DBStatisticBoltHelper.parameterId2ChannelIds.get(channelCode).split("\\|");
-        String chl1 = chls[0];
-        String chl2 = chls[1];
-        String chl3 = chls[2];
+
         String insertDataSql = "INSERT INTO " + StormConf.realTimeOutputTable +
                 "( RECORD_DAY,PROVINCE_ID,CHL1,CHL2,CHL3," +
                 "  CONTENT_ID,SALE_PARM,ODR_ABN_FEE,ODR_FEE," +
