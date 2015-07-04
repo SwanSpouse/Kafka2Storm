@@ -41,6 +41,7 @@ public class DBTimer extends Thread {
                 if (TimeParaser.isTimeToClearData(System.currentTimeMillis())) {
                     this.updateTotalDB();
                     DBRealTimeOutputBoltHelper.totalFee.clear();
+                    DBRealTimeOutputBoltHelper.totalFeeInDB.clear();
                 }
             }
         } catch (InterruptedException e) {
