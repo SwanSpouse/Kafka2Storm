@@ -73,12 +73,13 @@ public class DataWarehouseBolt extends BaseBasicBolt {
 
         LogUtil.printLog("DataWareHouseBolt 接收正常数据流: " + msisdn + " " + recordTime + " " + realInfoFee);
 
-		// 数据入库
-		DBHelper.insertData(msisdn, sessionId, channelCode, recordTime, bookId,
-				productId, realInfoFee, provinceId, orderType);
-        // 正常订购直接转发
-        collector.emit(StreamId.DATASTREAM2.name(), new Values(msisdn, sessionId, recordTime,
-                realInfoFee, channelCode, productId, provinceId, orderType, bookId));
+		// 订购记录增加到内存
+		if( DBHelper.insertData(msisdn, sessionId, channelCode, recordTime, bookId,
+				productId, realInfoFee, provinceId, orderType) == 1) {
+	        // 若新增成功则直接转发消息
+	        collector.emit(StreamId.DATASTREAM2.name(), new Values(msisdn, sessionId, recordTime,
+	                realInfoFee, channelCode, productId, provinceId, orderType, bookId));
+		}
 	}
 
 	// 处理异常数据流
@@ -96,12 +97,26 @@ public class DataWarehouseBolt extends BaseBasicBolt {
 
         LogUtil.printLog("DataWareHouseBolt 接收异常数据流: " + msisdn + " " + recordTime + " " + realInfoFee);
 
-		// 异常订购记录首先更新到缓存，如果找不到则退出
-		DBHelper.updateData(msisdn, sessionId, channelCode, recordTime, bookId,
+		// 如果update时找不到订购记录，则首先插入一条
+        int result = DBHelper.updateData(msisdn, sessionId, channelCode, recordTime, bookId,
 				productId, realInfoFee, provinceId, orderType, rule);
-		// 入缓存后直接转发
-		collector.emit(StreamId.ABNORMALDATASTREAM2.name(), new Values(msisdn, sessionId, recordTime, 
-				realInfoFee, channelCode, productId, rule, provinceId, orderType, bookId));		
+		if (result == -1) {
+			// 订购记录增加到内存
+			if( DBHelper.insertData(msisdn, sessionId, channelCode, recordTime, bookId,
+					productId, realInfoFee, provinceId, orderType) == 1) {
+		        // 若新增成功则直接转发正常订购消息
+		        collector.emit(StreamId.DATASTREAM2.name(), new Values(msisdn, sessionId, recordTime,
+		                realInfoFee, channelCode, productId, provinceId, orderType, bookId));
+			}
+			// 再次更新
+			result = DBHelper.updateData(msisdn, sessionId, channelCode, recordTime, bookId,
+					productId, realInfoFee, provinceId, orderType, rule);
+		}
+		// 更新成功后直接转发异常订购
+		if (result == 1) {
+			collector.emit(StreamId.ABNORMALDATASTREAM2.name(), new Values(msisdn, sessionId, recordTime, 
+					realInfoFee, channelCode, productId, rule, provinceId, orderType, bookId));
+		}
 
 		// 向前追溯准备阶段
         int ruleId = DBDataWarehouseCacheHelper.getRuleNumFromString(rule);

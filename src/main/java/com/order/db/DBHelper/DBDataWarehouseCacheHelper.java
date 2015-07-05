@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+
+import com.order.db.DBConstant;
 import com.order.db.JDBCUtil;
 import org.apache.log4j.Logger;
 
@@ -80,7 +82,7 @@ public class DBDataWarehouseCacheHelper implements Serializable {
     }
 
     /* 插入新的订购记录 */
-    public void insertData(String msisdn, String sessionId, String channelCode,
+    public int insertData(String msisdn, String sessionId, String channelCode,
                            Long recordTime, String bookID, String productID, double realInfoFee,
                            String provinceId, int orderType) {
         if (cleaner == null) {
@@ -121,19 +123,29 @@ public class DBDataWarehouseCacheHelper implements Serializable {
             LOCK = new Object();
         }
         synchronized (LOCK) {
+        	// 查找如果该订购在内存中，返回0
             if (orderMap.containsKey(msisdn)) {
+                Iterator<OrderRecord> itOrder = orderMap.get(msisdn).iterator();
+                while (itOrder.hasNext()) {
+                    OrderRecord oneRecord = itOrder.next();
+                    if (oneRecord.equals(order)) {
+                        return 0;
+                    }
+                }
                 orderMap.get(msisdn).add(order);
+                return 1;
             } else {
                 ArrayList<OrderRecord> list = new ArrayList<OrderRecord>();
                 list.add(order);
                 orderMap.put(msisdn, list);
+                return 1;
             }
             //log.info("insert result: " + this.toString());
         }
     }
 
     /* 更新订购记录某一个规则的异常状态 */
-    public boolean updateData(String msisdn, String sessionId, String channelCode,
+    public int updateData(String msisdn, String sessionId, String channelCode,
                            Long recordTime, String bookID, String productID, double realInfoFee,
                            String provinceId, int orderType, String rule) {
         if (cleaner == null) {
@@ -143,7 +155,7 @@ public class DBDataWarehouseCacheHelper implements Serializable {
                     while (true) {
                         try {
                             // 每隔一个一段时间清理一次。
-                            cleaner.sleep(clearTimer);
+                            cleaner.sleep(clearTimer * 1000);
                             log.info("Begin Clean DataWareHouse cache ...");
                             cleanAndToDB();
                         } catch (InterruptedException e) {
@@ -179,14 +191,19 @@ public class DBDataWarehouseCacheHelper implements Serializable {
                 while (itOrder.hasNext()) {
                     OrderRecord oneRecord = itOrder.next();
                     if (oneRecord.equals(order)) {
-                        oneRecord.getRules().put(getRuleNumFromString(rule), 0);
-                        //log.info("update find result: " + this.toString());
-                        return true;
+                    	int ruleId = getRuleNumFromString(rule);
+                    	if (oneRecord.getRules().get(ruleId) != 0) {
+                    		oneRecord.getRules().put(getRuleNumFromString(rule), 0);
+                    		return 1;
+                    	}
+                    	else {
+                    		return 0;
+                    	}
                     }
                 }
             }
             //log.info("update result: " + this.toString());
-            return false;
+            return -1;
         }
     }
 
@@ -309,7 +326,6 @@ public class DBDataWarehouseCacheHelper implements Serializable {
             }
             if (conn != null) {
                 conn.close();
-                conn = null;
             }
         }
     }

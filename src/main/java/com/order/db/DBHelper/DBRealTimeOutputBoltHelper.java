@@ -96,28 +96,28 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
         int ruleId = getRuleNumFromString(rules);
 
         // 获取总费用旧值
-        double oldTatalFee = 0;
+        double oldTotalFee = 0;
         if (totalFee.containsKey(totalFeeKey)) {
-            oldTatalFee = totalFee.get(totalFeeKey);
+            oldTotalFee = totalFee.get(totalFeeKey);
         } else {
             if (totalFeeInDB.contains(totalFeeKey)) {
-                oldTatalFee = totalFeeInDB.get(totalFeeKey);
+                oldTotalFee = totalFeeInDB.get(totalFeeKey);
             }
-            this.totalFee.put(totalFeeKey, oldTatalFee);
+            this.totalFee.put(totalFeeKey, oldTotalFee);
         }
         //else {
         //	try {
-        //		oldTatalFee = getTotalFeeFromDB(currentTime, provinceId, channelCode, contentId, contentType);
+        //		oldTotalFee = getTotalFeeFromDB(currentTime, provinceId, channelCode, contentId, contentType);
         //	} catch (SQLException e) {
         //		e.printStackTrace();
         //	}
-        //	this.totalFee.put(totalFeeKey, oldTatalFee);
+        //	this.totalFee.put(totalFeeKey, oldTotalFee);
         //}
 
         // 统计正常费用
         double curTotalFee = 0;
         if (ruleId == 0) {
-            curTotalFee = oldTatalFee + realInfoFee;
+            curTotalFee = oldTotalFee + realInfoFee;
             this.totalFee.put(totalFeeKey, curTotalFee);
             //log.info(this.toString());
             return;
