@@ -47,7 +47,6 @@ public class DBTimer extends Thread {
         } catch (InterruptedException e) {
             e.printStackTrace();
         } catch (SQLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
     }
@@ -80,7 +79,8 @@ public class DBTimer extends Thread {
             double abnFee = DBRealTimeOutputBoltHelper.abnormalFee.get(abnormalFeeKey);
             try {
                 if (checkExists(date, provinceId, contentID, contentType, channelCode, ruleID)) {
-                    this.updateAbnormalFee(date, provinceId, contentID, contentType, channelCode, ruleID, abnFee, fee);
+//                    this.updateAbnormalFee(date, provinceId, contentID, contentType, channelCode, ruleID, abnFee, fee);
+                    this.updateTotalFee(date, provinceId, contentID, contentType, channelCode, 0);
                 } else {
                     this.insertAbnormalFee(date, provinceId, contentID, contentType, channelCode, ruleID, abnFee, fee);
                 }
