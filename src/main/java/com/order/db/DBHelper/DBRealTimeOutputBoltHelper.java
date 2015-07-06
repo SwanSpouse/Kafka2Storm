@@ -114,7 +114,7 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
         //	this.totalFee.put(totalFeeKey, oldTotalFee);
         //}
 
-        // 统计正常费用
+        // 统计总费用
         double curTotalFee = 0;
         if (ruleId == 0) {
             curTotalFee = oldTotalFee + realInfoFee;
@@ -124,14 +124,20 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
         }
 
         // 统计异常费用
+        double currentAbnormalFee;
         String abnormalFeeKey = totalFeeKey + "|" + ruleId;
         if (abnormalFee.containsKey(abnormalFeeKey)) {
-            double currentAbnormalFee = abnormalFee.get(abnormalFeeKey) + realInfoFee;
+            currentAbnormalFee = abnormalFee.get(abnormalFeeKey) + realInfoFee;
             this.abnormalFee.put(abnormalFeeKey, currentAbnormalFee);
         } else {
-            this.abnormalFee.put(abnormalFeeKey, realInfoFee);
+        	currentAbnormalFee = realInfoFee;
+            this.abnormalFee.put(abnormalFeeKey, currentAbnormalFee);
         }
-        //log.info(this.toString());
+        
+        // 为防止异常费用比总费用大，做的异常处理
+        if (currentAbnormalFee > oldTotalFee) {
+        	this.totalFee.put(totalFeeKey, currentAbnormalFee);
+        }
         return;
     }
 
