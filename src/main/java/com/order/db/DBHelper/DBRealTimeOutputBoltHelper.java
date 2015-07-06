@@ -180,9 +180,10 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
     }
 
     private void getAllTotalFeeFromDB() throws SQLException {
-        String selectSql = "SELECT PROVINCE_ID,SALE_PARM,CONTENT_ID,CONTENT_TYPE,max(ODR_FEE) ODR_FEE " +
+        String selectSql = "SELECT PROVINCE_ID,SALE_PARM,CONTENT_ID,CONTENT_TYPE," +
+        		"max(ODR_ABN_FEE) ODR_ABN_FEE,max(ODR_FEE) ODR_FEE " +
         		"FROM " + StormConf.realTimeOutputTable + " WHERE RECORD_DAY=? " +
-        				"group by PROVINCE_ID, SALE_PARM, CONTENT_ID, CONTENT_TYPE";
+        		"group by PROVINCE_ID, SALE_PARM, CONTENT_ID, CONTENT_TYPE";
         ResultSet rs = null;
         PreparedStatement prepStmt = null;
         try {
@@ -198,7 +199,12 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
                 String channelCode = rs.getString("SALE_PARM");
                 String content = rs.getString("CONTENT_ID");
                 String contextType = rs.getString("CONTENT_TYPE");
+                double abFee = rs.getFloat("ODR_ABN_FEE");
                 double totalFee = rs.getFloat("ODR_FEE");
+                // 防止数据库中异常费用比总费用大
+                if (abFee > totalFee) {
+                	totalFee = abFee;
+                }
                 String totalFeeKey = date + "|" + provinceId + "|" + channelCode + "|"
                         + content + "|" + contextType;
                 this.totalFeeInDB.put(totalFeeKey, totalFee);

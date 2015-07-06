@@ -6,12 +6,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Random;
 
 
 import com.order.db.DBConstant;
 import com.order.db.JDBCUtil;
 import org.apache.log4j.Logger;
 
+import com.order.constant.Constant;
 import com.order.constant.Rules;
 import com.order.util.OrderRecord;
 import com.order.util.StormConf;
@@ -53,7 +55,7 @@ public class DBDataWarehouseCacheHelper implements Serializable {
     private transient Thread cleaner = null; //  清理线程
     protected static Object LOCK = null;  // 线程锁
 
-    private static final long clearTimer = 1 * 60 * 60;    //每N秒清理一次
+    private static final int clearTimer = 1 * 60 * 60;    //每N秒清理一次
     private static final long historyTimer = 1 * 60 * 60;  //每次清理1小时前的所有订购，并入库
 
     // 用户订购记录
@@ -89,6 +91,12 @@ public class DBDataWarehouseCacheHelper implements Serializable {
             cleaner = new Thread(new Runnable() {
                 @Override
                 public void run() {
+                	try {
+						Thread.sleep((new Random()).nextInt(clearTimer * 1000));
+					} catch (InterruptedException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
                     while (true) {
                         try {
                             // 每隔一个一段时间清理一次。
@@ -152,6 +160,12 @@ public class DBDataWarehouseCacheHelper implements Serializable {
             cleaner = new Thread(new Runnable() {
                 @Override
                 public void run() {
+                	try {
+						Thread.sleep((new Random()).nextInt(clearTimer * 1000));
+					} catch (InterruptedException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
                     while (true) {
                         try {
                             // 每隔一个一段时间清理一次。
