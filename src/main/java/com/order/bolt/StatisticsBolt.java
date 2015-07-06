@@ -81,28 +81,23 @@ public class StatisticsBolt extends BaseBasicBolt {
         }
 
         if (input.getSourceStreamId().equals(StreamId.BROWSEDATA.name())) {
-            LogUtil.printLog("阅读浏览话单到达StatisticBolt");
             //阅读浏览话单
             try {
                 this.constructInfoFromBrowseData(input);
             } catch (Exception e) {
-                log.error("阅读浏览话单数据结构异常");
                 e.printStackTrace();
             }
         } else if (input.getSourceStreamId().equals(StreamId.ORDERDATA.name())) {
             // 订购话单
-            LogUtil.printLog("订购话单到达StatisticBolt");
             try {
                 this.constructInfoFromOrderData(input, collector);
             } catch (Exception e) {
-                log.error("订购话单数据结构异常");
                 e.printStackTrace();
             }
         }
     }
 
     private void constructInfoFromBrowseData(Tuple input) throws NumberFormatException {
-        LogUtil.printLog("===========开始解析浏览话单数据===========");
         Long recordTime = TimeParaser.splitTime(input.getStringByField(FName.RECORDTIME.name()));
         String sessionId = input.getStringByField(FName.SESSIONID.name());
         String pageType = input.getStringByField(FName.PAGETYPE.name());
@@ -111,15 +106,10 @@ public class StatisticsBolt extends BaseBasicBolt {
         String bookId = input.getStringByField(FName.BOOKID.name());
         String chapterId = input.getStringByField(FName.CHAPTERID.name());
 
-        LogUtil.printLog("msisdn: " + msisdn + " recordTime " + recordTime + " bookId " + bookId + " chapterId " + chapterId + " channelCode " + channelCode +
-                " sessionId " + sessionId);
-
         if (sessionId == null || sessionId.trim().equals("")) {
             //浏览话单若无sessionId则直接丢弃。
             return;
         }
-
-        LogUtil.printLog("接收到浏览话单数据，更新数据结构 " + msisdn + " recordTime " + new Date(recordTime));
 
         //更新阅读浏览话单的SessionInfos信息
         Pair<String, SessionInfo> sessionPair = new Pair<String, SessionInfo>(msisdn, null);
@@ -135,7 +125,6 @@ public class StatisticsBolt extends BaseBasicBolt {
     }
 
     private void constructInfoFromOrderData(Tuple input, final BasicOutputCollector collector) throws NumberFormatException {
-        LogUtil.printLog("===========开始解析订单数据===========");
         String msisdn = input.getStringByField(FName.MSISDN.name());
         Long recordTime = TimeParaser.splitTime(input.getStringByField(FName.RECORDTIME.name()));
         String userAgent = input.getStringByField(FName.TERMINAL.name());
@@ -150,11 +139,6 @@ public class StatisticsBolt extends BaseBasicBolt {
         String wapIp = input.getStringByField(FName.WAPIP.name());
         String sessionId = input.getStringByField(FName.SESSIONID.name());
 
-        LogUtil.printLog("msisdn: " + msisdn + " recordTime " + recordTime + " UA " + userAgent
-                + " platform " + platform + " orderType " + orderTypeStr + " productId " + productId +
-                " bookId " + bookId + " chapterId " + chapterId + " channelCode " + channelCode + " cost " + realInfoFeeStr
-                + " provinceId " + provinceId + " wapId " + wapIp + " sessionId " + sessionId);
-
         int orderType = Integer.parseInt(orderTypeStr);
         double realInfoFee = Double.parseDouble(realInfoFeeStr);
 
@@ -162,11 +146,9 @@ public class StatisticsBolt extends BaseBasicBolt {
             sessionId = msisdn;
         }
 
-        LogUtil.printLog("接受到订单数据 " + msisdn + " recordTime " + new Date(recordTime));
         //所有订单数据先统一发送正常数据流。用作数据统计。
         collector.emit(StreamId.DATASTREAM.name(), new Values(msisdn, sessionId, recordTime,
                 realInfoFee, channelCode, productId, provinceId, orderType, bookId));
-        LogUtil.printLog("正常数据流成功发射");
 
         //更新订购话单的SessionInfos信息
         Pair<String, SessionInfo> sessionInfoPair = new Pair<String, SessionInfo>(msisdn, null);
@@ -181,8 +163,6 @@ public class StatisticsBolt extends BaseBasicBolt {
                     chapterId, recordTime, orderType, realInfoFee, channelCode, productId, provinceId);
             sessionInfos.put(new Pair<String, SessionInfo>(msisdn, currentSessionInfo));
         }
-
-        LogUtil.printLog("开始根据各个规则对订单数据进行检测 " + msisdn + " recordTime " + new Date(recordTime));
 
         //检测相应的各个规则。
         currentSessionInfo.checkRule123(bookId, new EmitDatas(collector));

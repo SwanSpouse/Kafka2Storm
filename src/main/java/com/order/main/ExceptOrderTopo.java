@@ -6,14 +6,11 @@ import backtype.storm.spout.SchemeAsMultiScheme;
 import backtype.storm.topology.TopologyBuilder;
 import backtype.storm.tuple.Fields;
 import com.order.bolt.*;
-import com.order.main.Grouping.DataWarehouseGrouping;
 import com.order.util.FName;
 import com.order.util.StormConf;
 import com.order.util.StreamId;
 import org.apache.log4j.Logger;
 import storm.kafka.*;
-
-import java.awt.print.Book;
 
 /**
  * Created by LiMingji on 2015/6/5.
@@ -66,7 +63,7 @@ public class ExceptOrderTopo {
                 .shuffleGrouping(StreamId.report_cdr.name());
 
         //统计bolt
-        builder.setBolt(StreamId.StatisticsBolt.name(), new StatisticsBolt(), 500)
+        builder.setBolt(StreamId.StatisticsBolt.name(), new StatisticsBolt(), 600)
                 .fieldsGrouping(StreamId.PageViewSplit.name(), StreamId.BROWSEDATA.name(), new Fields(FName.MSISDN.name()))
                 .fieldsGrouping(StreamId.OrderSplit.name(), StreamId.ORDERDATA.name(), new Fields(FName.MSISDN.name()));
 
@@ -76,8 +73,10 @@ public class ExceptOrderTopo {
                 .fieldsGrouping(StreamId.StatisticsBolt.name(), StreamId.ABNORMALDATASTREAM.name(), new Fields(FName.MSISDN.name()));
         //实时输出接口bolt
         builder.setBolt(StreamId.RealTimeOutputBolt.name(), new RealTimeOutputBolt(), 200)
-                .shuffleGrouping(StreamId.DataWarehouseBolt.name(), StreamId.DATASTREAM2.name())
-                .shuffleGrouping(StreamId.DataWarehouseBolt.name(), StreamId.ABNORMALDATASTREAM2.name());
+                .fieldsGrouping(StreamId.DataWarehouseBolt.name(), StreamId.DATASTREAM2.name(),
+                        new Fields(FName.MSISDN.name(), FName.CHANNELCODE.name(), FName.ORDERTYPE.name()))
+                .fieldsGrouping(StreamId.DataWarehouseBolt.name(), StreamId.ABNORMALDATASTREAM2.name(),
+                        new Fields(FName.MSISDN.name(), FName.CHANNELCODE.name(), FName.ORDERTYPE.name()));
 
         // Run Topo on Cluster
         conf.setNumWorkers(50);

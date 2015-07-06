@@ -117,8 +117,6 @@ public class SessionInfo implements Serializable{
         if (secondChannelId != null) {
             this.orderChannelCodeByDay.put(secondChannelId, lastUpdateTime);
         }
-        LogUtil.printLog("新数据插入: " + this);
-
     }
 
     //对已存在的SessionInfo进行更新。
@@ -168,7 +166,6 @@ public class SessionInfo implements Serializable{
         if (secondChannelId != null) {
             this.orderChannelCodeByDay.put(secondChannelId, lastUpdateTime);
         }
-        LogUtil.printLog("旧数据更新: " + this);
     }
 
     public boolean clear() {
@@ -205,7 +202,6 @@ public class SessionInfo implements Serializable{
             rule = Rules.THREE;
         }
         if (rule != null) {
-            LogUtil.printLog(this, rule.name(), false);
             callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
                     channelId, productId, rule.name(), provinceId, orderType, bookId);
         }
@@ -218,7 +214,6 @@ public class SessionInfo implements Serializable{
      * @param callback
      */
     public void checkRule4(final RulesCallback callback) {
-        LogUtil.printLog("检测规则4 " + bookId);
         if (orderChannelCodeByDay.size(lastUpdateTime) >= 3) {
             callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee, channelId,
                     productId, Rules.FOUR.name(), provinceId, orderType, bookId);
@@ -233,7 +228,6 @@ public class SessionInfo implements Serializable{
      * @param callback
      */
     public void checkRule5(String msisdnId, final RulesCallback callback) {
-        LogUtil.printLog("检测规则5 " + bookId);
         if (orderType != 1) {
             return;
         }
@@ -241,7 +235,6 @@ public class SessionInfo implements Serializable{
         if (channelOrderpv.contains(userChannelInfoFee)) {
             Pair<String, Integer> currentUserChannelInFee = channelOrderpv.get(userChannelInfoFee);
             if (currentUserChannelInFee.getValue() > 10) {
-                LogUtil.printLog(this, "rule5 ", false);
                 callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
                         channelId, productId, Rules.FIVE.name(), provinceId, orderType, bookId);
             }
@@ -256,7 +249,6 @@ public class SessionInfo implements Serializable{
      * @param callback
      */
     public void checkRule6(final RulesCallback callback) {
-        LogUtil.printLog("检测规则6 " + bookId);
         if (orderType != 4) {
             return;
         }
@@ -265,7 +257,6 @@ public class SessionInfo implements Serializable{
             orderTimes += bookOrderPv.sizeOfBookOrderTimesWithOrderType(bookId, 4);
         }
         if (orderTimes >= Constant.ORDER_BY_MONTH_THRESHOLD) {
-            LogUtil.printLog(this, "rule6", false);
             callback.hanleData(msisdnId, sessionId, lastUpdateTime,
                     realInfoFee, channelId, productId, Rules.SIX.name(), provinceId, orderType, bookId);
         }
@@ -279,7 +270,6 @@ public class SessionInfo implements Serializable{
      * @param callback
      */
     public void checkRule7(final RulesCallback callback) {
-        LogUtil.printLog("检测规则7 " + bookId);
         if (orderType != 1 || orderType != 21) {
             return;
         }
@@ -291,7 +281,6 @@ public class SessionInfo implements Serializable{
             bookReadPvs += bookReadPv.sizeWithTimeThreshold(bookId, lastUpdateTime, Constant.FIVE_MINUTES);
         }
         if (bookOrderNums >= 2 && bookOrderNums < 5 * bookReadPvs) {
-            LogUtil.printLog(this, " rule7 ", false);
             callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
                     channelId, productId, Rules.SEVEN.name(), provinceId, orderType, bookId);
         }
@@ -306,14 +295,12 @@ public class SessionInfo implements Serializable{
      * @param callback
      */
     public void checkRule8(String bookId, final RulesCallback callback) {
-        LogUtil.printLog("检测规则8 " + bookId);
         if (orderType != 2) {
             return;
         }
         int orderPvs = bookOrderPv.sizeOfBookOrderTimesWithOrderType(bookId, 2);
         int readPvs = bookReadPv.sizeWithTimeThreshold(bookId, lastUpdateTime, Constant.FIVE_MINUTES);
         if (orderPvs >= 10 && orderPvs <= 2 * readPvs) {
-            LogUtil.printLog(this, " rule8", false);
             callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
                     channelId, productId, Rules.EIGHT.name(), provinceId, orderType, bookId);
         }
@@ -328,12 +315,10 @@ public class SessionInfo implements Serializable{
      */
     private transient Thread rule12Checker = null;
     public void checkRule12(String platform, final RulesCallback callback) {
-        LogUtil.printLog("检测规则4 " + bookId);
         if (orderType != 4 || Integer.parseInt(platform) == 6) {
             return;
         }
         if (bookReadPv.size(lastUpdateTime) == 0) {
-            LogUtil.printLog(this, "rule12", false);
             callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
                     channelId, productId, Rules.TWELVE.name(), provinceId, orderType,bookId);
         }

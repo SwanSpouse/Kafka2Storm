@@ -71,8 +71,6 @@ public class DataWarehouseBolt extends BaseBasicBolt {
         String provinceId = input.getStringByField(FName.PROVINCEID.name());
 		int orderType = input.getIntegerByField(FName.ORDERTYPE.name());
 
-        LogUtil.printLog("DataWareHouseBolt 接收正常数据流: " + msisdn + " " + recordTime + " " + realInfoFee);
-
 		// 订购记录增加到内存
 		if( DBHelper.insertData(msisdn, sessionId, channelCode, recordTime, bookId,
 				productId, realInfoFee, provinceId, orderType) == 1) {
@@ -94,8 +92,6 @@ public class DataWarehouseBolt extends BaseBasicBolt {
 		String provinceId = input.getStringByField(FName.PROVINCEID.name());
 		int orderType = input.getIntegerByField(FName.ORDERTYPE.name());
 		String rule = input.getStringByField(FName.RULES.name());
-
-        LogUtil.printLog("DataWareHouseBolt 接收异常数据流: " + msisdn + " " + recordTime + " " + realInfoFee);
 
 		// 如果update时找不到订购记录，则首先插入一条
         int result = DBHelper.updateData(msisdn, sessionId, channelCode, recordTime, bookId,

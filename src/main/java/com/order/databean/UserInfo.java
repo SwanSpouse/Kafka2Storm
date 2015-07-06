@@ -48,8 +48,6 @@ public class UserInfo implements Serializable{
         this.sessionInfos.put(sessionInfo, lastUpdateTime);
         this.ipInfos.put(ipInfo, lastUpdateTime);
         this.terminalInfos.put(terminalInfo, lastUpdateTime);
-
-        LogUtil.printLog("新用户插入: " + this);
     }
 
     //更新已存在用户的信息
@@ -64,8 +62,6 @@ public class UserInfo implements Serializable{
         if (terminalInfo != null && !terminalInfo.trim().equals("")) {
             this.terminalInfos.put(terminalInfo, lastUpdateTime);
         }
-
-        LogUtil.printLog("老用户更新: " + this);
     }
 
     /**
@@ -89,26 +85,20 @@ public class UserInfo implements Serializable{
     public boolean[] isObeyRules() {
         boolean[] checkMarkBit = new boolean[3];
         if (sessionInfos.size(lastUpdateTime) >= Constant.SESSION_CHANGE_THRESHOLD) {
-            LogUtil.printLog(this,"rule9", false);
             checkMarkBit[SESSION_CHECK_BIT] = false;
         } else {
-            LogUtil.printLog(this,"rule9", true);
             checkMarkBit[SESSION_CHECK_BIT] = true;
         }
 
         if (ipInfos.size(lastUpdateTime) >= Constant.IP_CHANGE_THRESHOLD) {
-            LogUtil.printLog(this,"rule10", false);
             checkMarkBit[IP_CHECK_BIT] = false;
         } else {
-            LogUtil.printLog(this,"rule10", true);
             checkMarkBit[IP_CHECK_BIT] = true;
         }
 
         if (terminalInfos.size(lastUpdateTime) >= Constant.UA_CHANGE_THRESHOLD) {
-            LogUtil.printLog(this,"rule11", false);
             checkMarkBit[UA_CHECK_BIT] = false;
         } else {
-            LogUtil.printLog(this, "rule11", true);
             checkMarkBit[UA_CHECK_BIT] = true;
         }
         return checkMarkBit;

@@ -1,6 +1,5 @@
 package com.order.databean.TimeCacheStructures;
 
-import com.order.util.LogUtil;
 import org.apache.log4j.Logger;
 
 import java.io.Serializable;
@@ -189,7 +188,6 @@ public class RealTimeCacheList<T> implements Serializable{
         }
         //why?
         if (LOCK == null) {
-            LogUtil.printLog("这里怎么会为空？");
             LOCK = new Object();
         }
         synchronized (LOCK) {
