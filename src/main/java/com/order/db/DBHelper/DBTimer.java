@@ -10,6 +10,7 @@ import org.apache.log4j.Logger;
 import java.sql.*;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Random;
 
 /**
  * Created by LiMingji on 2015/6/9.
@@ -28,13 +29,14 @@ public class DBTimer extends Thread {
         super.run();
         try {
         	int num = 0;
+        	Thread.sleep((new Random()).nextInt(Constant.ONE_MINUTE * 5 * 1000));
             while (true) {
-                Thread.sleep(Constant.ONE_MINUTE * 1000L);
+                Thread.sleep(Constant.ONE_MINUTE * 5 * 1000L);
                 log.info("===将map中的数据更新到数据库中===");
                 //每分钟将map中异常费用数据更新到数据库中。
                 this.updateDB();
                 //每N分钟将总费用更新到库中
-                if (++num >= 10) {
+                if (++num >= 3) {
                 	this.updateTotalDB();
                 	num = 0;
                 }
@@ -80,7 +82,6 @@ public class DBTimer extends Thread {
             try {
                 if (checkExists(date, provinceId, contentID, contentType, channelCode, ruleID)) {
                    this.updateAbnormalFee(date, provinceId, contentID, contentType, channelCode, ruleID, abnFee, fee);
-                    //this.updateTotalFee(date, provinceId, contentID, contentType, channelCode, fee);
                 } else {
                     this.insertAbnormalFee(date, provinceId, contentID, contentType, channelCode, ruleID, abnFee, fee);
                 }

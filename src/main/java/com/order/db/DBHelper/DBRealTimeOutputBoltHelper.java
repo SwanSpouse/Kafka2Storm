@@ -180,19 +180,20 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
     }
 
     private void getAllTotalFeeFromDB() throws SQLException {
-        String selectSql = "SELECT RECORD_DAY,PROVINCE_ID,SALE_PARM,CONTENT_ID,CONTENT_TYPE,ODR_FEE FROM "
-                + StormConf.realTimeOutputTable + " WHERE RECORD_DAY=? AND RULE_ID=0";
+        String selectSql = "SELECT PROVINCE_ID,SALE_PARM,CONTENT_ID,CONTENT_TYPE,max(ODR_FEE) ODR_FEE " +
+        		"FROM " + StormConf.realTimeOutputTable + " WHERE RECORD_DAY=? " +
+        				"group by PROVINCE_ID, SALE_PARM, CONTENT_ID, CONTENT_TYPE";
         ResultSet rs = null;
         PreparedStatement prepStmt = null;
         try {
             conn = JDBCUtil.connUtil.getConnection();
             conn.setAutoCommit(false);
             prepStmt = conn.prepareStatement(selectSql);
-            prepStmt.setString(1, TimeParaser.formatTimeInDay(System.currentTimeMillis()));
+            String date = TimeParaser.formatTimeInDay(System.currentTimeMillis());
+            prepStmt.setString(1, date);
 
             rs = prepStmt.executeQuery();
             while (rs.next()) {
-                String date = rs.getString("RECORD_DAY");
                 String provinceId = rs.getString("PROVINCE_ID");
                 String channelCode = rs.getString("SALE_PARM");
                 String content = rs.getString("CONTENT_ID");

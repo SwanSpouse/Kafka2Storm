@@ -43,7 +43,7 @@ int sizeBefore = sessionInfos.size(currentTime);
                 }
 long afterClearTime = System.currentTimeMillis();
 int sizeAfter = sessionInfos.size(afterClearTime);
-log.info("清理sessionInfos耗时： " + (afterClearTime - currentTime) / 1000 + " 清理了 " + (sizeAfter - sizeBefore));
+log.info("清理sessionInfos耗时： " + (afterClearTime - currentTime)  + " 清理了 " + (sizeAfter - sizeBefore));
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

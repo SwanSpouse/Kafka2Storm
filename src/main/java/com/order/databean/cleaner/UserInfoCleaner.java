@@ -43,7 +43,7 @@ int sizeBefore = userInfos.size(currentTime);
                 }
 long afterClearTime = System.currentTimeMillis();
 int sizeAfter = userInfos.size(afterClearTime);
-log.info("清理userInofs耗时： " + (afterClearTime - currentTime) / 1000 + " 清理了 " + (sizeAfter - sizeBefore));
+log.info("清理userInofs耗时： " + (afterClearTime - currentTime) + " 清理了 " + (sizeAfter - sizeBefore));
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
