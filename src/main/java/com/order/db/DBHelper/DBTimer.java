@@ -79,8 +79,8 @@ public class DBTimer extends Thread {
             double abnFee = DBRealTimeOutputBoltHelper.abnormalFee.get(abnormalFeeKey);
             try {
                 if (checkExists(date, provinceId, contentID, contentType, channelCode, ruleID)) {
-//                    this.updateAbnormalFee(date, provinceId, contentID, contentType, channelCode, ruleID, abnFee, fee);
-                    this.updateTotalFee(date, provinceId, contentID, contentType, channelCode, 0);
+                   this.updateAbnormalFee(date, provinceId, contentID, contentType, channelCode, ruleID, abnFee, fee);
+                    //this.updateTotalFee(date, provinceId, contentID, contentType, channelCode, fee);
                 } else {
                     this.insertAbnormalFee(date, provinceId, contentID, contentType, channelCode, ruleID, abnFee, fee);
                 }
