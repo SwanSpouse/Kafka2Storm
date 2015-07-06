@@ -48,8 +48,6 @@ import org.codehaus.jettison.json.JSONObject;
 public class OrderSplit extends BaseBasicBolt {
 
     private static final long serialVersionUID = 1L;
-    private static long msgCount = 1l;
-    private static long totalCount = 1l;
     static Logger log = Logger.getLogger(OrderSplit.class);
 
     @Override
@@ -76,7 +74,7 @@ public class OrderSplit extends BaseBasicBolt {
                 }
             }
         } catch (JSONException e) {
-            log.equals("订单消息格式错误");
+            log.error("订单消息格式错误" + msg);
         }
         return null;
     }
@@ -85,7 +83,6 @@ public class OrderSplit extends BaseBasicBolt {
     public void execute(Tuple input, BasicOutputCollector collector) {
         String line = splitJson(input.getString(0));
         String[] words = line.split("\\|", -1);
-        totalCount++;
         if (words.length >= 49) {
             String msisdn = words[0]; // msisdnID Varchar2(20)
             String recordTime = words[1]; // Recordtime Varchar2(14)
@@ -102,15 +99,11 @@ public class OrderSplit extends BaseBasicBolt {
             String sessionId = words[39];// sessionId Varchar2(255)
             String promotionid = words[40]; // 促销互动ID (废弃) 2015-06-05
 
-            msgCount++;
-            if (msgCount % 50000 == 0) {
-                log.info("收到订购消息msg条数：" + msgCount + " 总条数: " + totalCount);
-            }
             collector.emit(StreamId.ORDERDATA.name(), new Values(msisdn,
                     recordTime, terminal, platform, orderType, productID, bookID, chapterID,
                     channelCode, cost, provinceId, wapIp, sessionId, promotionid));
         } else {
-            log.info("订单数据错误: " + line);
+            log.error("订单数据错误: " + line);
         }
     }
 

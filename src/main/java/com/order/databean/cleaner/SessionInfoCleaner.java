@@ -4,7 +4,7 @@ import com.order.constant.Constant;
 import com.order.databean.SessionInfo;
 import com.order.databean.TimeCacheStructures.Pair;
 import com.order.databean.TimeCacheStructures.RealTimeCacheList;
-import com.order.util.LogUtil;
+import org.apache.log4j.Logger;
 
 import java.util.Iterator;
 
@@ -14,6 +14,8 @@ import java.util.Iterator;
 public class SessionInfoCleaner extends Thread {
 
     private RealTimeCacheList<Pair<String, SessionInfo>> sessionInfos;
+
+    private static Logger log = Logger.getLogger(UserInfoCleaner.class);
 
     public SessionInfoCleaner(RealTimeCacheList<Pair<String, SessionInfo>> sessionInfos) {
         this.sessionInfos = sessionInfos;
@@ -25,7 +27,8 @@ public class SessionInfoCleaner extends Thread {
         while (true) {
             try {
                 Thread.sleep(Constant.ONE_MINUTE * 1000L);
-                LogUtil.printLog(this.getClass() + "开始清理SessionInfo数据");
+long currentTime = System.currentTimeMillis();
+int sizeBefore = sessionInfos.size(currentTime);
                 Iterator<Pair<String, SessionInfo>> it = sessionInfos.keySet().iterator();
                 while (it.hasNext()) {
                     Pair<String,SessionInfo> currentPair = it.next();
@@ -38,6 +41,9 @@ public class SessionInfoCleaner extends Thread {
                         sessionInfos.remove(currentPair);
                     }
                 }
+long afterClearTime = System.currentTimeMillis();
+int sizeAfter = sessionInfos.size(afterClearTime);
+log.info("清理sessionInfos耗时： " + (afterClearTime - currentTime) / 1000 + " 清理了 " + (sizeAfter - sizeBefore));
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

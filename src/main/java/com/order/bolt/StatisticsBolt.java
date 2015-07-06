@@ -23,7 +23,6 @@ import com.order.util.TimeParaser;
 import org.apache.log4j.Logger;
 
 import java.util.Date;
-import java.util.Iterator;
 
 /**
  * Created by LiMingji on 2015/5/24.
@@ -31,10 +30,6 @@ import java.util.Iterator;
 public class StatisticsBolt extends BaseBasicBolt {
     public static boolean isDebug = false;
     private static Logger log = Logger.getLogger(StatisticsBolt.class);
-
-    private static long viewMsgCount = 1l;
-    private static long orderMsgCount = 1l;
-    private static long normalCount = 1l;
 
     private DBStatisticBoltHelper DBHelper = new DBStatisticBoltHelper();
 
@@ -48,38 +43,11 @@ public class StatisticsBolt extends BaseBasicBolt {
             new RealTimeCacheList<Pair<String, SessionInfo>>(Constant.ONE_DAY);
     private SessionInfoCleaner sessionInfoCleaner = null;
 
-    //负责SeesionInfo数据的清理
-    private transient Thread cleaner = null;
     //负责每天导入维表的数据
     private transient Thread loader = null;
 
     @Override
     public void execute(Tuple input, BasicOutputCollector collector) {
-        if (cleaner == null) {
-            cleaner = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    while (true) {
-                        try {
-                            //每隔一个小时清理一次。
-                            cleaner.sleep(60 * 60 * 1000L);
-                            Iterator<Pair<String, SessionInfo>> iterator = sessionInfos.keySet().iterator();
-                            while (iterator.hasNext()) {
-                                Pair<String, SessionInfo> currentPair = iterator.next();
-                                if (currentPair.getValue().isOutOfTime()) {
-                                    log.info("sessionID : " + currentPair.getValue() + " is out of time");
-                                    sessionInfos.remove(currentPair);
-                                }
-                            }
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-            });
-            cleaner.setDaemon(true);
-            cleaner.start();
-        }
         if (loader == null) {
             //启动线程每天3点准时load数据
             loader = new Thread(new Runnable() {
@@ -113,7 +81,6 @@ public class StatisticsBolt extends BaseBasicBolt {
         }
 
         if (input.getSourceStreamId().equals(StreamId.BROWSEDATA.name())) {
-            viewMsgCount += 1;
             LogUtil.printLog("阅读浏览话单到达StatisticBolt");
             //阅读浏览话单
             try {
@@ -123,7 +90,6 @@ public class StatisticsBolt extends BaseBasicBolt {
                 e.printStackTrace();
             }
         } else if (input.getSourceStreamId().equals(StreamId.ORDERDATA.name())) {
-            orderMsgCount += 1;
             // 订购话单
             LogUtil.printLog("订购话单到达StatisticBolt");
             try {
@@ -132,9 +98,6 @@ public class StatisticsBolt extends BaseBasicBolt {
                 log.error("订购话单数据结构异常");
                 e.printStackTrace();
             }
-        }
-        if (orderMsgCount % 50000 == 0 || viewMsgCount % 50000 == 0) {
-            log.info("StatisticBolt收到订购消息为: " + orderMsgCount + " 收到阅读消息为 " + viewMsgCount);
         }
     }
 
@@ -153,7 +116,7 @@ public class StatisticsBolt extends BaseBasicBolt {
 
         if (sessionId == null || sessionId.trim().equals("")) {
             //浏览话单若无sessionId则直接丢弃。
-            return ;
+            return;
         }
 
         LogUtil.printLog("接收到浏览话单数据，更新数据结构 " + msisdn + " recordTime " + new Date(recordTime));
@@ -200,10 +163,6 @@ public class StatisticsBolt extends BaseBasicBolt {
         }
 
         LogUtil.printLog("接受到订单数据 " + msisdn + " recordTime " + new Date(recordTime));
-        normalCount++;
-        if (normalCount % 50000 == 0) {
-            log.info("正常订购话单发射数： " + normalCount);
-        }
         //所有订单数据先统一发送正常数据流。用作数据统计。
         collector.emit(StreamId.DATASTREAM.name(), new Values(msisdn, sessionId, recordTime,
                 realInfoFee, channelCode, productId, provinceId, orderType, bookId));
