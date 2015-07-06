@@ -1,8 +1,8 @@
 package com.order.databean.cleaner;
 
+import com.order.bolt.StatisticsBolt;
 import com.order.constant.Constant;
 import com.order.databean.TimeCacheStructures.Pair;
-import com.order.databean.TimeCacheStructures.RealTimeCacheList;
 import com.order.databean.UserInfo;
 import org.apache.log4j.Logger;
 
@@ -13,13 +13,7 @@ import java.util.Iterator;
  */
 public class UserInfoCleaner extends Thread {
 
-    private RealTimeCacheList<Pair<String, UserInfo>> userInfos;
-
     private static Logger log = Logger.getLogger(UserInfoCleaner.class);
-
-    public UserInfoCleaner(RealTimeCacheList<Pair<String, UserInfo>> userInfos) {
-        this.userInfos = userInfos;
-    }
 
     @Override
     public void run() {
@@ -28,21 +22,21 @@ public class UserInfoCleaner extends Thread {
             try {
                 Thread.sleep(Constant.ONE_MINUTE * 1000L);
 long currentTime = System.currentTimeMillis();
-int sizeBefore = userInfos.size(currentTime);
-                Iterator<Pair<String, UserInfo>> it = userInfos.keySet().iterator();
+int sizeBefore = StatisticsBolt.userInfos.size(currentTime);
+                Iterator<Pair<String, UserInfo>> it = StatisticsBolt.userInfos.keySet().iterator();
                 while (it.hasNext()) {
                     Pair<String,UserInfo> currentPair = it.next();
                     UserInfo currentUser = currentPair.getValue();
                     if (currentUser == null) {
-                        userInfos.remove(currentPair);
+                        it.remove();
                         continue;
                     }
                     if (currentUser.clear()) {
-                        userInfos.remove(currentPair);
+                        it.remove();
                     }
                 }
 long afterClearTime = System.currentTimeMillis();
-int sizeAfter = userInfos.size(afterClearTime);
+int sizeAfter = StatisticsBolt.userInfos.size(afterClearTime);
 log.info("清理userInofs耗时： " + (afterClearTime - currentTime) + " 清理了 " + (sizeAfter - sizeBefore));
             } catch (InterruptedException e) {
                 e.printStackTrace();

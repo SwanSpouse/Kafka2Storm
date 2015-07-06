@@ -17,12 +17,9 @@ import com.order.databean.cleaner.SessionInfoCleaner;
 import com.order.databean.cleaner.UserInfoCleaner;
 import com.order.db.DBHelper.DBStatisticBoltHelper;
 import com.order.util.FName;
-import com.order.util.LogUtil;
 import com.order.util.StreamId;
 import com.order.util.TimeParaser;
 import org.apache.log4j.Logger;
-
-import java.util.Date;
 
 /**
  * Created by LiMingji on 2015/5/24.
@@ -34,12 +31,12 @@ public class StatisticsBolt extends BaseBasicBolt {
     private DBStatisticBoltHelper DBHelper = new DBStatisticBoltHelper();
 
     //存储字段为msisdn 和 UserInfo
-    private RealTimeCacheList<Pair<String, UserInfo>> userInfos =
+    public static RealTimeCacheList<Pair<String, UserInfo>> userInfos =
             new RealTimeCacheList<Pair<String, UserInfo>>(Constant.ONE_HOUR);
     private UserInfoCleaner userInfoCleaner = null;
 
     //存储字段为msisdn 和 SessionInfo
-    private RealTimeCacheList<Pair<String, SessionInfo>> sessionInfos =
+    public static RealTimeCacheList<Pair<String, SessionInfo>> sessionInfos =
             new RealTimeCacheList<Pair<String, SessionInfo>>(Constant.ONE_DAY);
     private SessionInfoCleaner sessionInfoCleaner = null;
 
@@ -70,12 +67,12 @@ public class StatisticsBolt extends BaseBasicBolt {
             loader.start();
         }
         if (userInfoCleaner == null) {
-            userInfoCleaner = new UserInfoCleaner(this.userInfos);
+            userInfoCleaner = new UserInfoCleaner();
             userInfoCleaner.setDaemon(true);
             userInfoCleaner.start();
         }
-        if (sessionInfos == null) {
-            sessionInfoCleaner = new SessionInfoCleaner(this.sessionInfos);
+        if (sessionInfoCleaner == null) {
+            sessionInfoCleaner = new SessionInfoCleaner();
             sessionInfoCleaner.setDaemon(true);
             sessionInfoCleaner.start();
         }
