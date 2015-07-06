@@ -8,20 +8,18 @@ import org.apache.log4j.Logger;
 import java.io.Serializable;
 import java.sql.*;
 import java.util.Date;
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by LiMingji on 2015/6/4.
  */
-public class DBStatisticBoltHelper implements Serializable{
+public class DBStatisticBoltHelper implements Serializable {
     private static final long serialVersionUID = 1L;
     private static Logger log = Logger.getLogger(DBStatisticBoltHelper.class);
     private static transient Connection conn = null;
 
-    private static Object LOCK = null;
-
-    public static HashMap<String, String> parameterId2SecChannelId = null;
-    public static HashMap<String, String> parameterId2ChannelIds = null;
+    public static ConcurrentHashMap<String, String> parameterId2SecChannelId = null;
+    public static ConcurrentHashMap<String, String> parameterId2ChannelIds = null;
 
     private static Connection getConn() throws SQLException {
         if (conn == null) {
@@ -33,16 +31,13 @@ public class DBStatisticBoltHelper implements Serializable{
     }
 
     public DBStatisticBoltHelper() {
-        LOCK = new Object();
         try {
             conn = getConn();
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        synchronized (LOCK) {
-            parameterId2SecChannelId = new HashMap<String, String>();
-            parameterId2ChannelIds = new HashMap<String, String>();
-        }
+        parameterId2SecChannelId = new ConcurrentHashMap<String, String>();
+        parameterId2ChannelIds = new ConcurrentHashMap<String, String>();
     }
 
     /**
@@ -50,27 +45,19 @@ public class DBStatisticBoltHelper implements Serializable{
      */
     public static void getData() {
         LogUtil.printLog("加载二维渠道维表" + new Date());
-        if (LOCK == null) {
-            LOCK = new Object();
+        if (parameterId2ChannelIds == null) {
+            parameterId2ChannelIds = new ConcurrentHashMap<String, String>();
+        } else {
+            parameterId2ChannelIds.clear();
         }
-        synchronized (LOCK) {
-            if (parameterId2ChannelIds == null) {
-                parameterId2ChannelIds = new HashMap<String, String>();
-            } else {
-                parameterId2ChannelIds.clear();
-            }
-            if (parameterId2SecChannelId == null) {
-                parameterId2SecChannelId = new HashMap<String, String>();
-            } else {
-                parameterId2SecChannelId.clear();
-            }
+        if (parameterId2SecChannelId == null) {
+            parameterId2SecChannelId = new ConcurrentHashMap<String, String>();
+        } else {
+            parameterId2SecChannelId.clear();
         }
         String sql = "SELECT FIRST_CHANNEL_ID,SECOND_CHANNEL_ID,THIRD_CHANNEL_ID,PARAMETER_ID" +
                 " FROM " + StormConf.channelCodesTable;
         try {
-            //if (conn == null) {
-            //    conn = getConn();
-            //}
             Connection conn = JDBCUtil.connUtil.getConnection();
             conn.setAutoCommit(false);
             Statement stmt = conn.createStatement();
@@ -80,10 +67,8 @@ public class DBStatisticBoltHelper implements Serializable{
                 String secondChannelId = resultSet.getString("SECOND_CHANNEL_ID");
                 String thirdChannelId = resultSet.getString("THIRD_CHANNEL_ID");
                 String parameterId = resultSet.getString("PARAMETER_ID");
-                synchronized (LOCK) {
-                    parameterId2SecChannelId.put(parameterId, secondChannelId);
-                    parameterId2ChannelIds.put(parameterId, firstChannelId + "|" + secondChannelId + "|" + thirdChannelId);
-                }
+                parameterId2SecChannelId.put(parameterId, secondChannelId);
+                parameterId2ChannelIds.put(parameterId, firstChannelId + "|" + secondChannelId + "|" + thirdChannelId);
             }
             resultSet.close();
             stmt.close();

@@ -4,24 +4,25 @@ import org.apache.log4j.Logger;
 
 import java.io.Serializable;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * reference: https://github.com/HQebupt/TimeCacheMap
- *
+ * <p/>
  * 实时过期List :
- *      expirationSecs: List中数据过期时间。
- *      TimeOutCallBack: 对过期的数据如何进行处理。（可以选择进行持久化操作。）
- *
+ * expirationSecs: List中数据过期时间。
+ * TimeOutCallBack: 对过期的数据如何进行处理。（可以选择进行持久化操作。）
+ * <p/>
  * 清理操作：
- *      1. 定时清理：每隔expirationSecs进行一次清理。
- *      2. 数据插入时清理：插入对于同一key下的过期数据进行清理。
- *
+ * 1. 定时清理：每隔expirationSecs进行一次清理。
+ * 2. 数据插入时清理：插入对于同一key下的过期数据进行清理。
+ * <p/>
  * 说明：
- *      List中key唯一。相同的key会根据访问时间合并到key所对应的List中。
- *
+ * List中key唯一。相同的key会根据访问时间合并到key所对应的List中。
+ * <p/>
  * Created by LiMingji on 2015/5/22.
  */
-public class RealTimeCacheList<T> implements Serializable{
+public class RealTimeCacheList<T> implements Serializable {
 
     private static final long serialVersionUID = 1L;
     private static Logger log = Logger.getLogger(RealTimeCacheList.class);
@@ -32,10 +33,9 @@ public class RealTimeCacheList<T> implements Serializable{
         public void expire(T value, LinkedList<Long> pvTimes);
     }
 
-    private Map<T, LinkedList<Long>> oldList;
-    private Map<T, LinkedList<Long>> currentList;
+    private ConcurrentHashMap<T, LinkedList<Long>> oldList;
+    private ConcurrentHashMap<T, LinkedList<Long>> currentList;
 
-    protected static Object LOCK = null;
     protected transient Thread cleaner = null;
     protected TimeOutCallback timeOutCallback = null;
     protected int expiratonSecs = 0;
@@ -45,9 +45,8 @@ public class RealTimeCacheList<T> implements Serializable{
     }
 
     public RealTimeCacheList(int expirationSecs, final TimeOutCallback timeOutCallback) {
-        LOCK = new Object();
-        oldList = new LinkedHashMap<T, LinkedList<Long>>(this.mapSize);
-        currentList = new LinkedHashMap<T, LinkedList<Long>>(this.mapSize);
+        oldList = new ConcurrentHashMap<T, LinkedList<Long>>(this.mapSize);
+        currentList = new ConcurrentHashMap<T, LinkedList<Long>>(this.mapSize);
 
         this.timeOutCallback = timeOutCallback;
         this.expiratonSecs = expirationSecs;
@@ -81,18 +80,16 @@ public class RealTimeCacheList<T> implements Serializable{
 
     /**
      * 在获取size之前对oldlist 和 currentlist中的过期数据进行清除
-     * */
+     */
     public int size(long currentTime) {
         long timeThreashold = currentTime - expiratonSecs * 1000L;
-        synchronized (LOCK) {
-            this.removeTimeOutData(oldList, timeThreashold);
-            this.removeTimeOutData(currentList, timeThreashold);
-            return oldList.size() + currentList.size();
-        }
+        this.removeTimeOutData(oldList, timeThreashold);
+        this.removeTimeOutData(currentList, timeThreashold);
+        return oldList.size() + currentList.size();
     }
 
     //对某个map下的过期数据进行清楚。
-    private void removeTimeOutData(Map<T,LinkedList<Long>> map, long timeThreashold) {
+    private void removeTimeOutData(ConcurrentHashMap<T, LinkedList<Long>> map, long timeThreashold) {
         Iterator<T> it = map.keySet().iterator();
         while (it.hasNext()) {
             T key = it.next();
@@ -114,27 +111,23 @@ public class RealTimeCacheList<T> implements Serializable{
     }
 
     public int sizeById(T id) {
-        synchronized (LOCK) {
-            int countSize = 0;
-            if (oldList.containsKey(id)) {
-                countSize += oldList.get(id).size();
-            }
-            if (currentList.containsKey(id)) {
-                countSize += currentList.get(id).size();
-            }
-            return countSize;
+        int countSize = 0;
+        if (oldList.containsKey(id)) {
+            countSize += oldList.get(id).size();
         }
+        if (currentList.containsKey(id)) {
+            countSize += currentList.get(id).size();
+        }
+        return countSize;
     }
 
     public int sizeWithTimeThreshold(String id, Long currentTime, int thresholdInSeconds) {
-        synchronized (LOCK) {
-            Long timeThreshold = currentTime - thresholdInSeconds * 1000L;
-            return getSizeWithTimeThreshold(id, timeThreshold, oldList) +
-                    getSizeWithTimeThreshold(id, timeThreshold, currentList);
-        }
+        Long timeThreshold = currentTime - thresholdInSeconds * 1000L;
+        return getSizeWithTimeThreshold(id, timeThreshold, oldList) +
+                getSizeWithTimeThreshold(id, timeThreshold, currentList);
     }
 
-    private int getSizeWithTimeThreshold(String id, Long timeThreshold, Map<T, LinkedList<Long>> map) {
+    private int getSizeWithTimeThreshold(String id, Long timeThreshold, ConcurrentHashMap<T, LinkedList<Long>> map) {
         int countSize = 0;
         if (map.containsKey(id)) {
             LinkedList<Long> clickTimes = map.get(id);
@@ -154,31 +147,29 @@ public class RealTimeCacheList<T> implements Serializable{
     }
 
     public void put(T value, Long date) {
-        synchronized (LOCK) {
-            long currentTime;
-            if (date != null) {
-                currentTime = date;
-            } else {
-                currentTime = System.currentTimeMillis();
-            }
+        long currentTime;
+        if (date != null) {
+            currentTime = date;
+        } else {
+            currentTime = System.currentTimeMillis();
+        }
 
-            if (oldList.containsKey(value)) {
-                LinkedList<Long> clickTimes = oldList.get(value);
-                LinkedList<Long> newClickTimes = new LinkedList<Long>();
-                newClickTimes.addAll(clickTimes);
-                newClickTimes.add(currentTime);
-                currentList.put(value, newClickTimes);
-                oldList.remove(value);
+        if (oldList.containsKey(value)) {
+            LinkedList<Long> clickTimes = oldList.get(value);
+            LinkedList<Long> newClickTimes = new LinkedList<Long>();
+            newClickTimes.addAll(clickTimes);
+            newClickTimes.add(currentTime);
+            currentList.put(value, newClickTimes);
+            oldList.remove(value);
+        } else {
+            LinkedList<Long> clickTimes;
+            if (currentList.containsKey(value)) {
+                clickTimes = currentList.get(value);
             } else {
-                LinkedList<Long> clickTimes;
-                if (currentList.containsKey(value)) {
-                    clickTimes = currentList.get(value);
-                } else {
-                    clickTimes = new LinkedList<Long>();
-                }
-                clickTimes.add(currentTime);
-                currentList.put(value, clickTimes);
+                clickTimes = new LinkedList<Long>();
             }
+            clickTimes.add(currentTime);
+            currentList.put(value, clickTimes);
         }
     }
 
@@ -186,61 +177,49 @@ public class RealTimeCacheList<T> implements Serializable{
         if (value == null) {
             return false;
         }
-        //why?
-        if (LOCK == null) {
-            LOCK = new Object();
-        }
-        synchronized (LOCK) {
-            return oldList.containsKey(value) || currentList.containsKey(value);
-        }
+        return oldList.containsKey(value) || currentList.containsKey(value);
     }
 
     public Pair get(T value) {
         if (!(value instanceof Pair)) {
             return null;
         }
-        synchronized (LOCK) {
-            if (oldList.containsKey(value)) {
-                for (T currentValue : oldList.keySet()) {
-                    Pair currentPair = (Pair) currentValue;
-                    if (currentPair.equals(value)) {
-                        return currentPair;
-                    }
+        if (oldList.containsKey(value)) {
+            for (T currentValue : oldList.keySet()) {
+                Pair currentPair = (Pair) currentValue;
+                if (currentPair.equals(value)) {
+                    return currentPair;
                 }
             }
-            if (currentList.containsKey(value)) {
-                for (T currentValue : currentList.keySet()) {
-                    Pair currentPair = (Pair) currentValue;
-                    if (currentPair.equals(value)) {
-                        return currentPair;
-                    }
-                }
-            }
-            return null;
         }
+        if (currentList.containsKey(value)) {
+            for (T currentValue : currentList.keySet()) {
+                Pair currentPair = (Pair) currentValue;
+                if (currentPair.equals(value)) {
+                    return currentPair;
+                }
+            }
+        }
+        return null;
     }
 
-    public Set<T>  keySet() {
-        synchronized (LOCK) {
-            HashSet<T> set = new HashSet<T>();
-            for (T key : oldList.keySet()) {
-                set.add(key);
-            }
-            for (T key : currentList.keySet()) {
-                set.add(key);
-            }
-            return set;
+    public Set<T> keySet() {
+        HashSet<T> set = new HashSet<T>();
+        for (T key : oldList.keySet()) {
+            set.add(key);
         }
+        for (T key : currentList.keySet()) {
+            set.add(key);
+        }
+        return set;
     }
 
     public void remove(T key) {
-        synchronized (LOCK) {
-            if (oldList.containsKey(key)) {
-                oldList.remove(key);
-            }
-            if (currentList.containsKey(key)) {
-                currentList.remove(key);
-            }
+        if (oldList.containsKey(key)) {
+            oldList.remove(key);
+        }
+        if (currentList.containsKey(key)) {
+            currentList.remove(key);
         }
     }
 
