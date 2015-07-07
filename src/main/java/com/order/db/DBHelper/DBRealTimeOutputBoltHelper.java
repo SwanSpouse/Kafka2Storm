@@ -71,25 +71,15 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
      * ordertype 非4、5 内容id里填写图书id，内容类型填图书
      * 可以建立一个内容类型维表，1 包月 2 促销包 3 图书
      */
-    public void updateData(String msisdn, Long time, String channelCode, String contentId, String contentType,
-                           String provinceId, String productId, String rules,
-                           double realInfoFee, int orderType, String bookId) {
+    public void updateData(String msisdn, Long time, String channelCode, String provinceId,
+                           String rules, double realInfoFee, String contentId, String contentType) {
         if (storageData2DBTimer == null) {
             storageData2DBTimer = new DBTimer(this);
             storageData2DBTimer.setDaemon(true);
             storageData2DBTimer.start();
         }
         String currentTime = TimeParaser.formatTimeInDay(time);
-		if (orderType == 4) { // 包月
-			contentType = 1 + "";
-			contentId = productId;
-		} else if (orderType == 5) { // 促销包
-			contentType = 2 + "";
-			contentId = productId;
-		} else { // 图书
-			contentType = 3 + "";
-			contentId = bookId;
-		}
+
         // 总费用key值
         String totalFeeKey = currentTime + "|" + provinceId + "|" + channelCode + "|"
                 + contentId + "|" + contentType;

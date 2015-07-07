@@ -61,12 +61,10 @@ public class RealTimeOutputBolt extends BaseBasicBolt {
         double realInfoFee = input.getDoubleByField(FName.REALINFORFEE.name());
         String channelCode = input.getStringByField(FName.CHANNELCODE.name());
         String provinceId = input.getStringByField(FName.PROVINCEID.name());
-        String productId = input.getStringByField(FName.PRODUCTID.name());
-        int orderType = input.getIntegerByField(FName.ORDERTYPE.name());
-        String bookId = input.getStringByField(FName.BOOKID.name());
+        String contentId = input.getStringByField(FName.CONTENTID.name());
+        String contentType = input.getStringByField(FName.ACCESSTYPE.name());
 
-        DBHelper.updateData(msisdn, recordTime, channelCode, null, null, provinceId, productId,
-                "0", realInfoFee, orderType, bookId);
+        DBHelper.updateData(msisdn, recordTime, channelCode, provinceId, "0", realInfoFee, contentId, contentType);
     }
 
     /**
@@ -79,12 +77,10 @@ public class RealTimeOutputBolt extends BaseBasicBolt {
         String channelCode = input.getStringByField(FName.CHANNELCODE.name());
         String rule = input.getStringByField(FName.RULES.name());
         String provinceId = input.getStringByField(FName.PROVINCEID.name());
-        String productId = input.getStringByField(FName.PRODUCTID.name());
-        int orderType = input.getIntegerByField(FName.ORDERTYPE.name());
-        String bookId = input.getStringByField(FName.BOOKID.name());
+        String contentId = input.getStringByField(FName.CONTENTID.name());
+        String contentType = input.getStringByField(FName.CONTENTTYPE.name());
 
-        DBHelper.updateData(msisdn, recordTime, channelCode, null, null, provinceId, productId,
-                rule, realInfoFee, orderType, bookId);
+        DBHelper.updateData(msisdn, recordTime, channelCode, provinceId, rule, realInfoFee, contentId, contentType);
     }
 
     @Override

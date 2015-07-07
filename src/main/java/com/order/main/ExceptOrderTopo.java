@@ -74,9 +74,9 @@ public class ExceptOrderTopo {
         //实时输出接口bolt
         builder.setBolt(StreamId.RealTimeOutputBolt.name(), new RealTimeOutputBolt(), 200)
                 .fieldsGrouping(StreamId.DataWarehouseBolt.name(), StreamId.DATASTREAM2.name(),
-                        new Fields(FName.CHANNELCODE.name(), FName.ORDERTYPE.name(), FName.PROVINCEID.name(), FName.BOOKID.name(), FName.PRODUCTID.name()))
+                        new Fields(FName.CHANNELCODE.name(), FName.ORDERTYPE.name(), FName.PROVINCEID.name(), FName.CONTENTID.name(), FName.CONTENTTYPE.name()))
                 .fieldsGrouping(StreamId.DataWarehouseBolt.name(), StreamId.ABNORMALDATASTREAM2.name(),
-                        new Fields(FName.CHANNELCODE.name(), FName.ORDERTYPE.name(), FName.PROVINCEID.name(), FName.BOOKID.name(), FName.PRODUCTID.name()));
+                        new Fields(FName.CHANNELCODE.name(), FName.ORDERTYPE.name(), FName.PROVINCEID.name(), FName.CONTENTID.name(), FName.CONTENTTYPE.name()));
 
         // Run Topo on Cluster
         conf.setNumWorkers(50);

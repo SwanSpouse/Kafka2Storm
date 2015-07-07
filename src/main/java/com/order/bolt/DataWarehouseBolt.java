@@ -9,7 +9,6 @@ import backtype.storm.tuple.Values;
 
 import com.order.db.DBHelper.DBDataWarehouseCacheHelper;
 import com.order.util.FName;
-import com.order.util.LogUtil;
 import com.order.util.OrderRecord;
 import com.order.util.StreamId;
 import com.order.util.TimeParaser;
@@ -46,124 +45,166 @@ import java.util.Iterator;
  */
 public class DataWarehouseBolt extends BaseBasicBolt {
 
-	private static final long serialVersionUID = 1L;
-	private DBDataWarehouseCacheHelper DBHelper = new DBDataWarehouseCacheHelper();
+    private static final long serialVersionUID = 1L;
+    private DBDataWarehouseCacheHelper DBHelper = new DBDataWarehouseCacheHelper();
 
-	@Override
-	public void execute(Tuple input, BasicOutputCollector collector) {
-		if (input.getSourceStreamId().equals(StreamId.DATASTREAM.name())) {
-			handleDataStream(input, collector);
-		} else if (input.getSourceStreamId().equals(
-				StreamId.ABNORMALDATASTREAM.name())) {
-			handleAbnormalDataStream(input, collector);
-		}
-	}
+    @Override
+    public void execute(Tuple input, BasicOutputCollector collector) {
+        if (input.getSourceStreamId().equals(StreamId.DATASTREAM.name())) {
+            handleDataStream(input, collector);
+        } else if (input.getSourceStreamId().equals(StreamId.ABNORMALDATASTREAM.name())) {
+            handleAbnormalDataStream(input, collector);
+        }
+    }
 
-	// 处理正常数据流
-	private void handleDataStream(Tuple input, BasicOutputCollector collector) {
-		String msisdn = input.getStringByField(FName.MSISDN.name());
-		String sessionId = input.getStringByField(FName.SESSIONID.name());
-		String channelCode = input.getStringByField(FName.CHANNELCODE.name());
-		Long recordTime = input.getLongByField(FName.RECORDTIME.name());
-		String bookId = input.getStringByField(FName.BOOKID.name());
-		String productId = input.getStringByField(FName.PRODUCTID.name());
-		double realInfoFee = input.getDoubleByField(FName.REALINFORFEE.name());
+    // 处理正常数据流
+    private void handleDataStream(Tuple input, BasicOutputCollector collector) {
+        String msisdn = input.getStringByField(FName.MSISDN.name());
+        String sessionId = input.getStringByField(FName.SESSIONID.name());
+        String channelCode = input.getStringByField(FName.CHANNELCODE.name());
+        Long recordTime = input.getLongByField(FName.RECORDTIME.name());
+        String bookId = input.getStringByField(FName.BOOKID.name());
+        String productId = input.getStringByField(FName.PRODUCTID.name());
+        double realInfoFee = input.getDoubleByField(FName.REALINFORFEE.name());
         String provinceId = input.getStringByField(FName.PROVINCEID.name());
-		int orderType = input.getIntegerByField(FName.ORDERTYPE.name());
+        int orderType = input.getIntegerByField(FName.ORDERTYPE.name());
 
-		// 订购记录增加到内存
-		if( DBHelper.insertData(msisdn, sessionId, channelCode, recordTime, bookId,
-				productId, realInfoFee, provinceId, orderType) == 1) {
-	        // 若新增成功则直接转发消息
-	        collector.emit(StreamId.DATASTREAM2.name(), new Values(msisdn, sessionId, recordTime,
-	                realInfoFee, channelCode, productId, provinceId, orderType, bookId));
-		}
-	}
+        /**
+         *  根据 orderType & productId & bookId 生成contentType 和 contentId
+         * */
+        String contentId;
+        String contentType;
+        if (orderType == 4) { // 包月
+            contentType = 1 + "";
+            contentId = productId;
+        } else if (orderType == 5) { // 促销包
+            contentType = 2 + "";
+            contentId = productId;
+        } else { // 图书
+            contentType = 3 + "";
+            contentId = bookId;
+        }
 
-	// 处理异常数据流
-	private void handleAbnormalDataStream(Tuple input, BasicOutputCollector collector) {
-		String msisdn = input.getStringByField(FName.MSISDN.name());
-		String sessionId = input.getStringByField(FName.SESSIONID.name());
-		String channelCode = input.getStringByField(FName.CHANNELCODE.name());
-		Long recordTime = input.getLongByField(FName.RECORDTIME.name());
-		String bookId = input.getStringByField(FName.BOOKID.name());
-		String productId = input.getStringByField(FName.PRODUCTID.name());
-		double realInfoFee = input.getDoubleByField(FName.REALINFORFEE.name());
-		String provinceId = input.getStringByField(FName.PROVINCEID.name());
-		int orderType = input.getIntegerByField(FName.ORDERTYPE.name());
-		String rule = input.getStringByField(FName.RULES.name());
+        // 订购记录增加到内存
+        if (DBHelper.insertData(msisdn, sessionId, channelCode, recordTime, bookId,
+                productId, realInfoFee, provinceId, orderType) == 1) {
+            // 若新增成功则直接转发消息
+            collector.emit(StreamId.DATASTREAM2.name(), new Values(msisdn, sessionId, recordTime,
+                    realInfoFee, channelCode, provinceId, contentId, contentType));
+        }
+    }
 
-		// 如果update时找不到订购记录，则首先插入一条
+    // 处理异常数据流
+    private void handleAbnormalDataStream(Tuple input, BasicOutputCollector collector) {
+        String msisdn = input.getStringByField(FName.MSISDN.name());
+        String sessionId = input.getStringByField(FName.SESSIONID.name());
+        String channelCode = input.getStringByField(FName.CHANNELCODE.name());
+        Long recordTime = input.getLongByField(FName.RECORDTIME.name());
+        String bookId = input.getStringByField(FName.BOOKID.name());
+        String productId = input.getStringByField(FName.PRODUCTID.name());
+        double realInfoFee = input.getDoubleByField(FName.REALINFORFEE.name());
+        String provinceId = input.getStringByField(FName.PROVINCEID.name());
+        int orderType = input.getIntegerByField(FName.ORDERTYPE.name());
+        String rule = input.getStringByField(FName.RULES.name());
+
+        /**
+         *  根据 orderType & productId & bookId 生成contentType 和 contentId
+         * */
+        String contentId;
+        String contentType;
+        if (orderType == 4) { // 包月
+            contentType = 1 + "";
+            contentId = productId;
+        } else if (orderType == 5) { // 促销包
+            contentType = 2 + "";
+            contentId = productId;
+        } else { // 图书
+            contentType = 3 + "";
+            contentId = bookId;
+        }
+
+        // 如果update时找不到订购记录，则首先插入一条
         int result = DBHelper.updateData(msisdn, sessionId, channelCode, recordTime, bookId,
-				productId, realInfoFee, provinceId, orderType, rule);
-		if (result == -1) {
-			// 订购记录增加到内存
-			if( DBHelper.insertData(msisdn, sessionId, channelCode, recordTime, bookId,
-					productId, realInfoFee, provinceId, orderType) == 1) {
-		        // 若新增成功则直接转发正常订购消息
-		        collector.emit(StreamId.DATASTREAM2.name(), new Values(msisdn, sessionId, recordTime,
-		                realInfoFee, channelCode, productId, provinceId, orderType, bookId));
-			}
-			// 再次更新
-			result = DBHelper.updateData(msisdn, sessionId, channelCode, recordTime, bookId,
-					productId, realInfoFee, provinceId, orderType, rule);
-		}
-		// 更新成功后直接转发异常订购
-		if (result == 1) {
-			collector.emit(StreamId.ABNORMALDATASTREAM2.name(), new Values(msisdn, sessionId, recordTime, 
-					realInfoFee, channelCode, productId, rule, provinceId, orderType, bookId));
-		}
+                productId, realInfoFee, provinceId, orderType, rule);
+        if (result == -1) {
+            // 订购记录增加到内存
+            if (DBHelper.insertData(msisdn, sessionId, channelCode, recordTime, bookId,
+                    productId, realInfoFee, provinceId, orderType) == 1) {
+                // 若新增成功则直接转发正常订购消息
+                collector.emit(StreamId.DATASTREAM2.name(), new Values(msisdn, sessionId, recordTime,
+                        realInfoFee, channelCode, provinceId, contentId, contentType));
+            }
+            // 再次更新
+            result = DBHelper.updateData(msisdn, sessionId, channelCode, recordTime, bookId,
+                    productId, realInfoFee, provinceId, orderType, rule);
+        }
+        // 更新成功后直接转发异常订购
+        if (result == 1) {
+            collector.emit(StreamId.ABNORMALDATASTREAM2.name(), new Values(msisdn, sessionId, recordTime,
+                    realInfoFee, channelCode, provinceId, rule, contentId, contentType));
+        }
 
-		// 向前追溯准备阶段
+        // 向前追溯准备阶段
         int ruleId = DBHelper.getRuleNumFromString(rule);
         if (ruleId < 1 || ruleId > 12) {
             return;
         }
         /**
          * 1 2 3 5 6 7 8 这些规则是向前追溯该渠道下1小时数据。
-           4    追溯一天的数据
-           9 10 11 追溯自然小时的数据。
+         4    追溯一天的数据
+         9 10 11 追溯自然小时的数据。
          */
-        String traceBackTime = "";  // ?? spout中话单时间为空应直接干掉
+        String traceBackTime = "";
         if (ruleId == 1 || ruleId == 2 || ruleId == 3 ||
                 ruleId == 5 || ruleId == 6 || ruleId == 7 || ruleId == 8) {
             traceBackTime = TimeParaser.OneHourAgo(recordTime);
         } else if (ruleId == 4) {
             traceBackTime = TimeParaser.OneDayAgo(recordTime);
-        } else if (ruleId == 9 || ruleId == 10 || ruleId == 11) {    //?? 无规则12
+        } else if (ruleId == 9 || ruleId == 10 || ruleId == 11) {
             traceBackTime = TimeParaser.NormalHourAgo(recordTime);
         } else {
-			return;
-		}
-        
-		// 向前回溯各个规则有不同的追溯参数  ??
-		ArrayList<OrderRecord> list = DBHelper.traceBackOrders(msisdn,
-				channelCode, TimeParaser.splitTime(traceBackTime), ruleId);
-		// 将回溯的订购发送
-		Iterator<OrderRecord> itOrder = list.iterator();
-		while (itOrder.hasNext()) {
-			OrderRecord oneRecord = itOrder.next();
-			collector.emit(
-					StreamId.ABNORMALDATASTREAM2.name(),
-					new Values(oneRecord.getMsisdn(), oneRecord.getSessionId(),
-							oneRecord.getRecordTime(), oneRecord.getRealfee(),
-							oneRecord.getChannelCode(), oneRecord.getProductID(), 
-							rule, oneRecord.getProvinceId(), oneRecord.getOrderType(),
-							oneRecord.getBookID()));
-		}
-	}
+            return;
+        }
 
-	@Override
+        ArrayList<OrderRecord> list = DBHelper.traceBackOrders(msisdn,
+                channelCode, TimeParaser.splitTime(traceBackTime), ruleId);
+        // 将回溯的订购发送
+        Iterator<OrderRecord> itOrder = list.iterator();
+        while (itOrder.hasNext()) {
+            OrderRecord oneRecord = itOrder.next();
+            /**
+             *  根据 orderType & productId & bookId 生成contentType 和 contentId
+             * */
+            contentType = "";
+            contentId = "";
+            if (oneRecord.getOrderType() == 4) { // 包月
+                contentType = 1 + "";
+                contentId = oneRecord.getProductID();
+            } else if (oneRecord.getOrderType() == 5) { // 促销包
+                contentType = 2 + "";
+                contentId = oneRecord.getProductID();
+            } else { // 图书
+                contentType = 3 + "";
+                contentId = oneRecord.getBookID();
+            }
+
+            collector.emit(
+                    StreamId.ABNORMALDATASTREAM2.name(), new Values(oneRecord.getMsisdn(), oneRecord.getSessionId(),
+                            oneRecord.getRecordTime(), oneRecord.getRealfee(), oneRecord.getChannelCode(),
+                            oneRecord.getProvinceId(), rule, contentId, contentType));
+        }
+    }
+
+    @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
         declarer.declareStream(StreamId.DATASTREAM2.name(),
                 new Fields(FName.MSISDN.name(), FName.SESSIONID.name(), FName.RECORDTIME.name(),
-                        FName.REALINFORFEE.name(), FName.CHANNELCODE.name(), FName.PRODUCTID.name(),
-                        FName.PROVINCEID.name(), FName.ORDERTYPE.name(), FName.BOOKID.name()));
+                        FName.REALINFORFEE.name(), FName.CHANNELCODE.name(), FName.PROVINCEID.name(),
+                        FName.CONTENTID.name(), FName.CONTENTTYPE.name()));
 
         declarer.declareStream(StreamId.ABNORMALDATASTREAM2.name(),
                 new Fields(FName.MSISDN.name(), FName.SESSIONID.name(), FName.RECORDTIME.name(),
-                        FName.REALINFORFEE.name(), FName.CHANNELCODE.name(), FName.PRODUCTID.name(),
-                        FName.RULES.name(), FName.PROVINCEID.name(), FName.ORDERTYPE.name(),
-                        FName.BOOKID.name()));
+                        FName.REALINFORFEE.name(), FName.CHANNELCODE.name(), FName.PROVINCEID.name(),
+                        FName.RULES.name(), FName.CONTENTID.name(), FName.CONTENTTYPE.name()));
     }
 }
