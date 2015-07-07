@@ -16,29 +16,9 @@ import java.util.concurrent.ConcurrentHashMap;
 public class DBStatisticBoltHelper implements Serializable {
     private static final long serialVersionUID = 1L;
     private static Logger log = Logger.getLogger(DBStatisticBoltHelper.class);
-    private static transient Connection conn = null;
 
-    public static ConcurrentHashMap<String, String> parameterId2SecChannelId = null;
-    public static ConcurrentHashMap<String, String> parameterId2ChannelIds = null;
-
-    private static Connection getConn() throws SQLException {
-        if (conn == null) {
-            log.info("Connection is null!");
-            conn = JDBCUtil.connUtil.getConnection();
-            conn.setAutoCommit(false);
-        }
-        return conn;
-    }
-
-    public DBStatisticBoltHelper() {
-        try {
-            conn = getConn();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        parameterId2SecChannelId = new ConcurrentHashMap<String, String>();
-        parameterId2ChannelIds = new ConcurrentHashMap<String, String>();
-    }
+    public static ConcurrentHashMap<String, String> parameterId2SecChannelId = new ConcurrentHashMap<String, String>();
+    public static ConcurrentHashMap<String, String> parameterId2ChannelIds = new ConcurrentHashMap<String, String>();
 
     /**
      * 获取营销参数 二级渠道维表

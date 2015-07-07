@@ -25,11 +25,11 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
     private transient Connection conn = null;
 
     //Key: date|provinceId|channelCode|content|contextType|
-    public static ConcurrentHashMap<String, Double> abnormalFee = null;
+    public ConcurrentHashMap<String, Double> abnormalFee = null;
     //Key: date|provinceId|channelCode|content|contextType|ruleID
-    public static ConcurrentHashMap<String, Double> totalFee = null;
+    public ConcurrentHashMap<String, Double> totalFee = null;
     // 每次重启时，先从数据库中查询所有总费用到内存中。此bolt中需要哪些在将其复制到totalfee中
-    public static ConcurrentHashMap<String, Double> totalFeeInDB = null;
+    public ConcurrentHashMap<String, Double> totalFeeInDB = null;
 
     private Connection getConn() throws SQLException {
         if (conn == null) {
@@ -44,7 +44,7 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
 
     public DBRealTimeOutputBoltHelper() {
         if (storageData2DBTimer == null) {
-            storageData2DBTimer = new DBTimer(conn);
+            storageData2DBTimer = new DBTimer(this);
             storageData2DBTimer.setDaemon(true);
             storageData2DBTimer.start();
         }
@@ -75,21 +75,21 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
                            String provinceId, String productId, String rules,
                            double realInfoFee, int orderType, String bookId) {
         if (storageData2DBTimer == null) {
-            storageData2DBTimer = new DBTimer(conn);
+            storageData2DBTimer = new DBTimer(this);
             storageData2DBTimer.setDaemon(true);
             storageData2DBTimer.start();
         }
         String currentTime = TimeParaser.formatTimeInDay(time);
-        if (orderType == 1 || orderType == 2 || orderType == 21 || orderType == 3) {  //图书
-            contentType = 3 + "";
-            contentId = bookId;
-        } else if (orderType == 4) {  //包月
-            contentType = 1 + "";
-            contentId = productId;
-        } else if (orderType == 5) {  //促销包
-            contentType = 2 + "";
-            contentId = productId;
-        }
+		if (orderType == 4) { // 包月
+			contentType = 1 + "";
+			contentId = productId;
+		} else if (orderType == 5) { // 促销包
+			contentType = 2 + "";
+			contentId = productId;
+		} else { // 图书
+			contentType = 3 + "";
+			contentId = bookId;
+		}
         // 总费用key值
         String totalFeeKey = currentTime + "|" + provinceId + "|" + channelCode + "|"
                 + contentId + "|" + contentType;
@@ -97,22 +97,15 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
 
         // 获取总费用旧值
         double oldTotalFee = 0;
-        if (totalFee.containsKey(totalFeeKey)) {
-            oldTotalFee = totalFee.get(totalFeeKey);
+        if (this.totalFee.containsKey(totalFeeKey)) {
+            oldTotalFee = this.totalFee.get(totalFeeKey);
         } else {
-            if (totalFeeInDB.contains(totalFeeKey)) {
-                oldTotalFee = totalFeeInDB.get(totalFeeKey);
+            if (this.totalFeeInDB.contains(totalFeeKey)) {
+            	//log.info("total fee indb:  "+ totalFeeKey + "====" + oldTotalFee);  //test
+                oldTotalFee = this.totalFeeInDB.get(totalFeeKey);
             }
             this.totalFee.put(totalFeeKey, oldTotalFee);
         }
-        //else {
-        //	try {
-        //		oldTotalFee = getTotalFeeFromDB(currentTime, provinceId, channelCode, contentId, contentType);
-        //	} catch (SQLException e) {
-        //		e.printStackTrace();
-        //	}
-        //	this.totalFee.put(totalFeeKey, oldTotalFee);
-        //}
 
         // 统计总费用
         double curTotalFee = 0;
@@ -125,7 +118,7 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
 
         // 统计异常费用
         double currentAbnormalFee;
-        String abnormalFeeKey = totalFeeKey + "|" + ruleId;
+        String abnormalFeeKey = totalFeeKey + "|" + String.valueOf(ruleId);
         if (abnormalFee.containsKey(abnormalFeeKey)) {
             currentAbnormalFee = abnormalFee.get(abnormalFeeKey) + realInfoFee;
             this.abnormalFee.put(abnormalFeeKey, currentAbnormalFee);
@@ -134,10 +127,6 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
             this.abnormalFee.put(abnormalFeeKey, currentAbnormalFee);
         }
         
-        // 为防止异常费用比总费用大，做的异常处理
-        if (currentAbnormalFee > oldTotalFee) {
-        	this.totalFee.put(totalFeeKey, currentAbnormalFee);
-        }
         return;
     }
 
@@ -214,6 +203,7 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
                 String totalFeeKey = date + "|" + provinceId + "|" + channelCode + "|"
                         + content + "|" + contextType;
                 this.totalFeeInDB.put(totalFeeKey, totalFee);
+                //log.info("totalFromDBInfo is " + totalFeeKey + "====" + String.valueOf(totalFee)); //test
             }
             rs.close();
             prepStmt.close();

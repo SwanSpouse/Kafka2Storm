@@ -28,15 +28,13 @@ public class StatisticsBolt extends BaseBasicBolt {
     public static boolean isDebug = false;
     private static Logger log = Logger.getLogger(StatisticsBolt.class);
 
-    private DBStatisticBoltHelper DBHelper = new DBStatisticBoltHelper();
-
     //存储字段为msisdn 和 UserInfo
-    public static RealTimeCacheList<Pair<String, UserInfo>> userInfos =
+    public  RealTimeCacheList<Pair<String, UserInfo>> userInfos =
             new RealTimeCacheList<Pair<String, UserInfo>>(Constant.ONE_HOUR);
     private UserInfoCleaner userInfoCleaner = null;
 
     //存储字段为msisdn 和 SessionInfo
-    public static RealTimeCacheList<Pair<String, SessionInfo>> sessionInfos =
+    public  RealTimeCacheList<Pair<String, SessionInfo>> sessionInfos =
             new RealTimeCacheList<Pair<String, SessionInfo>>(Constant.ONE_DAY);
     private SessionInfoCleaner sessionInfoCleaner = null;
 
@@ -52,7 +50,7 @@ public class StatisticsBolt extends BaseBasicBolt {
                 public void run() {
                     while (true) {
                         try {
-                            DBHelper.getData();
+                            DBStatisticBoltHelper.getData();
                             long sleepTime = TimeParaser.getMillisFromNowToThreeOclock();
                             if (sleepTime > 0) {
                                 loader.sleep(sleepTime);
@@ -67,12 +65,12 @@ public class StatisticsBolt extends BaseBasicBolt {
             loader.start();
         }
         if (userInfoCleaner == null) {
-            userInfoCleaner = new UserInfoCleaner();
+            userInfoCleaner = new UserInfoCleaner(this);
             userInfoCleaner.setDaemon(true);
             userInfoCleaner.start();
         }
         if (sessionInfoCleaner == null) {
-            sessionInfoCleaner = new SessionInfoCleaner();
+            sessionInfoCleaner = new SessionInfoCleaner(this);
             sessionInfoCleaner.setDaemon(true);
             sessionInfoCleaner.start();
         }

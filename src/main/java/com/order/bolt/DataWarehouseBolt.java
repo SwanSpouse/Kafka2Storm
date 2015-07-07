@@ -115,7 +115,7 @@ public class DataWarehouseBolt extends BaseBasicBolt {
 		}
 
 		// 向前追溯准备阶段
-        int ruleId = DBDataWarehouseCacheHelper.getRuleNumFromString(rule);
+        int ruleId = DBHelper.getRuleNumFromString(rule);
         if (ruleId < 1 || ruleId > 12) {
             return;
         }

@@ -6,7 +6,6 @@ import backtype.storm.topology.base.BaseBasicBolt;
 import backtype.storm.tuple.Tuple;
 import com.order.db.DBHelper.DBRealTimeOutputBoltHelper;
 import com.order.util.FName;
-import com.order.util.LogUtil;
 import com.order.util.StreamId;
 
 /**

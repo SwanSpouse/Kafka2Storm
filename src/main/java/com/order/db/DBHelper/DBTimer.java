@@ -10,6 +10,8 @@ import org.apache.log4j.Logger;
 import java.sql.*;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Random;
 
 /**
@@ -19,9 +21,10 @@ public class DBTimer extends Thread {
     private static Logger log = Logger.getLogger(DBTimer.class);
 
     private Connection conn = null;
+    private DBRealTimeOutputBoltHelper helper = null;
 
-    public DBTimer(Connection conn) {
-        this.conn = conn;
+    public DBTimer(DBRealTimeOutputBoltHelper helper) {
+        this.helper = helper;
     }
 
     @Override
@@ -29,11 +32,12 @@ public class DBTimer extends Thread {
         super.run();
         try {
         	int num = 0;
-        	Thread.sleep((new Random()).nextInt(Constant.ONE_MINUTE * 5 * 1000));
+        	Thread.sleep((new Random()).nextInt(Constant.ONE_MINUTE * 5 * 1000));  //test
             while (true) {
-                Thread.sleep(Constant.ONE_MINUTE * 5 * 1000L);
+                Thread.sleep(Constant.ONE_MINUTE * 5 * 1000L);  // test
                 log.info("===将map中的数据更新到数据库中===");
                 //每分钟将map中异常费用数据更新到数据库中。
+                //log.info(this.toString());  //test
                 this.updateDB();
                 //每N分钟将总费用更新到库中
                 if (++num >= 3) {
@@ -42,8 +46,8 @@ public class DBTimer extends Thread {
                 }
                 if (TimeParaser.isTimeToClearData(System.currentTimeMillis())) {
                     this.updateTotalDB();
-                    DBRealTimeOutputBoltHelper.totalFee.clear();
-                    DBRealTimeOutputBoltHelper.totalFeeInDB.clear();
+                    helper.totalFee.clear();
+                    helper.totalFeeInDB.clear();
                 }
             }
         } catch (InterruptedException e) {
@@ -55,7 +59,7 @@ public class DBTimer extends Thread {
  
     private void updateDB() throws SQLException {
     	// 将异常订购费用更新到库里，并清除内存
-        for (String key : DBRealTimeOutputBoltHelper.abnormalFee.keySet()) {
+        for (String key : helper.abnormalFee.keySet()) {
             String[] keys = key.split("\\|");
             if (keys.length < 6) {
                 log.error("字段错误: " + key);
@@ -69,16 +73,16 @@ public class DBTimer extends Thread {
             String ruleID = keys[5];
             String totalFeeKey = date + "|" + provinceId + "|" + channelCode + "|"
                     + contentID + "|" + contentType;
-            if (!DBRealTimeOutputBoltHelper.totalFee.containsKey(totalFeeKey)) {
-                LogUtil.printLog("费用列表异常：" + DBRealTimeOutputBoltHelper.totalFee + " : "
-                        + DBRealTimeOutputBoltHelper.abnormalFee + " : " + totalFeeKey +
+            if (!helper.totalFee.containsKey(totalFeeKey)) {
+                LogUtil.printLog("费用列表异常：" + helper.totalFee + " : "
+                        + helper.abnormalFee + " : " + totalFeeKey +
                         " " + Arrays.asList(keys));
                 continue;
             }
-            double fee = DBRealTimeOutputBoltHelper.totalFee.get(totalFeeKey);
+            double fee = helper.totalFee.get(totalFeeKey);
             if (fee == 0) continue;  // 总费用为0,则无需入库
             String abnormalFeeKey = totalFeeKey + "|" + ruleID;
-            double abnFee = DBRealTimeOutputBoltHelper.abnormalFee.get(abnormalFeeKey);
+            double abnFee = helper.abnormalFee.get(abnormalFeeKey);
             try {
                 if (checkExists(date, provinceId, contentID, contentType, channelCode, ruleID)) {
                    this.updateAbnormalFee(date, provinceId, contentID, contentType, channelCode, ruleID, abnFee, fee);
@@ -89,13 +93,13 @@ public class DBTimer extends Thread {
                 e.printStackTrace();
             }
         }
-        log.info("===更新" + String.valueOf(DBRealTimeOutputBoltHelper.abnormalFee.size()) + "条异常统计信息到数据库中===");
-        DBRealTimeOutputBoltHelper.abnormalFee.clear();
+        log.info("===更新" + String.valueOf(helper.abnormalFee.size()) + "条异常统计信息到数据库中===");
+        helper.abnormalFee.clear();
     }
     
     private void updateTotalDB() throws SQLException {
         // 将总费用更新到库中（ruleid为0）,不清空内存
-        for (String key : DBRealTimeOutputBoltHelper.totalFee.keySet()) {
+        for (String key : helper.totalFee.keySet()) {
             String[] keys = key.split("\\|");
             if (keys.length != 5) {
                 log.error("totalfee的key值字段个数错误: " + key);
@@ -107,7 +111,7 @@ public class DBTimer extends Thread {
             String contentID = keys[3];
             String contentType = keys[4];
             String ruleID = "0";
-            double fee = DBRealTimeOutputBoltHelper.totalFee.get(key);
+            double fee = helper.totalFee.get(key);
             if (fee == 0) continue;  //总费用为0不入库
             //log.info("Insert Key : " + key);
             if (checkExists(date, provinceId, contentID, contentType, channelCode, ruleID)) {
@@ -117,7 +121,7 @@ public class DBTimer extends Thread {
                 this.insertAbnormalFee(date, provinceId, contentID, contentType, channelCode, ruleID, 0, fee);
             }
         }
-        log.info("===更新" + String.valueOf(DBRealTimeOutputBoltHelper.totalFee.size()) + "条总费用统计信息到数据库中===");
+        log.info("===更新" + String.valueOf(helper.totalFee.size()) + "条总费用统计信息到数据库中===");
     }
 
     private boolean checkExists(String date, String provinceId, String contentID, String contentType,
@@ -174,7 +178,7 @@ public class DBTimer extends Thread {
 
         if (!DBStatisticBoltHelper.parameterId2ChannelIds.containsKey(channelCode)) {
             log.error("营销参数维表更新错误:" + new Date() + "==>" + channelCode);
-            chl1 = chl2 = chl3 = "";
+            chl1 = chl2 = chl3 = "null";
         } else {
             String[] chls = DBStatisticBoltHelper.parameterId2ChannelIds.get(channelCode).split("\\|");
             chl1 = chls[0];
@@ -301,5 +305,24 @@ public class DBTimer extends Thread {
                 conn = null;
             }
         }
+    }
+    
+    public String toString() {
+        String result = "\n size of totalFee is " + String.valueOf(helper.totalFee.size()) + "\n";
+        // 遍历
+        Iterator<Map.Entry<String, Double>> it = helper.totalFee.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<String, Double> entry = it.next();
+            result += entry.getKey() + " " + String.valueOf(entry.getValue()) + "\n";
+        }
+
+        result += "\n size of ABFee is " + String.valueOf(helper.abnormalFee.size()) + "\n";
+        Iterator<Map.Entry<String, Double>> it2 = helper.abnormalFee.entrySet().iterator();
+        while (it2.hasNext()) {
+            Map.Entry<String, Double> entry2 = it2.next();
+            result += entry2.getKey() + " " + String.valueOf(entry2.getValue()) + "\n";
+        }
+
+        return result;
     }
 }

@@ -14,16 +14,19 @@ import java.util.Iterator;
 public class SessionInfoCleaner extends Thread {
 
     private static Logger log = Logger.getLogger(UserInfoCleaner.class);
+    private StatisticsBolt bolt = null;
 
+    public SessionInfoCleaner(StatisticsBolt bolt) {
+    	this.bolt = bolt;
+    }
+    
     @Override
     public void run() {
         super.run();
         while (true) {
             try {
                 Thread.sleep(Constant.ONE_MINUTE * 1000L);
-long currentTime = System.currentTimeMillis();
-int sizeBefore = StatisticsBolt.sessionInfos.size(currentTime);
-                Iterator<Pair<String, SessionInfo>> it = StatisticsBolt.sessionInfos.keySet().iterator();
+                Iterator<Pair<String, SessionInfo>> it = bolt.sessionInfos.keySet().iterator();
                 while (it.hasNext()) {
                     Pair<String,SessionInfo> currentPair = it.next();
                     SessionInfo currentUser = currentPair.getValue();
@@ -35,9 +38,6 @@ int sizeBefore = StatisticsBolt.sessionInfos.size(currentTime);
                         it.remove();
                     }
                 }
-long afterClearTime = System.currentTimeMillis();
-int sizeAfter = StatisticsBolt.sessionInfos.size(afterClearTime);
-log.info("清理sessionInfos耗时： " + (afterClearTime - currentTime)  + " 清理了 " + (sizeAfter - sizeBefore));
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
