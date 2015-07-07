@@ -62,7 +62,7 @@ public class RealTimeOutputBolt extends BaseBasicBolt {
         String channelCode = input.getStringByField(FName.CHANNELCODE.name());
         String provinceId = input.getStringByField(FName.PROVINCEID.name());
         String contentId = input.getStringByField(FName.CONTENTID.name());
-        String contentType = input.getStringByField(FName.ACCESSTYPE.name());
+        String contentType = input.getStringByField(FName.CONTENTTYPE.name());
 
         DBHelper.updateData(msisdn, recordTime, channelCode, provinceId, "0", realInfoFee, contentId, contentType);
     }
