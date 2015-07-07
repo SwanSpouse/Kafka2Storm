@@ -29,7 +29,7 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
     //Key: date|provinceId|channelCode|content|contextType|ruleID
     public ConcurrentHashMap<String, Double> totalFee = null;
     // 每次重启时，先从数据库中查询所有总费用到内存中。此bolt中需要哪些在将其复制到totalfee中
-    public ConcurrentHashMap<String, Double> totalFeeInDB = null;
+    public static ConcurrentHashMap<String, Double> totalFeeInDB = null;
 
     private Connection getConn() throws SQLException {
         if (conn == null) {
@@ -90,9 +90,9 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
         if (this.totalFee.containsKey(totalFeeKey)) {
             oldTotalFee = this.totalFee.get(totalFeeKey);
         } else {
-            if (this.totalFeeInDB.contains(totalFeeKey)) {
+            if (DBRealTimeOutputBoltHelper.totalFeeInDB.contains(totalFeeKey)) {
             	//log.info("total fee indb:  "+ totalFeeKey + "====" + oldTotalFee);  //test
-                oldTotalFee = this.totalFeeInDB.get(totalFeeKey);
+                oldTotalFee = DBRealTimeOutputBoltHelper.totalFeeInDB.get(totalFeeKey);
             }
             this.totalFee.put(totalFeeKey, oldTotalFee);
         }
@@ -183,7 +183,7 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
                 String provinceId = rs.getString("PROVINCE_ID");
                 String channelCode = rs.getString("SALE_PARM");
                 String content = rs.getString("CONTENT_ID");
-                String contextType = rs.getString("CONTENT_TYPE");
+                String contentType = rs.getString("CONTENT_TYPE");
                 double abFee = rs.getFloat("ODR_ABN_FEE");
                 double totalFee = rs.getFloat("ODR_FEE");
                 // 防止数据库中异常费用比总费用大
@@ -191,13 +191,13 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
                 	totalFee = abFee;
                 }
                 String totalFeeKey = date + "|" + provinceId + "|" + channelCode + "|"
-                        + content + "|" + contextType;
-                this.totalFeeInDB.put(totalFeeKey, totalFee);
+                        + content + "|" + contentType;
+                DBRealTimeOutputBoltHelper.totalFeeInDB.put(totalFeeKey, totalFee);
                 //log.info("totalFromDBInfo is " + totalFeeKey + "====" + String.valueOf(totalFee)); //test
             }
             rs.close();
             prepStmt.close();
-            log.info("Init totalFee map size is " + String.valueOf(this.totalFeeInDB.size()) + "!");
+            log.info("Init totalFee map size is " + String.valueOf(DBRealTimeOutputBoltHelper.totalFeeInDB.size()) + "!");
         } catch (SQLException e) {
             log.error("查询sql错误" + selectSql);
             e.printStackTrace();
