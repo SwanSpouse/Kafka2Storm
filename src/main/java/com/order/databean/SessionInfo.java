@@ -116,7 +116,7 @@ public class SessionInfo implements Serializable{
                 e.printStackTrace();
             }
         }
-        String secondChannelId = DBStatisticBoltHelper.parameterId2SecChannelId.get(channelId);
+        String secondChannelId = DBStatisticBoltHelper.parameterId2SecChannelId.get(channelId.toUpperCase());
         if (secondChannelId != null) {
             this.orderChannelCodeByDay.put(secondChannelId, lastUpdateTime);
         }
@@ -169,7 +169,7 @@ public class SessionInfo implements Serializable{
                 e.printStackTrace();
             }
         }
-        String secondChannelId = DBStatisticBoltHelper.parameterId2SecChannelId.get(channelId);
+        String secondChannelId = DBStatisticBoltHelper.parameterId2SecChannelId.get(channelId.toUpperCase());
         if (secondChannelId != null) {
             this.orderChannelCodeByDay.put(secondChannelId, lastUpdateTime);
         }

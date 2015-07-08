@@ -194,10 +194,10 @@ public class DBTimer extends Thread {
         String chl2 = null;
         String chl3 = null;
 
-        if (!DBStatisticBoltHelper.parameterId2ChannelIds.containsKey(channelCode)) {
+        if (!DBStatisticBoltHelper.parameterId2ChannelIds.containsKey(channelCode.toUpperCase())) {
             chl1 = chl2 = chl3 = "null";
         } else {
-            String[] chls = DBStatisticBoltHelper.parameterId2ChannelIds.get(channelCode).split("\\|");
+            String[] chls = DBStatisticBoltHelper.parameterId2ChannelIds.get(channelCode.toUpperCase()).split("\\|");
             chl1 = chls[0];
             chl2 = chls[1];
             chl3 = chls[2];
