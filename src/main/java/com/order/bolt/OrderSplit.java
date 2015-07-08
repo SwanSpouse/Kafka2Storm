@@ -114,20 +114,20 @@ public class OrderSplit extends BaseBasicBolt {
     public void count(String colume) {
     	if (colume.equals("recv")) {
 	    	recvnum++;
-	    	if (recvnum >= 100) {
-	    		DBOrderCount.updateDbSum("OrderSplit", "recv", 100);
+	    	if (recvnum >= 1000) {
+	    		DBOrderCount.updateDbSum("OrderSplit", "recv", 1000);
 	    		recvnum=0;
 	    	}
     	} else if (colume.equals("drop")) {
     		dropnum++;
-	    	if (dropnum >= 100) {
-	    		DBOrderCount.updateDbSum("OrderSplit", "drop", 100);
+	    	if (dropnum >= 1000) {
+	    		DBOrderCount.updateDbSum("OrderSplit", "drop", 1000);
 	    		dropnum=0;
 	    	}
 	    } else if (colume.equals("send")) {
 	    	sendnum++;
-	    	if (sendnum >= 100) {
-	    		DBOrderCount.updateDbSum("OrderSplit", "send", 100);
+	    	if (sendnum >= 1000) {
+	    		DBOrderCount.updateDbSum("OrderSplit", "send", 1000);
 	    		sendnum=0;
 	    	}
 	    }

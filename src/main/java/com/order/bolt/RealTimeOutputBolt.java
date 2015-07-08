@@ -63,19 +63,19 @@ public class RealTimeOutputBolt extends BaseBasicBolt {
     	if (colume.equals("recv")) {
 	    	recvnum++;
 	    	if (recvnum >= 100) {
-	    		DBOrderCount.updateDbSum("RealTimeOutputBolt", "recv", 100);
+	    		DBOrderCount.updateDbSum("RealTimeOutputBolt", "recv", 1000);
 	    		recvnum=0;
 	    	}
     	} else if (colume.equals("drop")) {
     		dropnum++;
 	    	if (dropnum >= 100) {
-	    		DBOrderCount.updateDbSum("RealTimeOutputBolt", "drop", 100);
+	    		DBOrderCount.updateDbSum("RealTimeOutputBolt", "drop", 1000);
 	    		dropnum=0;
 	    	}
 	    } else if (colume.equals("send")) {
 	    	sendnum++;
 	    	if (sendnum >= 100) {
-	    		DBOrderCount.updateDbSum("RealTimeOutputBolt", "send", 100);
+	    		DBOrderCount.updateDbSum("RealTimeOutputBolt", "send", 1000);
 	    		sendnum=0;
 	    	}
 	    }
