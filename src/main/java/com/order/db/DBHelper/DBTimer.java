@@ -37,7 +37,6 @@ public class DBTimer extends Thread {
                 Thread.sleep(Constant.ONE_MINUTE * 5 * 1000L);  // test
                 log.info("===将map中的数据更新到数据库中===");
                 //每分钟将map中异常费用数据更新到数据库中。
-                //log.info(this.toString());  //test
                 this.updateDB();
                 //每N分钟将总费用更新到库中
                 if (++num >= 3) {
@@ -93,7 +92,6 @@ public class DBTimer extends Thread {
                 e.printStackTrace();
             }
         }
-        log.info("===更新" + String.valueOf(helper.abnormalFee.size()) + "条异常统计信息到数据库中===");
         helper.abnormalFee.clear();
     }
     
@@ -121,8 +119,8 @@ public class DBTimer extends Thread {
                 this.insertAbnormalFee(date, provinceId, contentID, contentType, channelCode, ruleID, 0, fee);
             }
         }
-        log.info("===更新" + String.valueOf(helper.totalFee.size()) + "条总费用统计信息到数据库中===");
-    }
+//        log.info("===updateTotalDB更新" + String.valueOf(helper.totalFee.size()) + "条总费用统计信息到数据库中===");
+     }
 
     private boolean checkExists(String date, String provinceId, String contentID, String contentType,
                                 String channelCode, String ruleId) throws SQLException {
@@ -169,8 +167,12 @@ public class DBTimer extends Thread {
 
     private void insertAbnormalFee(String recordDay,String provinceId, String contentId, String contentType,
                             String channelCode, String ruleId, double abnormalFee, double totalFee) throws SQLException {
-        if (DBStatisticBoltHelper.parameterId2ChannelIds == null) {
-            DBStatisticBoltHelper.getData();
+        if (DBStatisticBoltHelper.parameterId2ChannelIds == null || DBStatisticBoltHelper.parameterId2ChannelIds.isEmpty()) {
+            try {
+                DBStatisticBoltHelper.getData();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
         String chl1 = null;
         String chl2 = null;

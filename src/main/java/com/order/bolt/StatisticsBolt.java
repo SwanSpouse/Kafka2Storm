@@ -21,6 +21,8 @@ import com.order.util.StreamId;
 import com.order.util.TimeParaser;
 import org.apache.log4j.Logger;
 
+import java.sql.SQLException;
+
 /**
  * Created by LiMingji on 2015/5/24.
  */
@@ -56,6 +58,8 @@ public class StatisticsBolt extends BaseBasicBolt {
                                 loader.sleep(sleepTime);
                             }
                         } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        } catch (SQLException e) {
                             e.printStackTrace();
                         }
                     }

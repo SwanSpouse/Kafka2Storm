@@ -7,11 +7,10 @@ import com.order.databean.TimeCacheStructures.BookOrderList;
 import com.order.databean.TimeCacheStructures.CachedList;
 import com.order.databean.TimeCacheStructures.Pair;
 import com.order.db.DBHelper.DBStatisticBoltHelper;
-import com.order.util.LogUtil;
-import com.order.util.TimeParaser;
 import org.apache.log4j.Logger;
 
 import java.io.Serializable;
+import java.sql.SQLException;
 import java.util.Date;
 
 /**
@@ -111,7 +110,11 @@ public class SessionInfo implements Serializable{
         }
         //将用户channelCode对应的二级渠道进行保存
         if (DBStatisticBoltHelper.parameterId2SecChannelId == null) {
-            DBStatisticBoltHelper.getData();
+            try {
+                DBStatisticBoltHelper.getData();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
         String secondChannelId = DBStatisticBoltHelper.parameterId2SecChannelId.get(channelId);
         if (secondChannelId != null) {
@@ -159,8 +162,12 @@ public class SessionInfo implements Serializable{
             }
         }
         //将用户channelCode对应的二级渠道进行保存
-        if (DBStatisticBoltHelper.parameterId2SecChannelId == null) {
-            DBStatisticBoltHelper.getData();
+        if (DBStatisticBoltHelper.parameterId2SecChannelId == null || DBStatisticBoltHelper.parameterId2SecChannelId.isEmpty()) {
+            try {
+                DBStatisticBoltHelper.getData();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
         String secondChannelId = DBStatisticBoltHelper.parameterId2SecChannelId.get(channelId);
         if (secondChannelId != null) {

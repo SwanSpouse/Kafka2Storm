@@ -269,7 +269,7 @@ public class DBDataWarehouseCacheHelper implements Serializable {
 		}
 		// 将删除的订购记录批量入库
 		insertOrdersToDB(insertList);
-		log.info("cleanAndToDB result size: " + String.valueOf(orderMap.size()));
+//		log.info("cleanAndToDB result size: " + String.valueOf(orderMap.size()));
 	}
 
 	// 批量入库
@@ -277,7 +277,6 @@ public class DBDataWarehouseCacheHelper implements Serializable {
 			throws Exception {
 		PreparedStatement pst = null;
 		try {
-			long startTime = System.currentTimeMillis();
 			String sql = "insert into " + StormConf.dataWarehouseTable
 					+ " VALUES (?,?,?,?,?,?,?," + "?,?,?,?,?,?,?,?,?,?,?,?)";
 			conn = JDBCUtil.connUtil.getConnection();
@@ -301,10 +300,6 @@ public class DBDataWarehouseCacheHelper implements Serializable {
 			}
 			pst.executeBatch();
 			conn.commit();
-			long endTime = System.currentTimeMillis();
-			log.info("The patch insert " + String.valueOf(orderList.size())
-					+ " order record taked time ：" + (endTime - startTime)
-					+ "ms");
 		} catch (SQLException e) {
 			e.printStackTrace();
 			log.error("insert data to DB is failed.");
