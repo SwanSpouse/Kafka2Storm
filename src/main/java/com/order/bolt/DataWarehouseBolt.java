@@ -8,6 +8,7 @@ import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
 
 import com.order.db.DBHelper.DBDataWarehouseCacheHelper;
+import com.order.db.DBHelper.DBOrderCount;
 import com.order.util.FName;
 import com.order.util.OrderRecord;
 import com.order.util.StreamId;
@@ -47,14 +48,38 @@ public class DataWarehouseBolt extends BaseBasicBolt {
 
     private static final long serialVersionUID = 1L;
     private DBDataWarehouseCacheHelper DBHelper = new DBDataWarehouseCacheHelper();
-
+    private long recvnum = 0, dropnum = 0, sendnum = 0;
+    
     @Override
     public void execute(Tuple input, BasicOutputCollector collector) {
         if (input.getSourceStreamId().equals(StreamId.DATASTREAM.name())) {
+            count("recv");
             handleDataStream(input, collector);
         } else if (input.getSourceStreamId().equals(StreamId.ABNORMALDATASTREAM.name())) {
             handleAbnormalDataStream(input, collector);
         }
+    }
+    
+    public void count(String colume) {
+    	if (colume.equals("recv")) {
+	    	recvnum++;
+	    	if (recvnum >= 100) {
+	    		DBOrderCount.updateDbSum("DataWarehouseBolt", "recv", 100);
+	    		recvnum=0;
+	    	}
+    	} else if (colume.equals("drop")) {
+    		dropnum++;
+	    	if (dropnum >= 100) {
+	    		DBOrderCount.updateDbSum("DataWarehouseBolt", "drop", 100);
+	    		dropnum=0;
+	    	}
+	    } else if (colume.equals("send")) {
+	    	sendnum++;
+	    	if (sendnum >= 100) {
+	    		DBOrderCount.updateDbSum("DataWarehouseBolt", "send", 100);
+	    		sendnum=0;
+	    	}
+	    }
     }
 
     @Override
@@ -101,6 +126,7 @@ public class DataWarehouseBolt extends BaseBasicBolt {
             // 若新增成功则直接转发消息
             collector.emit(StreamId.DATASTREAM2.name(), new Values(msisdn, sessionId, recordTime,
                     realInfoFee, channelCode, provinceId, contentId, contentType));
+            count("send");
         }
     }
 
@@ -143,6 +169,7 @@ public class DataWarehouseBolt extends BaseBasicBolt {
                 // 若新增成功则直接转发正常订购消息
                 collector.emit(StreamId.DATASTREAM2.name(), new Values(msisdn, sessionId, recordTime,
                         realInfoFee, channelCode, provinceId, contentId, contentType));
+                count("send");
             }
             // 再次更新
             result = DBHelper.updateData(msisdn, sessionId, channelCode, recordTime, bookId,

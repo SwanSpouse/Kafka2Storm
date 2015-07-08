@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
+import com.order.db.DBHelper.DBOrderCount;
 import com.order.util.FName;
 import com.order.util.StreamId;
 
@@ -48,8 +49,8 @@ import org.codehaus.jettison.json.JSONObject;
 public class OrderSplit extends BaseBasicBolt {
 
     private static final long serialVersionUID = 1L;
-private static long countMsg = 1L;
     static Logger log = Logger.getLogger(OrderSplit.class);
+    private long recvnum = 0, dropnum = 0, sendnum = 0;
 
     @Override
     public void prepare(Map conf, TopologyContext context) {
@@ -75,7 +76,6 @@ private static long countMsg = 1L;
                 }
             }
         } catch (JSONException e) {
-            countMsg += 1;
             log.error("订单消息格式错误" + msg);
         }
         return null;
@@ -83,9 +83,7 @@ private static long countMsg = 1L;
 
     @Override
     public void execute(Tuple input, BasicOutputCollector collector) {
-if (countMsg % 5000 == 0) {
-    log.info("废弃订单条数为： " + countMsg);
-}
+    	count("recv");
         String line = splitJson(input.getString(0));
         String[] words = line.split("\\|", -1);
         if (words.length >= 49) {
@@ -107,12 +105,34 @@ if (countMsg % 5000 == 0) {
             collector.emit(StreamId.ORDERDATA.name(), new Values(msisdn,
                     recordTime, terminal, platform, orderType, productID, bookID, chapterID,
                     channelCode, cost, provinceId, wapIp, sessionId, promotionid));
+            count("send");
         } else {
-countMsg += 1;
-            log.error("订单数据错误: " + line);
+        	count("drop");
         }
     }
 
+    public void count(String colume) {
+    	if (colume.equals("recv")) {
+	    	recvnum++;
+	    	if (recvnum >= 100) {
+	    		DBOrderCount.updateDbSum("OrderSplit", "recv", 100);
+	    		recvnum=0;
+	    	}
+    	} else if (colume.equals("drop")) {
+    		dropnum++;
+	    	if (dropnum >= 100) {
+	    		DBOrderCount.updateDbSum("OrderSplit", "drop", 100);
+	    		dropnum=0;
+	    	}
+	    } else if (colume.equals("send")) {
+	    	sendnum++;
+	    	if (sendnum >= 100) {
+	    		DBOrderCount.updateDbSum("OrderSplit", "send", 100);
+	    		sendnum=0;
+	    	}
+	    }
+    }
+    
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
 
         declarer.declareStream(StreamId.ORDERDATA.name(),

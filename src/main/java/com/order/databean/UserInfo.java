@@ -2,7 +2,6 @@ package com.order.databean;
 
 import com.order.constant.Constant;
 import com.order.databean.TimeCacheStructures.CachedList;
-import com.order.util.LogUtil;
 
 import java.io.Serializable;
 

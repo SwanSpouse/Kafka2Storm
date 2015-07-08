@@ -15,6 +15,7 @@ import com.order.databean.TimeCacheStructures.RealTimeCacheList;
 import com.order.databean.UserInfo;
 import com.order.databean.cleaner.SessionInfoCleaner;
 import com.order.databean.cleaner.UserInfoCleaner;
+import com.order.db.DBHelper.DBOrderCount;
 import com.order.db.DBHelper.DBStatisticBoltHelper;
 import com.order.util.FName;
 import com.order.util.StreamId;
@@ -29,6 +30,7 @@ import java.sql.SQLException;
 public class StatisticsBolt extends BaseBasicBolt {
     public static boolean isDebug = false;
     private static Logger log = Logger.getLogger(StatisticsBolt.class);
+    private long recvnum = 0, dropnum = 0, sendnum = 0;
 
     //存储字段为msisdn 和 UserInfo
     public  RealTimeCacheList<Pair<String, UserInfo>> userInfos =
@@ -87,6 +89,7 @@ public class StatisticsBolt extends BaseBasicBolt {
                 e.printStackTrace();
             }
         } else if (input.getSourceStreamId().equals(StreamId.ORDERDATA.name())) {
+        	count("recv");
             // 订购话单
             try {
                 this.constructInfoFromOrderData(input, collector);
@@ -145,6 +148,7 @@ public class StatisticsBolt extends BaseBasicBolt {
             sessionId = msisdn;
         }
 
+    	count("send");
         //所有订单数据先统一发送正常数据流。用作数据统计。
         collector.emit(StreamId.DATASTREAM.name(), new Values(msisdn, sessionId, recordTime,
                 realInfoFee, channelCode, productId, provinceId, orderType, bookId));
@@ -199,6 +203,28 @@ public class StatisticsBolt extends BaseBasicBolt {
                     new Values(msisdn, sessionId, recordTime, realInfoFee, channelCode, productId,
                             provinceId, orderType, bookId, Rules.ELEVEN.name()));
         }
+    }
+    
+    public void count(String colume) {
+    	if (colume.equals("recv")) {
+	    	recvnum++;
+	    	if (recvnum >= 100) {
+	    		DBOrderCount.updateDbSum("StatisticsBolt", "recv", 100);
+	    		recvnum=0;
+	    	}
+    	} else if (colume.equals("drop")) {
+    		dropnum++;
+	    	if (dropnum >= 100) {
+	    		DBOrderCount.updateDbSum("StatisticsBolt", "drop", 100);
+	    		dropnum=0;
+	    	}
+	    } else if (colume.equals("send")) {
+	    	sendnum++;
+	    	if (sendnum >= 100) {
+	    		DBOrderCount.updateDbSum("StatisticsBolt", "send", 100);
+	    		sendnum=0;
+	    	}
+	    }
     }
 
     @Override
