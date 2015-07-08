@@ -57,6 +57,16 @@ public class DataWarehouseBolt extends BaseBasicBolt {
         }
     }
 
+    @Override
+    public void cleanup()
+    {
+    	try {
+			DBHelper.cleanAndToDB();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+    }
+    
     // 处理正常数据流
     private void handleDataStream(Tuple input, BasicOutputCollector collector) {
         String msisdn = input.getStringByField(FName.MSISDN.name());

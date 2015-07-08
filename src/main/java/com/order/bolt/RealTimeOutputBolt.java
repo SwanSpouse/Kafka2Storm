@@ -1,9 +1,12 @@
 package com.order.bolt;
 
+import org.apache.log4j.Logger;
+
 import backtype.storm.topology.BasicOutputCollector;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseBasicBolt;
 import backtype.storm.tuple.Tuple;
+
 import com.order.db.DBHelper.DBRealTimeOutputBoltHelper;
 import com.order.util.FName;
 import com.order.util.StreamId;
@@ -37,7 +40,10 @@ import com.order.util.StreamId;
 public class RealTimeOutputBolt extends BaseBasicBolt {
 	private static final long serialVersionUID = 1L;
 	private DBRealTimeOutputBoltHelper DBHelper = null;
-
+    private static Logger log = Logger.getLogger(RealTimeOutputBolt.class);
+	private long normalOrderCnt = 0;
+	private long abnormalOrderCnt = 0;
+	
     @Override
     public void execute(Tuple input, BasicOutputCollector collector) {
         if (DBHelper == null) {
@@ -51,11 +57,25 @@ public class RealTimeOutputBolt extends BaseBasicBolt {
             dealAbnormalData(input);
         }
     }
-
+    
+    @Override
+    public void cleanup()
+    {
+    	try {
+    		DBHelper.cleanup();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+    }
+    
     /**
      * 处理正常数据流
      */
     private void dealNormalDate(Tuple input) {
+    	normalOrderCnt++;
+    	if (normalOrderCnt%5000 == 0) {
+    		log.info("====RealTimeOutputBolt get normalorder" + String.valueOf(normalOrderCnt));
+    	}
         String msisdn = input.getStringByField(FName.MSISDN.name());
         Long recordTime = input.getLongByField(FName.RECORDTIME.name());
         double realInfoFee = input.getDoubleByField(FName.REALINFORFEE.name());
@@ -71,6 +91,10 @@ public class RealTimeOutputBolt extends BaseBasicBolt {
      * 处理异常数据流
      */
     private void dealAbnormalData(Tuple input) {
+    	abnormalOrderCnt++;
+    	if (abnormalOrderCnt%5000 == 0) {
+    		log.info("====RealTimeOutputBolt get abnormalorder" + String.valueOf(abnormalOrderCnt));
+    	}
         String msisdn = input.getStringByField(FName.MSISDN.name());
         Long recordTime = input.getLongByField(FName.RECORDTIME.name());
         double realInfoFee = input.getDoubleByField(FName.REALINFORFEE.name());

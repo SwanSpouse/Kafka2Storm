@@ -51,8 +51,8 @@ public class DBDataWarehouseCacheHelper implements Serializable {
 
 	private transient Thread cleaner = null; // 清理线程
 
-	private final int clearTimer = 1 * 60 * 60; // 每N秒清理一次
-	private final long historyTimer = 1 * 60 * 60; // 每次清理1小时前的所有订购，并入库
+	private final int clearTimer = 1 * 5 * 60; // 每5分钟秒清理一次
+	private final long historyTimer = 1 * 5 * 60; // 每次清理5分钟前的所有订购，并入库
 
 	// 用户订购记录
 	private ConcurrentHashMap<String, ArrayList<OrderRecord>> orderMap;
@@ -159,7 +159,6 @@ public class DBDataWarehouseCacheHelper implements Serializable {
 						try {
 							// 每隔一个一段时间清理一次。
 							cleaner.sleep(clearTimer * 1000);
-							log.info("Begin Clean DataWareHouse cache ...");
 							cleanAndToDB();
 						} catch (InterruptedException e) {
 							e.printStackTrace();
@@ -234,10 +233,11 @@ public class DBDataWarehouseCacheHelper implements Serializable {
 	}
 
 	public void cleanAndToDB() throws Exception {
+		log.info("====Begin cleanAndToDB ");
 		long currentTime = System.currentTimeMillis();
 		currentTime = currentTime - 1000 * historyTimer;
 
-		log.info("Begin cleanAndToDB before "
+		log.info("====Begin cleanAndToDB before "
 				+ TimeParaser.formatTimeInSeconds(currentTime));
 		// 要入库的订购记录列表
 		ArrayList<OrderRecord> insertList = new ArrayList<OrderRecord>();
@@ -268,7 +268,7 @@ public class DBDataWarehouseCacheHelper implements Serializable {
 		}
 		// 将删除的订购记录批量入库
 		insertOrdersToDB(insertList);
-//		log.info("cleanAndToDB result size: " + String.valueOf(orderMap.size()));
+		log.info("====cleanAndToDB result size: " + String.valueOf(orderMap.size()));
 	}
 
 	// 批量入库
@@ -276,6 +276,7 @@ public class DBDataWarehouseCacheHelper implements Serializable {
 			throws Exception {
 		PreparedStatement pst = null;
 		try {
+			long startTime = System.currentTimeMillis();
 			String sql = "insert into " + StormConf.dataWarehouseTable
 					+ " VALUES (?,?,?,?,?,?,?," + "?,?,?,?,?,?,?,?,?,?,?,?)";
 			conn = JDBCUtil.connUtil.getConnection();
@@ -299,6 +300,10 @@ public class DBDataWarehouseCacheHelper implements Serializable {
 			}
 			pst.executeBatch();
 			conn.commit();
+			long endTime = System.currentTimeMillis();
+			log.info("====The patch insert " + String.valueOf(orderList.size())
+					+ " order record taked time ：" + (endTime - startTime)
+					+ "ms");
 		} catch (SQLException e) {
 			e.printStackTrace();
 			log.error("insert data to DB is failed.");

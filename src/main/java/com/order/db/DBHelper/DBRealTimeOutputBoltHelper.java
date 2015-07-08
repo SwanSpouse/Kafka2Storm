@@ -42,7 +42,20 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
 
     private transient Thread storageData2DBTimer = null;
 
-    public DBRealTimeOutputBoltHelper() {
+    public void cleanup() {
+    	try {
+			((DBTimer) storageData2DBTimer).updateDB();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+    	try {
+			((DBTimer) storageData2DBTimer).updateTotalDB();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public DBRealTimeOutputBoltHelper() {
         if (storageData2DBTimer == null) {
             storageData2DBTimer = new DBTimer(this);
             storageData2DBTimer.setDaemon(true);
@@ -164,6 +177,7 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
     }
 
     private void getAllTotalFeeFromDB() throws SQLException {
+    	log.info("====getAllTotalFeeFromDB: Begin get all totalFee From DB====" );
         String selectSql = "SELECT PROVINCE_ID,SALE_PARM,CONTENT_ID,CONTENT_TYPE," +
         		"max(ODR_ABN_FEE) ODR_ABN_FEE,max(ODR_FEE) ODR_FEE " +
         		"FROM " + StormConf.realTimeOutputTable + " WHERE RECORD_DAY=? " +
@@ -192,7 +206,9 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
                 String totalFeeKey = date + "|" + provinceId + "|" + channelCode + "|"
                         + content + "|" + contentType;
                 DBRealTimeOutputBoltHelper.totalFeeInDB.put(totalFeeKey, totalFee);
+                //log.info("======totalFromDBInfo is " + totalFeeKey + "====" + String.valueOf(totalFee)); //test
             }
+            log.info("====getAllTotalFeeFromDB: Init totalFee map size is " + String.valueOf(this.totalFeeInDB.size()) + "!");
         } catch (SQLException e) {
             log.error("查询sql错误" + selectSql);
             e.printStackTrace();

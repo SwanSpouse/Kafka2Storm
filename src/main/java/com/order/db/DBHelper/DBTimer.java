@@ -22,6 +22,7 @@ public class DBTimer extends Thread {
 
     private Connection conn = null;
     private DBRealTimeOutputBoltHelper helper = null;
+    private long lastClearDayDataTime = 0;
 
     public DBTimer(DBRealTimeOutputBoltHelper helper) {
         this.helper = helper;
@@ -33,9 +34,10 @@ public class DBTimer extends Thread {
         try {
         	int num = 0;
         	Thread.sleep((new Random()).nextInt(Constant.ONE_MINUTE * 5 * 1000));  //test
+        	//lastClearDayDataTime = System
             while (true) {
                 Thread.sleep(Constant.ONE_MINUTE * 5 * 1000L);  // test
-                log.info("===将map中的数据更新到数据库中===");
+                log.info("===将RealTime缓存中的数据更新到数据库中===");
                 //每分钟将map中异常费用数据更新到数据库中。
                 this.updateDB();
                 //每N分钟将总费用更新到库中
@@ -44,6 +46,7 @@ public class DBTimer extends Thread {
                 	num = 0;
                 }
                 if (TimeParaser.isTimeToClearData(System.currentTimeMillis())) {
+                	this.updateDB();
                     this.updateTotalDB();
                     helper.totalFee.clear();
                     DBRealTimeOutputBoltHelper.totalFeeInDB.clear();
@@ -56,8 +59,11 @@ public class DBTimer extends Thread {
 		}
     }
  
-    private void updateDB() throws SQLException {
+    public void updateDB() throws SQLException {
     	// 将异常订购费用更新到库里，并清除内存
+        log.info("====DBTimer开始更新异常费用===");
+        int insertCnt = 0;
+        int updateCnt = 0;
         for (String key : helper.abnormalFee.keySet()) {
             String[] keys = key.split("\\|");
             if (keys.length < 6) {
@@ -85,17 +91,24 @@ public class DBTimer extends Thread {
             try {
                 if (checkExists(date, provinceId, contentID, contentType, channelCode, ruleID)) {
                    this.updateAbnormalFee(date, provinceId, contentID, contentType, channelCode, ruleID, abnFee, fee);
+                   updateCnt++;
                 } else {
                     this.insertAbnormalFee(date, provinceId, contentID, contentType, channelCode, ruleID, abnFee, fee);
+                    insertCnt++;
                 }
             } catch (SQLException e) {
                 e.printStackTrace();
             }
         }
+        log.info("===DBTimer更新异常统计信息,总共" + String.valueOf(helper.abnormalFee.size())
+        		+ "条，其中update" + String.valueOf(updateCnt) + "条， insert " + String.valueOf(insertCnt) + "条");
         helper.abnormalFee.clear();
     }
     
-    private void updateTotalDB() throws SQLException {
+    public void updateTotalDB() throws SQLException {
+        log.info("====updateTotalDB开始更新总费用===");
+        int insertCnt = 0;
+        int updateCnt = 0;
         // 将总费用更新到库中（ruleid为0）,不清空内存
         for (String key : helper.totalFee.keySet()) {
             String[] keys = key.split("\\|");
@@ -115,11 +128,15 @@ public class DBTimer extends Thread {
             if (checkExists(date, provinceId, contentID, contentType, channelCode, ruleID)) {
                 //this.updateAbnormalFee(date, provinceId, contentID, contentType, channelCode, ruleID, 0, fee);
                 this.updateTotalFee(date, provinceId, contentID, contentType, channelCode, fee);
+                updateCnt++;
             } else {
                 this.insertAbnormalFee(date, provinceId, contentID, contentType, channelCode, ruleID, 0, fee);
+                insertCnt++;
             }
         }
-//        log.info("===updateTotalDB更新" + String.valueOf(helper.totalFee.size()) + "条总费用统计信息到数据库中===");
+        log.info("===updateTotalDB更新" + String.valueOf(helper.totalFee.size()) + "条总费用统计信息到数据库中===");
+        log.info("===updateTotalDB更新异常统计信息,总共" + String.valueOf(helper.totalFee.size())
+        		+ "条，其中update" + String.valueOf(updateCnt) + "条， insert " + String.valueOf(insertCnt) + "条");
      }
 
     private boolean checkExists(String date, String provinceId, String contentID, String contentType,
