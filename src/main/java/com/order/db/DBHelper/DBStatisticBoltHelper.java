@@ -56,7 +56,7 @@ public class DBStatisticBoltHelper implements Serializable {
                 String secondChannelId = resultSet.getString("SECOND_CHANNEL_ID");
                 secondChannelId = secondChannelId == null ? null : secondChannelId.toUpperCase();
 
-                String thirdChannelId = resultSet.getString("THIRD_CHANNEL_ID").toUpperCase();
+                String thirdChannelId = resultSet.getString("THIRD_CHANNEL_ID");
                 thirdChannelId = thirdChannelId == null ? null : thirdChannelId.toUpperCase();
 
                 String parameterId = resultSet.getString("PARAMETER_ID");
