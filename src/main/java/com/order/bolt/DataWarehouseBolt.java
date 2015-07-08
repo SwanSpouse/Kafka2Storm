@@ -63,20 +63,20 @@ public class DataWarehouseBolt extends BaseBasicBolt {
     public void count(String colume) {
     	if (colume.equals("recv")) {
 	    	recvnum++;
-	    	if (recvnum >= 100) {
-	    		DBOrderCount.updateDbSum("DataWarehouseBolt", "recv", 100);
+	    	if (recvnum >= 1000) {
+	    		DBOrderCount.updateDbSum("DataWarehouseBolt", "recv", 1000);
 	    		recvnum=0;
 	    	}
     	} else if (colume.equals("drop")) {
     		dropnum++;
-	    	if (dropnum >= 100) {
-	    		DBOrderCount.updateDbSum("DataWarehouseBolt", "drop", 100);
+	    	if (dropnum >= 1000) {
+	    		DBOrderCount.updateDbSum("DataWarehouseBolt", "drop", 1000);
 	    		dropnum=0;
 	    	}
 	    } else if (colume.equals("send")) {
 	    	sendnum++;
-	    	if (sendnum >= 100) {
-	    		DBOrderCount.updateDbSum("DataWarehouseBolt", "send", 100);
+	    	if (sendnum >= 1000) {
+	    		DBOrderCount.updateDbSum("DataWarehouseBolt", "send", 1000);
 	    		sendnum=0;
 	    	}
 	    }
@@ -203,33 +203,33 @@ public class DataWarehouseBolt extends BaseBasicBolt {
             return;
         }
 
-        ArrayList<OrderRecord> list = DBHelper.traceBackOrders(msisdn,
-                channelCode, TimeParaser.splitTime(traceBackTime), ruleId);
-        // 将回溯的订购发送
-        Iterator<OrderRecord> itOrder = list.iterator();
-        while (itOrder.hasNext()) {
-            OrderRecord oneRecord = itOrder.next();
-            /**
-             *  根据 orderType & productId & bookId 生成contentType 和 contentId
-             * */
-            contentType = "";
-            contentId = "";
-            if (oneRecord.getOrderType() == 4) { // 包月
-                contentType = 1 + "";
-                contentId = oneRecord.getProductID();
-            } else if (oneRecord.getOrderType() == 5) { // 促销包
-                contentType = 2 + "";
-                contentId = oneRecord.getProductID();
-            } else { // 图书
-                contentType = 3 + "";
-                contentId = oneRecord.getBookID();
-            }
-
-            collector.emit(
-                    StreamId.ABNORMALDATASTREAM2.name(), new Values(oneRecord.getMsisdn(), oneRecord.getSessionId(),
-                            oneRecord.getRecordTime(), oneRecord.getRealfee(), oneRecord.getChannelCode(),
-                            oneRecord.getProvinceId(), rule, contentId, contentType));
-        }
+//        ArrayList<OrderRecord> list = DBHelper.traceBackOrders(msisdn,
+//                channelCode, TimeParaser.splitTime(traceBackTime), ruleId);
+//        // 将回溯的订购发送
+//        Iterator<OrderRecord> itOrder = list.iterator();
+//        while (itOrder.hasNext()) {
+//            OrderRecord oneRecord = itOrder.next();
+//            /**
+//             *  根据 orderType & productId & bookId 生成contentType 和 contentId
+//             * */
+//            contentType = "";
+//            contentId = "";
+//            if (oneRecord.getOrderType() == 4) { // 包月
+//                contentType = 1 + "";
+//                contentId = oneRecord.getProductID();
+//            } else if (oneRecord.getOrderType() == 5) { // 促销包
+//                contentType = 2 + "";
+//                contentId = oneRecord.getProductID();
+//            } else { // 图书
+//                contentType = 3 + "";
+//                contentId = oneRecord.getBookID();
+//            }
+//
+//            collector.emit(
+//                    StreamId.ABNORMALDATASTREAM2.name(), new Values(oneRecord.getMsisdn(), oneRecord.getSessionId(),
+//                            oneRecord.getRecordTime(), oneRecord.getRealfee(), oneRecord.getChannelCode(),
+//                            oneRecord.getProvinceId(), rule, contentId, contentType));
+//        }
     }
 
     @Override
