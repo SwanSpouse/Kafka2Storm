@@ -153,7 +153,6 @@ public class DBDataWarehouseCacheHelper implements Serializable {
 					try {
 						Thread.sleep((new Random()).nextInt(clearTimer * 1000));
 					} catch (InterruptedException e1) {
-						// TODO Auto-generated catch block
 						e1.printStackTrace();
 					}
 					while (true) {

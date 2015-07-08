@@ -179,7 +179,6 @@ public class DBTimer extends Thread {
         String chl3 = null;
 
         if (!DBStatisticBoltHelper.parameterId2ChannelIds.containsKey(channelCode)) {
-            log.error("营销参数维表更新错误:" + new Date() + "==>" + channelCode);
             chl1 = chl2 = chl3 = "null";
         } else {
             String[] chls = DBStatisticBoltHelper.parameterId2ChannelIds.get(channelCode).split("\\|");
