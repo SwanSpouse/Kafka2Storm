@@ -49,10 +49,19 @@ public class DBStatisticBoltHelper implements Serializable {
             stmt = conn.createStatement();
             resultSet = stmt.executeQuery(sql);
             while (resultSet.next()) {
-                String firstChannelId = resultSet.getString("FIRST_CHANNEL_ID").toUpperCase();
-                String secondChannelId = resultSet.getString("SECOND_CHANNEL_ID").toUpperCase();
+                //营销参数均应该大写。
+                String firstChannelId = resultSet.getString("FIRST_CHANNEL_ID");
+                firstChannelId = firstChannelId == null ? null : firstChannelId.toUpperCase();
+
+                String secondChannelId = resultSet.getString("SECOND_CHANNEL_ID");
+                secondChannelId = secondChannelId == null ? null : secondChannelId.toUpperCase();
+
                 String thirdChannelId = resultSet.getString("THIRD_CHANNEL_ID").toUpperCase();
-                String parameterId = resultSet.getString("PARAMETER_ID").toUpperCase();
+                thirdChannelId = thirdChannelId == null ? null : thirdChannelId.toUpperCase();
+
+                String parameterId = resultSet.getString("PARAMETER_ID");
+                parameterId = parameterId == null ? null : parameterId.toUpperCase();
+
                 parameterId2SecChannelId.put(parameterId, secondChannelId);
                 parameterId2ChannelIds.put(parameterId, firstChannelId + "|" + secondChannelId + "|" + thirdChannelId);
             }
