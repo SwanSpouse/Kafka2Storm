@@ -21,7 +21,8 @@ public class DBOrderCount {
     	if (column.equals("recv")) {
     		column = "RECVMSG";
     	} else if (column.equals("drop")) {
-    	} else if (column.equals("send")) {
+            column = "DROPMSG";
+        } else if (column.equals("send")) {
     		column = "SENDMSG";
     	} else {
     		log.error("DBOrderCount Column is error: " + column);
