@@ -22,6 +22,7 @@ public class DBTimer extends Thread {
     private Connection conn = null;
     private DBRealTimeOutputBoltHelper helper = null;
     private long lastClearDayDataTime = 0;
+    private final long dayMillis = 24*60*60*1000;
 
     public DBTimer(DBRealTimeOutputBoltHelper helper) {
         this.helper = helper;
@@ -33,7 +34,8 @@ public class DBTimer extends Thread {
         try {
         	int num = 0;
         	Thread.sleep((new Random()).nextInt(Constant.ONE_MINUTE * 5 * 1000));  //test
-        	//lastClearDayDataTime = System
+        	long nowtime = System.currentTimeMillis();
+        	lastClearDayDataTime = nowtime - nowtime%dayMillis;
             while (true) {
                 Thread.sleep(Constant.ONE_MINUTE * 5 * 1000L);  // test
                 log.info("===将RealTime缓存中的数据更新到数据库中===");
@@ -44,11 +46,13 @@ public class DBTimer extends Thread {
                 	this.updateTotalDB();
                 	num = 0;
                 }
-                if (TimeParaser.isTimeToClearData(System.currentTimeMillis())) {
+                //if (TimeParaser.isTimeToClearData(System.currentTimeMillis())) {
+                if (System.currentTimeMillis() >= (lastClearDayDataTime+dayMillis)) {
                 	this.updateDB();
                     this.updateTotalDB();
                     helper.totalFee.clear();
-                    DBRealTimeOutputBoltHelper.totalFeeInDB.clear();
+                    helper.totalFeeInDB.clear();
+                    lastClearDayDataTime += dayMillis;
                 }
             }
         } catch (InterruptedException e) {

@@ -29,7 +29,7 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
     //Key: date|provinceId|channelCode|content|contextType|ruleID
     public ConcurrentHashMap<String, Double> totalFee = null;
     // 每次重启时，先从数据库中查询所有总费用到内存中。此bolt中需要哪些在将其复制到totalfee中
-    public static ConcurrentHashMap<String, Double> totalFeeInDB = new ConcurrentHashMap<String, Double>();
+    public ConcurrentHashMap<String, Double> totalFeeInDB = null;
 
     private Connection getConn() throws SQLException {
         if (conn == null) {
@@ -63,6 +63,7 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
         }
         totalFee = new ConcurrentHashMap<String, Double>();
         abnormalFee = new ConcurrentHashMap<String, Double>();
+        totalFeeInDB = new ConcurrentHashMap<String, Double>();
         try {
             getAllTotalFeeFromDB();
         } catch (SQLException e) {
@@ -103,8 +104,8 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
         if (this.totalFee.containsKey(totalFeeKey)) {
             oldTotalFee = this.totalFee.get(totalFeeKey);
         } else {
-            if (DBRealTimeOutputBoltHelper.totalFeeInDB.containsKey(totalFeeKey)) {
-                oldTotalFee = DBRealTimeOutputBoltHelper.totalFeeInDB.get(totalFeeKey);
+            if (totalFeeInDB.containsKey(totalFeeKey)) {
+                oldTotalFee = totalFeeInDB.get(totalFeeKey);
             }
             this.totalFee.put(totalFeeKey, oldTotalFee);
         }
@@ -205,7 +206,7 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
                 }
                 String totalFeeKey = date + "|" + provinceId + "|" + channelCode + "|"
                         + content + "|" + contentType;
-                DBRealTimeOutputBoltHelper.totalFeeInDB.put(totalFeeKey, totalFee);
+                totalFeeInDB.put(totalFeeKey, totalFee);
                 //log.info("======totalFromDBInfo is " + totalFeeKey + "====" + String.valueOf(totalFee)); //test
             }
             log.info("====getAllTotalFeeFromDB: Init totalFee map size is " + String.valueOf(this.totalFeeInDB.size()) + "!");

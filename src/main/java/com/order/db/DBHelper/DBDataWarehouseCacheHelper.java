@@ -53,7 +53,8 @@ public class DBDataWarehouseCacheHelper implements Serializable {
 
 	private final int clearTimer = 1 * 5 * 60; // 每5分钟秒清理一次
 	private final long historyTimer = 1 * 5 * 60; // 每次清理5分钟前的所有订购，并入库
-
+	private long dropnum = 0;
+	
 	// 用户订购记录
 	private ConcurrentHashMap<String, ArrayList<OrderRecord>> orderMap;
 
@@ -257,6 +258,7 @@ public class DBDataWarehouseCacheHelper implements Serializable {
 				if (oneRecord.getRecordTime() < currentTime) {
 					// 要入库的订购记录列表
 					insertList.add(oneRecord);
+					count("drop");
 					// 删除此条订购记录
 					itOrder.remove();
 				}
@@ -319,6 +321,16 @@ public class DBDataWarehouseCacheHelper implements Serializable {
 			}
 		}
 	}
+	
+    public void count(String colume) {
+    	if (colume.equals("drop")) {
+    		dropnum++;
+	    	if (dropnum >= 1000) {
+	    		DBOrderCount.updateDbSum("DataWarehouseBolt", "drop", 1000);
+	    		dropnum=0;
+	    	}
+	    }
+    }
 
 	public String toString() {
 		String result = "\n size of order Map is "

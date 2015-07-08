@@ -80,8 +80,9 @@ public class ExceptOrderTopo {
 
         // Run Topo on Cluster
         conf.setNumWorkers(50);
-        conf.setNumAckers(0);
-        conf.setMaxSpoutPending(5000);
+        conf.setNumAckers(5);
+        conf.setMaxSpoutPending(10000);
+        conf.setMessageTimeoutSecs(30);
         StormSubmitter.submitTopology(StormConf.TOPONAME, conf, builder.createTopology());
     }
 }
