@@ -102,6 +102,9 @@ public class OrderSplit extends BaseBasicBolt {
             String sessionId = words[39];// sessionId Varchar2(255)
             String promotionid = words[40]; // 促销互动ID (废弃) 2015-06-05
 
+            //营销参数应均为大写。
+            channelCode = channelCode == null ? null : channelCode.toUpperCase();
+
             collector.emit(StreamId.ORDERDATA.name(), new Values(msisdn,
                     recordTime, terminal, platform, orderType, productID, bookID, chapterID,
                     channelCode, cost, provinceId, wapIp, sessionId, promotionid));

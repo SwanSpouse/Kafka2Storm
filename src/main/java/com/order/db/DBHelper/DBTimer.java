@@ -199,12 +199,15 @@ public class DBTimer extends Thread {
         String chl3 = null;
 
         if (!DBStatisticBoltHelper.parameterId2ChannelIds.containsKey(channelCode.toUpperCase())) {
-            chl1 = chl2 = chl3 = "null";
+            chl1 = chl2 = chl3 = "NULL";
         } else {
             String[] chls = DBStatisticBoltHelper.parameterId2ChannelIds.get(channelCode.toUpperCase()).split("\\|");
             chl1 = chls[0];
+            chl1 = chl1 == null ? "NULL" : chl1.toUpperCase();
             chl2 = chls[1];
+            chl2 = chl2 == null ? "NULL" : chl2.toUpperCase();
             chl3 = chls[2];
+            chl3 = chl3 == null ? "NULL" : chl3.toUpperCase();
         }
 
         String insertDataSql = "INSERT INTO " + StormConf.realTimeOutputTable +
