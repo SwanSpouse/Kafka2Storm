@@ -163,17 +163,20 @@ public class DataWarehouseBolt extends BaseBasicBolt {
         int result = DBHelper.updateData(msisdn, sessionId, channelCode, recordTime, bookId,
                 productId, realInfoFee, provinceId, orderType, rule);
         if (result == -1) {
-            // 订购记录增加到内存
-            if (DBHelper.insertData(msisdn, sessionId, channelCode, recordTime, bookId,
-                    productId, realInfoFee, provinceId, orderType) == 1) {
-                // 若新增成功则直接转发正常订购消息
-                collector.emit(StreamId.DATASTREAM2.name(), new Values(msisdn, sessionId, recordTime,
-                        realInfoFee, channelCode, provinceId, contentId, contentType));
-                count("send");
-            }
-            // 再次更新
-            result = DBHelper.updateData(msisdn, sessionId, channelCode, recordTime, bookId,
-                    productId, realInfoFee, provinceId, orderType, rule);
+        	// 找不到异常订购对应的正常订购，直接返回，不再发新的。
+        	return;
+        	
+            //// 订购记录增加到内存
+            //if (DBHelper.insertData(msisdn, sessionId, channelCode, recordTime, bookId,
+            //        productId, realInfoFee, provinceId, orderType) == 1) {
+            //    // 若新增成功则直接转发正常订购消息
+            //    collector.emit(StreamId.DATASTREAM2.name(), new Values(msisdn, sessionId, recordTime,
+            //            realInfoFee, channelCode, provinceId, contentId, contentType));
+            //    count("send");
+            //}
+            //// 再次更新
+            //result = DBHelper.updateData(msisdn, sessionId, channelCode, recordTime, bookId,
+            //        productId, realInfoFee, provinceId, orderType, rule);
         }
         // 更新成功后直接转发异常订购
         if (result == 1) {

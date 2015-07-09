@@ -125,13 +125,14 @@ public class DBDataWarehouseCacheHelper implements Serializable {
 
 		// 查找如果该订购在内存中，返回0
 		if (orderMap.containsKey(msisdn)) {
-			Iterator<OrderRecord> itOrder = orderMap.get(msisdn).iterator();
-			while (itOrder.hasNext()) {
-				OrderRecord oneRecord = itOrder.next();
-				if (oneRecord.equals(order)) {
-					return 0;
-				}
-			}
+			//由于有完全相同的订购消息，所以不判断原来是否存在该订购，直接存入
+			//Iterator<OrderRecord> itOrder = orderMap.get(msisdn).iterator();
+			//while (itOrder.hasNext()) {
+			//	OrderRecord oneRecord = itOrder.next();
+			//	if (oneRecord.equals(order)) {
+			//		return 0;
+			//	}
+			//}
 			orderMap.get(msisdn).add(order);
 			return 1;
 		} else {
