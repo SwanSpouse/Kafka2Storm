@@ -280,7 +280,7 @@ public class DBDataWarehouseCacheHelper implements Serializable {
 		try {
 			long startTime = System.currentTimeMillis();
 			String sql = "insert into " + StormConf.dataWarehouseTable
-					+ " VALUES (?,?,?,?,?,?,?," + "?,?,?,?,?,?,?,?,?,?,?,?)";
+					+ " VALUES (?,?,?,?,?,?,?," + "?,?,?,?,?,?,?,?,?,?,?,?,?)";
 			conn = JDBCUtil.connUtil.getConnection();
 			conn.setAutoCommit(false);
 			pst = conn.prepareStatement(sql);
@@ -297,6 +297,7 @@ public class DBDataWarehouseCacheHelper implements Serializable {
 				for (int i = 8; i < 20; i++) {
 					pst.setString(i, oneRecord.getRules().get(i - 7).toString());
 				}
+				pst.setString(20, TimeParaser.formatTimeInSeconds(oneRecord.getRecordTime()));
 				pst.addBatch();
 				// log.info("AddBatch: " + oneRecord.toString());
 			}

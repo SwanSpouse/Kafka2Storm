@@ -4,7 +4,6 @@ import com.order.constant.Constant;
 import com.order.db.JDBCUtil;
 import com.order.util.LogUtil;
 import com.order.util.StormConf;
-import com.order.util.TimeParaser;
 import org.apache.log4j.Logger;
 
 import java.sql.*;
