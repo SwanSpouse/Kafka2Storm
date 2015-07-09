@@ -69,9 +69,6 @@ if (countMsg % 5000 == 0 ) {
                         recordTime, sessionId, pageType, msisdn,
                         channelCode, bookId, chapterId));
             }
-            collector.emit(StreamId.BROWSEDATA.name(), new Values(
-                    recordTime, sessionId, pageType, msisdn,
-                    channelCode, bookId, chapterId));
         } else {
 countMsg += 1;
             log.info("Error data: " + line);
