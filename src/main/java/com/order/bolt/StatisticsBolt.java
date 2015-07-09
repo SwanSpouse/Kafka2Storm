@@ -195,7 +195,7 @@ public class StatisticsBolt extends BaseBasicBolt {
             log.info("~~~~检查规则4所需时间 " + (System.currentTimeMillis() - systemTime));
             systemTime = System.currentTimeMillis();
         }
-        currentSessionInfo.checkRule5(bookId, new EmitDatas(collector));
+        currentSessionInfo.checkRule5(channelCode, new EmitDatas(collector));
         if(isPrint()) {
             log.info("~~~~检查规则5所需时间 " + (System.currentTimeMillis() - systemTime));
             systemTime = System.currentTimeMillis();

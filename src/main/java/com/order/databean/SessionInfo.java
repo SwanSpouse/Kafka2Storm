@@ -45,7 +45,7 @@ public class SessionInfo implements Serializable{
     private CachedList<String> bookReadPv = new CachedList<String>(Constant.SIXTYFIVE_MINUTES);
     //图书购买pv,
     private BookOrderList bookOrderPv = new BookOrderList();
-    //各个渠道下的日购买费用 Pair值为用户msisdn 和 orderType=1的 信息费。
+    //各个渠道下的日购买费用 Pair值为用户 channelCode 和 信息费。
     private CachedList<Pair<String, Double>> channelOrderpv = new CachedList<Pair<String, Double>>(Constant.ONE_DAY);
     //用户营销Id对应的扣费二级渠道。
     private CachedList<String> orderChannelCodeByDay = new CachedList<String>(Constant.ONE_DAY);
@@ -98,7 +98,7 @@ public class SessionInfo implements Serializable{
 
         //统计orderType == 1情况下的用户日渠道信息费。
         if (orderType == 1) {
-            Pair<String, Double> pair = new Pair<String, Double>(msisdnId, realInfoFee);
+            Pair<String, Double> pair = new Pair<String, Double>(channelId, realInfoFee);
             if (channelOrderpv.contains(pair)) {
                 Pair<String, Double> currentPair = channelOrderpv.get(pair);
                 currentPair.setValue(currentPair.getValue() + realInfoFee);
@@ -152,7 +152,7 @@ public class SessionInfo implements Serializable{
         }
         //统计orderType == 1情况下的用户日渠道信息费。
         if (orderType == 1) {
-            Pair<String, Double> pair = new Pair<String, Double>(msisdnId, realInfoFee);
+            Pair<String, Double> pair = new Pair<String, Double>(channelId, realInfoFee);
             if (channelOrderpv.contains(pair)) {
                 Pair<String, Double> currentPair = channelOrderpv.get(pair);
                 currentPair.setValue(currentPair.getValue() + realInfoFee);
@@ -234,11 +234,11 @@ public class SessionInfo implements Serializable{
      *
      * @param callback
      */
-    public void checkRule5(String msisdnId, final RulesCallback callback) {
+    public void checkRule5(String channelId, final RulesCallback callback) {
         if (orderType != 1) {
             return;
         }
-        Pair<String, Double> userChannelInfoFee = new Pair<String, Double>(msisdnId, null);
+        Pair<String, Double> userChannelInfoFee = new Pair<String, Double>(channelId, null);
         if (channelOrderpv.contains(userChannelInfoFee)) {
             Pair<String, Integer> currentUserChannelInFee = channelOrderpv.get(userChannelInfoFee);
             if (currentUserChannelInFee.getValue() > 10) {
