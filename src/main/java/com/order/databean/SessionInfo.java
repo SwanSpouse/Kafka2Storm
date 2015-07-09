@@ -75,7 +75,6 @@ public class SessionInfo implements Serializable{
         }
         this.sessionId = sessionId;
         this.msisdnId = msisdnId;
-
         this.orderType = orderType;
         this.realInfoFee = realInfoFee;
         this.channelId = channelId;
@@ -123,7 +122,7 @@ public class SessionInfo implements Serializable{
     }
 
     //对已存在的SessionInfo进行更新。
-    public void updateSessionInfo(String bookReadId, String bookOrderId, String bookChapterOrderId,
+    public void updateSessionInfo(String sessionId, String bookReadId, String bookOrderId, String bookChapterOrderId,
                                   Long currentTime, int orderType, Double realInfoFee,
                                   String channelId, String productId, String provinceId) {
         if (currentTime != null) {
@@ -141,6 +140,7 @@ public class SessionInfo implements Serializable{
             bookOrderPv.put(bookOrderId, orderType, lastUpdateTime);
         }
 
+        this.sessionId = sessionId;
         this.bookId = bookOrderId;
         this.provinceId = provinceId;
         this.orderType = orderType;

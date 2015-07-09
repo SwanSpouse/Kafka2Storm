@@ -125,7 +125,7 @@ public class StatisticsBolt extends BaseBasicBolt {
         Pair<String, SessionInfo> sessionPair = new Pair<String, SessionInfo>(msisdn, null);
         if (sessionInfos.contains(sessionPair)) {
             SessionInfo currentSessionInfo = (SessionInfo) sessionInfos.get(sessionPair).getValue();
-            currentSessionInfo.updateSessionInfo(bookId, null, null, recordTime, -1, 0.0, channelCode, null, "");
+            currentSessionInfo.updateSessionInfo(sessionId, bookId, null, null, recordTime, -1, 0.0, channelCode, null, "");
             sessionInfos.put(new Pair<String, SessionInfo>(msisdn, currentSessionInfo));
         } else {
             SessionInfo currentSessionInfo = new SessionInfo(sessionId, msisdn, bookId, null, null, recordTime, -1, 0, channelCode, null, "");
@@ -172,7 +172,7 @@ public class StatisticsBolt extends BaseBasicBolt {
         SessionInfo currentSessionInfo;
         if (sessionInfos.contains(sessionInfoPair)) {
             currentSessionInfo = (SessionInfo) sessionInfos.get(sessionInfoPair).getValue();
-            currentSessionInfo.updateSessionInfo(null, bookId, chapterId, recordTime, orderType,
+            currentSessionInfo.updateSessionInfo(sessionId, null, bookId, chapterId, recordTime, orderType,
                     realInfoFee, channelCode, productId, provinceId);
             sessionInfos.put(new Pair<String, SessionInfo>(msisdn, currentSessionInfo));
         } else {
