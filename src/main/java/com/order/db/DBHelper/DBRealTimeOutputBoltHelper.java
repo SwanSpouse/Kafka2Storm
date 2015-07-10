@@ -101,20 +101,20 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
 
         // 获取总费用旧值
         double oldTotalFee = 0;
-        if (this.totalFee.containsKey(totalFeeKey)) {
-            oldTotalFee = this.totalFee.get(totalFeeKey);
+        if (totalFee.containsKey(totalFeeKey)) {
+            oldTotalFee = totalFee.get(totalFeeKey);
         } else {
             if (totalFeeInDB.containsKey(totalFeeKey)) {
                 oldTotalFee = totalFeeInDB.get(totalFeeKey);
             }
-            this.totalFee.put(totalFeeKey, oldTotalFee);
+            totalFee.put(totalFeeKey, oldTotalFee);
         }
 
         // 统计总费用
         double curTotalFee = 0;
         if (ruleId == 0) {
             curTotalFee = oldTotalFee + realInfoFee;
-            this.totalFee.put(totalFeeKey, curTotalFee);
+            totalFee.put(totalFeeKey, curTotalFee);
             //log.info(this.toString());
             return;
         }

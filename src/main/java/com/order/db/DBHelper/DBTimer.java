@@ -48,6 +48,7 @@ public class DBTimer extends Thread {
                 }
                 //if (TimeParaser.isTimeToClearData(System.currentTimeMillis())) {
                 if (System.currentTimeMillis() >= (lastClearDayDataTime+dayMillis)) {
+                	log.info("====DBTimer begin clear day data====");
                 	this.updateDB();
                     this.updateTotalDB();
                     helper.totalFee.clear();

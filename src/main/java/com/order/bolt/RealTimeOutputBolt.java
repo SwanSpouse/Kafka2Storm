@@ -1,7 +1,10 @@
 package com.order.bolt;
 
+import java.util.Map;
+
 import org.apache.log4j.Logger;
 
+import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.BasicOutputCollector;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseBasicBolt;
@@ -44,6 +47,13 @@ public class RealTimeOutputBolt extends BaseBasicBolt {
     private static Logger log = Logger.getLogger(RealTimeOutputBolt.class);
     private long recvnum = 0, dropnum = 0, sendnum = 0;
 
+    @Override
+    public void prepare(Map stormConf, TopologyContext context) {
+        if (DBHelper == null) {
+            DBHelper = new DBRealTimeOutputBoltHelper();
+        }
+    }
+    
     @Override
     public void execute(Tuple input, BasicOutputCollector collector) {
         if (DBHelper == null) {
