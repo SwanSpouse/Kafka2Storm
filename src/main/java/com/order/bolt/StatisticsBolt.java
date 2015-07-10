@@ -42,9 +42,6 @@ public class StatisticsBolt extends BaseBasicBolt {
             new RealTimeCacheList<Pair<String, SessionInfo>>(Constant.ONE_DAY);
     private SessionInfoCleaner sessionInfoCleaner = null;
 
-    private long countPrint =0;
-    private long systemTime ;
-
     //负责每天导入维表的数据
     private transient Thread loader = null;
 
@@ -91,13 +88,7 @@ public class StatisticsBolt extends BaseBasicBolt {
                 e.printStackTrace();
             }
         } else if (input.getSourceStreamId().equals(StreamId.ORDERDATA.name())) {
-            count("recv");
-            countPrint += 1;
-        	if(isPrint()) {
-                systemTime = System.currentTimeMillis();
-                log.info("~~~~订购数据到达StatisticBolt的时间 " + systemTime);
-            }
-     
+            count("recv");     
             // 订购话单
             try {
                 this.constructInfoFromOrderData(input, collector);
@@ -155,18 +146,11 @@ public class StatisticsBolt extends BaseBasicBolt {
         if (sessionId == null || sessionId.trim().equals("")) {
             sessionId = msisdn;
         }
-        if(isPrint()) {
-            log.info("~~~~获取各个字段时间 " + (System.currentTimeMillis() - systemTime));
-            systemTime = System.currentTimeMillis();
-        }
+
         count("send");
         //所有订单数据先统一发送正常数据流。用作数据统计。
         collector.emit(StreamId.DATASTREAM.name(), new Values(msisdn, sessionId, recordTime,
                 realInfoFee, channelCode, productId, provinceId, orderType, bookId));
-        if(isPrint()) {
-            log.info("~~~~发送正常数据流所需时间 " + (System.currentTimeMillis() - systemTime));
-            systemTime = System.currentTimeMillis();
-        }
         //更新订购话单的SessionInfos信息
         Pair<String, SessionInfo> sessionInfoPair = new Pair<String, SessionInfo>(msisdn, null);
         SessionInfo currentSessionInfo;
@@ -180,48 +164,15 @@ public class StatisticsBolt extends BaseBasicBolt {
                     chapterId, recordTime, orderType, realInfoFee, channelCode, productId, provinceId);
             sessionInfos.put(new Pair<String, SessionInfo>(msisdn, currentSessionInfo));
         }
-        if(isPrint()) {
-            log.info("~~~~更新sessionInfos时间 " + (System.currentTimeMillis() - systemTime));
-            systemTime = System.currentTimeMillis();
-        }
+        
         //检测相应的各个规则。
         currentSessionInfo.checkRule123(bookId, new EmitDatas(collector));
-        if(isPrint()) {
-            log.info("~~~~检查规则123所需时间 " + (System.currentTimeMillis() - systemTime));
-            systemTime = System.currentTimeMillis();
-        }
         currentSessionInfo.checkRule4(new EmitDatas(collector));
-        if(isPrint()) {
-            log.info("~~~~检查规则4所需时间 " + (System.currentTimeMillis() - systemTime));
-            systemTime = System.currentTimeMillis();
-        }
         currentSessionInfo.checkRule5(channelCode, new EmitDatas(collector));
-        if(isPrint()) {
-            log.info("~~~~检查规则5所需时间 " + (System.currentTimeMillis() - systemTime));
-            systemTime = System.currentTimeMillis();
-        }
         currentSessionInfo.checkRule6(new EmitDatas(collector));
-        if(isPrint()) {
-            log.info("~~~~检查规则6所需时间 " + (System.currentTimeMillis() - systemTime));
-            systemTime = System.currentTimeMillis();
-        }
         currentSessionInfo.checkRule7(new EmitDatas(collector));
-        if(isPrint()) {
-            log.info("~~~~检查规则7所需时间 " + (System.currentTimeMillis() - systemTime));
-            systemTime = System.currentTimeMillis();
-        }
-
         currentSessionInfo.checkRule8(bookId, new EmitDatas(collector));
-        if(isPrint()) {
-            log.info("~~~~检查规则8所需时间 " + (System.currentTimeMillis() - systemTime));
-            systemTime = System.currentTimeMillis();
-        }
-
         currentSessionInfo.checkRule12(platform, new EmitDatas(collector));
-        if(isPrint()) {
-            log.info("~~~~检查规则12所需时间 " + (System.currentTimeMillis() - systemTime));
-            systemTime = System.currentTimeMillis();
-        }
 
         //更新订购话单UserInfos信息
         Pair<String, UserInfo> userInfoPair = new Pair<String, UserInfo>(msisdn, null);
@@ -234,10 +185,6 @@ public class StatisticsBolt extends BaseBasicBolt {
             currentUserInfo = new UserInfo(msisdn, recordTime, sessionId, wapIp, userAgent);
             userInfos.put(new Pair<String, UserInfo>(msisdn, currentUserInfo));
         }
-        if(isPrint()) {
-            log.info("~~~~更新userInfos时间 " + (System.currentTimeMillis() - systemTime));
-            systemTime = System.currentTimeMillis();
-        }
 
         boolean[] isObeyRules = currentUserInfo.isObeyRules();
         if (!isObeyRules[UserInfo.SESSION_CHECK_BIT]) {
@@ -245,20 +192,11 @@ public class StatisticsBolt extends BaseBasicBolt {
                     new Values(msisdn, sessionId, recordTime, realInfoFee, channelCode, productId,
                             provinceId, orderType, bookId, Rules.NINE.name()));
         }
-        if(isPrint()) {
-            log.info("~~~~检查规则9所需时间 " + (System.currentTimeMillis() - systemTime));
-            systemTime = System.currentTimeMillis();
-        }
-
+        
         if (!isObeyRules[UserInfo.IP_CHECK_BIT]) {
             collector.emit(StreamId.ABNORMALDATASTREAM.name(),
                     new Values(msisdn, sessionId, recordTime, realInfoFee, channelCode, productId,
                             provinceId, orderType, bookId, Rules.TEN.name()));
-        }
-
-        if(isPrint()) {
-            log.info("~~~~检查规则10所需时间 " + (System.currentTimeMillis() - systemTime));
-            systemTime = System.currentTimeMillis();
         }
 
         if (!isObeyRules[UserInfo.UA_CHECK_BIT]) {
@@ -266,20 +204,6 @@ public class StatisticsBolt extends BaseBasicBolt {
                     new Values(msisdn, sessionId, recordTime, realInfoFee, channelCode, productId,
                             provinceId, orderType, bookId, Rules.ELEVEN.name()));
         }
-        if(isPrint()) {
-            log.info("~~~~检查规则11所需时间 " + (System.currentTimeMillis() - systemTime));
-            systemTime = System.currentTimeMillis();
-        }
-        if (countPrint >= Long.MAX_VALUE) {
-            countPrint = 0;
-        }
-    }
-
-    private boolean isPrint() {
-        if (countPrint % 10000 == 0) {
-            return true;
-        }
-        return false;
     }
 
     public void count(String colume) {
