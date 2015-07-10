@@ -240,7 +240,7 @@ public class SessionInfo implements Serializable{
         }
         Pair<String, Double> userChannelInfoFee = new Pair<String, Double>(channelId, null);
         if (channelOrderpv.contains(userChannelInfoFee)) {
-            Pair<String, Integer> currentUserChannelInFee = channelOrderpv.get(userChannelInfoFee);
+            Pair<String, Double> currentUserChannelInFee = channelOrderpv.get(userChannelInfoFee);
             if (currentUserChannelInFee.getValue() > 10) {
                 callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
                         channelId, productId, Rules.FIVE.name(), provinceId, orderType, bookId);
