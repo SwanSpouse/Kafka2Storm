@@ -108,7 +108,7 @@ public class SessionInfo implements Serializable{
             }
         }
         //将用户channelCode对应的二级渠道进行保存
-        if (DBStatisticBoltHelper.parameterId2SecChannelId == null) {
+        if (DBStatisticBoltHelper.parameterId2SecChannelId == null|| DBStatisticBoltHelper.parameterId2SecChannelId.isEmpty()) {
             try {
                 DBStatisticBoltHelper.getData();
             } catch (SQLException e) {
