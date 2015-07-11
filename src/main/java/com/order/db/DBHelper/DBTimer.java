@@ -22,39 +22,56 @@ public class DBTimer extends Thread {
     private Connection conn = null;
     private DBRealTimeOutputBoltHelper helper = null;
     private long lastClearDayDataTime = 0;
+    private long lastClearMinDataTime = 0;
     private final long dayMillis = 24*60*60*1000;
+    private final long minMillis = 15 * 60 * 1000;
+    //private static transient Object LOCK = null;
 
     public DBTimer(DBRealTimeOutputBoltHelper helper) {
         this.helper = helper;
+    	long nowtime = System.currentTimeMillis();
+    	lastClearDayDataTime = nowtime - nowtime % dayMillis;
+    	lastClearMinDataTime = nowtime;
     }
 
+    // 先不采用在excute中清理的方式
+	public void checkClear() {
+		long nowTime = System.currentTimeMillis();
+		if (nowTime < lastClearMinDataTime + minMillis) {
+			return;
+		}
+		lastClearMinDataTime = nowTime;
+		
+		try {
+			log.info("===将RealTime缓存中的数据更新到数据库中===");
+			// 将map中增量异常费用和增量总费用数据更新到数据库中
+			this.updateAllTotalFeeToDB();
+			this.updateAllAbnormalFeeToDB();
+			helper.totalFee.clear();
+			helper.abnormalFee.clear();
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+    
     @Override
     public void run() {
         super.run();
         try {
-        	int num = 0;
         	Thread.sleep((new Random()).nextInt(Constant.ONE_MINUTE * 5 * 1000));  //test
-        	long nowtime = System.currentTimeMillis();
-        	lastClearDayDataTime = nowtime - nowtime%dayMillis;
             while (true) {
                 Thread.sleep(Constant.ONE_MINUTE * 5 * 1000L);  // test
                 log.info("===将RealTime缓存中的数据更新到数据库中===");
-                //每分钟将map中异常费用数据更新到数据库中。
-                this.updateDB();
-                //每N分钟将总费用更新到库中
-                if (++num >= 3) {
-                	this.updateTotalDB();
-                	num = 0;
-                }
-                //if (TimeParaser.isTimeToClearData(System.currentTimeMillis())) {
-                if (System.currentTimeMillis() >= (lastClearDayDataTime+dayMillis)) {
-                	log.info("====DBTimer begin clear day data====");
-                	this.updateDB();
-                    this.updateTotalDB();
-                    helper.totalFee.clear();
-                    helper.totalFeeInDB.clear();
-                    lastClearDayDataTime += dayMillis;
-                }
+                //将map中增量异常费用和增量总费用数据更新到数据库中
+        		if (helper.getLOCK() == null)
+        			helper.setLOCK(new Object());
+        		synchronized (helper.getLOCK()) {
+	    			this.updateAllTotalFeeToDB();
+	    			this.updateAllAbnormalFeeToDB();
+	    			helper.totalFee.clear();
+	    			helper.abnormalFee.clear();
+	        	}
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -63,9 +80,9 @@ public class DBTimer extends Thread {
 		}
     }
  
-    public void updateDB() throws SQLException {
+    public void updateAllAbnormalFeeToDB() throws SQLException {
     	// 将异常订购费用更新到库里，并清除内存
-        log.info("====DBTimer开始更新异常费用===");
+        log.info("====DBTimer开始更新增量异常费用===");
         int insertCnt = 0;
         int updateCnt = 0;
         for (String key : helper.abnormalFee.keySet()) {
@@ -83,15 +100,19 @@ public class DBTimer extends Thread {
             String totalFeeKey = date + "|" + provinceId + "|" + channelCode + "|"
                     + contentID + "|" + contentType;
             if (!helper.totalFee.containsKey(totalFeeKey)) {
-                LogUtil.printLog("费用列表异常：" + helper.totalFee + " : "
-                        + helper.abnormalFee + " : " + totalFeeKey +
-                        " " + Arrays.asList(keys));
                 continue;
             }
             double fee = helper.totalFee.get(totalFeeKey);
-            if (fee == 0) continue;  // 总费用为0,则无需入库
-            String abnormalFeeKey = totalFeeKey + "|" + ruleID;
-            double abnFee = helper.abnormalFee.get(abnormalFeeKey);
+            // 总费用等于0, 则忽略此异常费用
+            if (fee < 1) continue;
+
+            //String abnormalFeeKey = totalFeeKey + "|" + ruleID;
+            double abnFee = helper.abnormalFee.get(key);
+            // 增量总费用小于增量异常费用,则赋值
+            if (fee < abnFee) {
+            	abnFee = fee;
+            }
+            
             try {
                 if (checkExists(date, provinceId, contentID, contentType, channelCode, ruleID)) {
                    this.updateAbnormalFee(date, provinceId, contentID, contentType, channelCode, ruleID, abnFee, fee);
@@ -109,8 +130,8 @@ public class DBTimer extends Thread {
         helper.abnormalFee.clear();
     }
     
-    public void updateTotalDB() throws SQLException {
-        log.info("====updateTotalDB开始更新总费用===");
+    public void updateAllTotalFeeToDB() throws SQLException {
+        log.info("====updateTotalDB开始更新增量总费用===");
         int insertCnt = 0;
         int updateCnt = 0;
         // 将总费用更新到库中（ruleid为0）,不清空内存
@@ -127,16 +148,36 @@ public class DBTimer extends Thread {
             String contentType = keys[4];
             String ruleID = "0";
             double fee = helper.totalFee.get(key);
-            if (fee == 0) continue;  //总费用为0不入库
-            //log.info("Insert Key : " + key);
-            if (checkExists(date, provinceId, contentID, contentType, channelCode, ruleID)) {
-                //this.updateAbnormalFee(date, provinceId, contentID, contentType, channelCode, ruleID, 0, fee);
-                this.updateTotalFee(date, provinceId, contentID, contentType, channelCode, fee);
-                updateCnt++;
-            } else {
-                this.insertAbnormalFee(date, provinceId, contentID, contentType, channelCode, ruleID, 0, fee);
+            //总费用为0不入库
+            if (fee < 1) {
+            	continue;
+            }
+            
+            // 如果总费用记录不存在，则首先插入
+            if (!checkExists(date, provinceId, contentID, contentType, channelCode, ruleID)) {
+                if (!this.insertAbnormalFee(date, provinceId, contentID, contentType, channelCode, ruleID, 0, 0)) {
+                	helper.totalFee.put(key, (double) 0);
+                	continue;
+                }
                 insertCnt++;
             }
+            // 插入后更新所有该Key的总费用记录和异常费用记录中的总费用
+            if(!this.updateTotalFee(date, provinceId, contentID, contentType, channelCode, fee)) {
+            	helper.totalFee.put(key, (double) 0);
+            }
+            updateCnt++;
+            
+            // 更新完毕后，将增量总费用置零
+            //helper.totalFee.put(key, (double) 0);
+            
+            // 之前逻辑注释
+            //if (checkExists(date, provinceId, contentID, contentType, channelCode, ruleID)) {
+            //    this.updateTotalFee(date, provinceId, contentID, contentType, channelCode, fee);
+            //    updateCnt++;
+            //} else {
+            //    this.insertAbnormalFee(date, provinceId, contentID, contentType, channelCode, ruleID, 0, fee);
+            //    insertCnt++;
+            //}
         }
         log.info("===updateTotalDB更新" + String.valueOf(helper.totalFee.size()) + "条总费用统计信息到数据库中===");
         log.info("===updateTotalDB更新异常统计信息,总共" + String.valueOf(helper.totalFee.size())
@@ -186,7 +227,7 @@ public class DBTimer extends Thread {
         return false;
     }
 
-    private void insertAbnormalFee(String recordDay,String provinceId, String contentId, String contentType,
+    private boolean insertAbnormalFee(String recordDay,String provinceId, String contentId, String contentType,
                             String channelCode, String ruleId, double abnormalFee, double totalFee) throws SQLException {
         if (DBStatisticBoltHelper.parameterId2ChannelIds == null || DBStatisticBoltHelper.parameterId2ChannelIds.isEmpty()) {
             try {
@@ -240,6 +281,7 @@ public class DBTimer extends Thread {
             prepStmt.setInt(12, Integer.parseInt(ruleId));
             prepStmt.execute();
             prepStmt.execute("commit");
+            return true;
             //log.info("数据插入成功:" + insertDataSql);
         } catch (SQLException e) {
             log.error("插入sql错误:" + insertDataSql);
@@ -253,9 +295,10 @@ public class DBTimer extends Thread {
                 conn = null;
             }
         }
+        return false;
     }
 
-    private void updateAbnormalFee(String date, String provinceId, String contentID, String contentType,
+    private boolean updateAbnormalFee(String date, String provinceId, String contentID, String contentType,
                             String channelCode, String ruleId, double abnormalFee, double totalFee) throws SQLException {
         PreparedStatement prepStmt = null;
         String updateSql = null;
@@ -263,23 +306,22 @@ public class DBTimer extends Thread {
             conn = JDBCUtil.connUtil.getConnection();
             conn.setAutoCommit(false);
             updateSql = " UPDATE " + StormConf.realTimeOutputTable +
-                    " SET ODR_ABN_FEE=ODR_ABN_FEE+?, ODR_FEE=?, " +
-                    " ABN_RAT=(ODR_ABN_FEE+?)/?" +
+                    " SET ODR_ABN_FEE=ODR_ABN_FEE+?, " +
+                    " ABN_RAT=(ODR_ABN_FEE+?)/ODR_FEE" +
                     " WHERE RECORD_DAY=? AND PROVINCE_ID=? AND CONTENT_ID=?" +
                     " AND SALE_PARM=? AND CONTENT_TYPE=? AND RULE_ID=? ";
             prepStmt = conn.prepareStatement(updateSql);
             prepStmt.setDouble(1, abnormalFee);
-            prepStmt.setDouble(2, totalFee);
-            prepStmt.setDouble(3, abnormalFee);
-            prepStmt.setDouble(4, totalFee);
-            prepStmt.setString(5, date);
-            prepStmt.setString(6, provinceId);
-            prepStmt.setString(7, contentID);
-            prepStmt.setString(8, channelCode);
-            prepStmt.setString(9, contentType);
-            prepStmt.setString(10, ruleId);
+            prepStmt.setDouble(2, abnormalFee);
+            prepStmt.setString(3, date);
+            prepStmt.setString(4, provinceId);
+            prepStmt.setString(5, contentID);
+            prepStmt.setString(6, channelCode);
+            prepStmt.setString(7, contentType);
+            prepStmt.setString(8, ruleId);
             prepStmt.executeUpdate();
             prepStmt.execute("commit");
+            return true;
             //log.info("DBTimer 更新数据成功" + updateSql);
         } catch (SQLException e) {
             log.error("更新sql错误" + updateSql);
@@ -293,9 +335,10 @@ public class DBTimer extends Thread {
                 conn = null;
             }
         }
+        return false;
     }
     
-    private void updateTotalFee(String date, String provinceId, String contentID, String contentType,
+    private boolean updateTotalFee(String date, String provinceId, String contentID, String contentType,
                             String channelCode, double totalFee) throws SQLException {
         PreparedStatement prepStmt = null;
         String updateSql = null;
@@ -303,8 +346,8 @@ public class DBTimer extends Thread {
             conn = JDBCUtil.connUtil.getConnection();
             conn.setAutoCommit(false);
             updateSql = " UPDATE " + StormConf.realTimeOutputTable +
-                    " SET ODR_FEE=?, " +
-                    " ABN_RAT=ODR_ABN_FEE/?" +
+                    " SET ODR_FEE=ODR_FEE+?, " +
+                    " ABN_RAT=ODR_ABN_FEE/(ODR_FEE+?)" +
                     " WHERE RECORD_DAY=? AND PROVINCE_ID=? AND CONTENT_ID=?" +
                     " AND SALE_PARM=? AND CONTENT_TYPE=? ";
             prepStmt = conn.prepareStatement(updateSql);
@@ -317,6 +360,7 @@ public class DBTimer extends Thread {
             prepStmt.setString(7, contentType);
             prepStmt.executeUpdate();
             prepStmt.execute("commit");
+            return true;
             //log.info("DBTimer 更新数据成功" + updateSql);
         } catch (SQLException e) {
             log.error("更新sql错误" + updateSql);
@@ -330,8 +374,16 @@ public class DBTimer extends Thread {
                 conn = null;
             }
         }
+        return false;
     }
     
+	public void setAllTotalFeeToZero() throws SQLException {
+		log.info("====开始设定所有总费用为0===");
+		for (String key : helper.totalFee.keySet()) {
+			helper.totalFee.put(key, (double) 0);
+		}
+	}
+
     public String toString() {
         String result = "\n size of totalFee is " + String.valueOf(helper.totalFee.size()) + "\n";
         // 遍历
