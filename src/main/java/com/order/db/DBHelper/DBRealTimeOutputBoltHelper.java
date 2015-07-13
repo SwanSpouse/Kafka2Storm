@@ -30,8 +30,19 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
     public ConcurrentHashMap<String, Double> totalFee = null;
     // 每次重启时，先从数据库中查询所有总费用到内存中。此bolt中需要哪些在将其复制到totalfee中
     public ConcurrentHashMap<String, Double> totalFeeInDB = null;
+    // 定时清除
+    //private DBTimer storageData2DBTimer = null;
+    private transient Thread storageData2DBTimer = null;
+    private transient Object LOCK = null;
+    public Object getLOCK() {
+		return LOCK;
+	}
+	public void setLOCK(Object lOCK) {
+		LOCK = lOCK;
+	}
 
-    private Connection getConn() throws SQLException {
+
+	private Connection getConn() throws SQLException {
         if (conn == null) {
             log.info("Connection is null!");
             conn = JDBCUtil.connUtil.getConnection();
@@ -40,18 +51,21 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
         return conn;
     }
 
-    private transient Thread storageData2DBTimer = null;
 
-    public void cleanup() {
-    	try {
-			((DBTimer) storageData2DBTimer).updateDB();
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-    	try {
-			((DBTimer) storageData2DBTimer).updateTotalDB();
-		} catch (SQLException e) {
-			e.printStackTrace();
+	public void cleanup() {
+		if (LOCK == null)
+			LOCK = new Object();
+		synchronized (LOCK) {
+			try {
+				((DBTimer) storageData2DBTimer).updateAllTotalFeeToDB();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+			try {
+				((DBTimer) storageData2DBTimer).updateAllAbnormalFeeToDB();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
@@ -61,14 +75,14 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
             storageData2DBTimer.setDaemon(true);
             storageData2DBTimer.start();
         }
-        totalFee = new ConcurrentHashMap<String, Double>();
-        abnormalFee = new ConcurrentHashMap<String, Double>();
-        totalFeeInDB = new ConcurrentHashMap<String, Double>();
-        try {
-            getAllTotalFeeFromDB();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+		if (LOCK == null)
+			LOCK = new Object();
+		synchronized (LOCK) {
+			totalFee = new ConcurrentHashMap<String, Double>();
+			abnormalFee = new ConcurrentHashMap<String, Double>();
+			totalFeeInDB = new ConcurrentHashMap<String, Double>();
+		}
+
         try {
             conn = this.getConn();
         } catch (SQLException e) {
@@ -86,51 +100,60 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
      */
     public void updateData(String msisdn, Long time, String channelCode, String provinceId,
                            String rules, double realInfoFee, String contentId, String contentType) {
-        if (storageData2DBTimer == null) {
-            storageData2DBTimer = new DBTimer(this);
-            storageData2DBTimer.setDaemon(true);
-            storageData2DBTimer.start();
-        }
-        String currentTime = TimeParaser.formatTimeInDay(time);
+		if (LOCK == null)
+			LOCK = new Object();
+		synchronized (LOCK) {
+			if (storageData2DBTimer == null) {
+				storageData2DBTimer = new DBTimer(this);
+				storageData2DBTimer.setDaemon(true);
+				storageData2DBTimer.start();
+			}
+			String currentTime = TimeParaser.formatTimeInDay(time);
 
-        // 总费用key值
-        String totalFeeKey = currentTime + "|" + provinceId + "|" + channelCode + "|"
-                + contentId + "|" + contentType;
-        // log.info("====recived Msg : " + totalFeeKey + "  rule:" + rules); //test
-        int ruleId = getRuleNumFromString(rules);
+			// 总费用key值
+			String totalFeeKey = currentTime + "|" + provinceId + "|"
+					+ channelCode + "|" + contentId + "|" + contentType;
+			int ruleId = getRuleNumFromString(rules);
 
-        // 获取总费用旧值
-        double oldTotalFee = 0;
-        if (totalFee.containsKey(totalFeeKey)) {
-            oldTotalFee = totalFee.get(totalFeeKey);
-        } else {
-            if (totalFeeInDB.containsKey(totalFeeKey)) {
-                oldTotalFee = totalFeeInDB.get(totalFeeKey);
-            }
-            totalFee.put(totalFeeKey, oldTotalFee);
-        }
+			// 获取总费用旧值
+			double oldTotalFee = 0;
+			if (totalFee.containsKey(totalFeeKey)) {
+				oldTotalFee = totalFee.get(totalFeeKey);
+			} else {
+				if (totalFeeInDB.containsKey(totalFeeKey)) {
+					oldTotalFee = totalFeeInDB.get(totalFeeKey);
+				}
+				totalFee.put(totalFeeKey, oldTotalFee);
+			}
 
-        // 统计总费用
-        double curTotalFee = 0;
-        if (ruleId == 0) {
-            curTotalFee = oldTotalFee + realInfoFee;
-            totalFee.put(totalFeeKey, curTotalFee);
-            //log.info(this.toString());
-            return;
-        }
+			// 统计总费用
+			if (ruleId == 0) {
+				double curTotalFee = 0;
+				curTotalFee = oldTotalFee + realInfoFee;
+				totalFee.put(totalFeeKey, curTotalFee);
+				// log.info(this.toString());
+				return;
+			}
 
-        // 统计异常费用
-        double currentAbnormalFee;
-        String abnormalFeeKey = totalFeeKey + "|" + String.valueOf(ruleId);
-        if (abnormalFee.containsKey(abnormalFeeKey)) {
-            currentAbnormalFee = abnormalFee.get(abnormalFeeKey) + realInfoFee;
-            this.abnormalFee.put(abnormalFeeKey, currentAbnormalFee);
-        } else {
-        	currentAbnormalFee = realInfoFee;
-            this.abnormalFee.put(abnormalFeeKey, currentAbnormalFee);
-        }
-        
-        return;
+			// 统计异常费用
+			double currentAbnormalFee;
+			String abnormalFeeKey = totalFeeKey + "|" + String.valueOf(ruleId);
+			if (abnormalFee.containsKey(abnormalFeeKey)) {
+				currentAbnormalFee = abnormalFee.get(abnormalFeeKey)
+						+ realInfoFee;
+				abnormalFee.put(abnormalFeeKey, currentAbnormalFee);
+			} else {
+				currentAbnormalFee = realInfoFee;
+				abnormalFee.put(abnormalFeeKey, currentAbnormalFee);
+			}
+
+			// 为防止异常费用大于总费用做异常处理，当异常费用大于总费用时，讲总费用相应增大
+			// if (currentAbnormalFee > oldTotalFee){
+			// totalFee.put(totalFeeKey, currentAbnormalFee);
+			// }
+
+			return;
+		}
     }
 
     private double getTotalFeeFromDB(String currentTime, String provinceId, String channelCode,
@@ -277,4 +300,8 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
 
         return result;
     }
+
+	public void checkClear() {
+		((DBTimer) storageData2DBTimer).checkClear();		
+	}
 }

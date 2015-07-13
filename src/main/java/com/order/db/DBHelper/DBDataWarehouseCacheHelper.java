@@ -50,6 +50,7 @@ public class DBDataWarehouseCacheHelper implements Serializable {
 	private transient Connection conn = null;
 
 	private transient Thread cleaner = null; // 清理线程
+    private transient Object LOCK = null;
 
 	private final int clearTimer = 1 * 5 * 60; // 每5分钟秒清理一次
 	private final long historyTimer = 1 * 5 * 60; // 每次清理5分钟前的所有订购，并入库
@@ -75,14 +76,18 @@ public class DBDataWarehouseCacheHelper implements Serializable {
 			e.printStackTrace();
 		}
 
-		/* 定时清理内存中的订购记录到数据库中 */
-		orderMap = new ConcurrentHashMap<String, ArrayList<OrderRecord>>();
+		if (LOCK == null)
+			LOCK = new Object();
+		synchronized (LOCK) {
+			/* 定时清理内存中的订购记录到数据库中 */
+			orderMap = new ConcurrentHashMap<String, ArrayList<OrderRecord>>();
+		}
 	}
 
-    /* 插入新的订购记录 */
-    public int insertData(String msisdn, String sessionId, String channelCode,
-                           Long recordTime, String bookID, String productID, double realInfoFee,
-                           String provinceId, int orderType) {
+	/* 插入新的订购记录 */
+	public int insertData(String msisdn, String sessionId, String channelCode,
+			Long recordTime, String bookID, String productID,
+			double realInfoFee, String provinceId, int orderType) {
 		if (cleaner == null) {
 			cleaner = new Thread(new Runnable() {
 				@Override
@@ -123,31 +128,37 @@ public class DBDataWarehouseCacheHelper implements Serializable {
 			order.getRules().put(i, 1);
 		}
 
-		// 查找如果该订购在内存中，返回0
-		if (orderMap.containsKey(msisdn)) {
-			//由于有完全相同的订购消息，所以不判断原来是否存在该订购，直接存入
-			//Iterator<OrderRecord> itOrder = orderMap.get(msisdn).iterator();
-			//while (itOrder.hasNext()) {
-			//	OrderRecord oneRecord = itOrder.next();
-			//	if (oneRecord.equals(order)) {
-			//		return 0;
-			//	}
-			//}
-			orderMap.get(msisdn).add(order);
-			return 1;
-		} else {
-			ArrayList<OrderRecord> list = new ArrayList<OrderRecord>();
-			list.add(order);
-			orderMap.put(msisdn, list);
-			return 1;
+		// 加锁
+		if (LOCK == null)
+			LOCK = new Object();
+		synchronized (LOCK) {
+			// 查找如果该订购在内存中，返回0
+			if (orderMap.containsKey(msisdn)) {
+				// 由于有完全相同的订购消息，所以不判断原来是否存在该订购，直接存入
+				// Iterator<OrderRecord> itOrder =
+				// orderMap.get(msisdn).iterator();
+				// while (itOrder.hasNext()) {
+				// OrderRecord oneRecord = itOrder.next();
+				// if (oneRecord.equals(order)) {
+				// return 0;
+				// }
+				// }
+				orderMap.get(msisdn).add(order);
+				return 1;
+			} else {
+				ArrayList<OrderRecord> list = new ArrayList<OrderRecord>();
+				list.add(order);
+				orderMap.put(msisdn, list);
+				return 1;
+			}
+			// log.info("insert result: " + this.toString());
 		}
-		// log.info("insert result: " + this.toString());
 	}
 
-    /* 更新订购记录某一个规则的异常状态 */
-    public int updateData(String msisdn, String sessionId, String channelCode,
-                           Long recordTime, String bookID, String productID, double realInfoFee,
-                           String provinceId, int orderType, String rule) {
+	/* 更新订购记录某一个规则的异常状态 */
+	public int updateData(String msisdn, String sessionId, String channelCode,
+			Long recordTime, String bookID, String productID,
+			double realInfoFee, String provinceId, int orderType, String rule) {
 		if (cleaner == null) {
 			cleaner = new Thread(new Runnable() {
 				@Override
@@ -184,94 +195,113 @@ public class DBDataWarehouseCacheHelper implements Serializable {
 		order.setProvinceId(provinceId);
 		order.setOrderType(orderType);
 
-		if (orderMap.containsKey(msisdn)) {
-			Iterator<OrderRecord> itOrder = orderMap.get(msisdn).iterator();
-			while (itOrder.hasNext()) {
-				OrderRecord oneRecord = itOrder.next();
-				if (oneRecord.equals(order)) {
-					int ruleId = getRuleNumFromString(rule);
-					if (oneRecord.getRules().get(ruleId) != 0) {
-						oneRecord.getRules().put(getRuleNumFromString(rule), 0);
-						return 1;
-					} else {
-						return 0;
+		// 加锁
+		if (LOCK == null)
+			LOCK = new Object();
+		synchronized (LOCK) {
+			if (orderMap.containsKey(msisdn)) {
+				Iterator<OrderRecord> itOrder = orderMap.get(msisdn).iterator();
+				while (itOrder.hasNext()) {
+					OrderRecord oneRecord = itOrder.next();
+					if (oneRecord.equals(order)) {
+						int ruleId = getRuleNumFromString(rule);
+						if (oneRecord.getRules().get(ruleId) != 0) {
+							oneRecord.getRules().put(
+									getRuleNumFromString(rule), 0);
+							return 1;
+						} else {
+							return 0;
+						}
 					}
 				}
 			}
+			// log.info("update result: " + this.toString());
+			return -1;
 		}
-		// log.info("update result: " + this.toString());
-		return -1;
 	}
 
 	/* 回溯前一段时间的订购，返回之前判断为正常的订购 */
     public ArrayList<OrderRecord> traceBackOrders(String msisdn, String channelCode, Long traceBackTime, int ruleID) {
 		ArrayList<OrderRecord> relist = new ArrayList<OrderRecord>();
-		if (!orderMap.containsKey(msisdn)) {
+		// 加锁
+		if (LOCK == null)
+			LOCK = new Object();
+		synchronized (LOCK) {
+
+			if (!orderMap.containsKey(msisdn)) {
+				return relist;
+			}
+
+			Iterator<OrderRecord> itOrder = orderMap.get(msisdn).iterator();
+			while (itOrder.hasNext()) {
+				OrderRecord oneRecord = itOrder.next();
+				// 如果channelCode不为空，则需要判断channelCode
+				if (channelCode != null && !channelCode.trim().equals("")
+						&& !oneRecord.getChannelCode().equals(channelCode)) {
+					continue;
+				}
+				// 如果traceBackTime不为空，则需要订购时间大于等于traceBackTime
+				if (traceBackTime != null
+						&& oneRecord.getRecordTime() < traceBackTime) {
+					continue;
+				}
+				// 如果ruleID为1-12，则获取之前为判断之前为正常的订购，并将状态改为异常
+				if (ruleID >= 1 && ruleID <= 12
+						&& oneRecord.getRules().get(ruleID) == 1) {
+					oneRecord.getRules().put(ruleID, 0);
+					relist.add(oneRecord);
+				}
+			}
+			// log.info("trackback result: " + this.toString());
 			return relist;
 		}
-
-		Iterator<OrderRecord> itOrder = orderMap.get(msisdn).iterator();
-		while (itOrder.hasNext()) {
-			OrderRecord oneRecord = itOrder.next();
-			// 如果channelCode不为空，则需要判断channelCode
-			if (channelCode != null && !channelCode.trim().equals("")
-					&& !oneRecord.getChannelCode().equals(channelCode)) {
-				continue;
-			}
-			// 如果traceBackTime不为空，则需要订购时间大于等于traceBackTime
-			if (traceBackTime != null
-					&& oneRecord.getRecordTime() < traceBackTime) {
-				continue;
-			}
-			// 如果ruleID为1-12，则获取之前为判断之前为正常的订购，并将状态改为异常
-			if (ruleID >= 1 && ruleID <= 12
-					&& oneRecord.getRules().get(ruleID) == 1) {
-				oneRecord.getRules().put(ruleID, 0);
-				relist.add(oneRecord);
-			}
-		}
-		// log.info("trackback result: " + this.toString());
-		return relist;
 	}
 
 	public void cleanAndToDB() throws Exception {
-		log.info("====Begin cleanAndToDB ");
-		long currentTime = System.currentTimeMillis();
-		currentTime = currentTime - 1000 * historyTimer;
+		// 加锁
+		if (LOCK == null)
+			LOCK = new Object();
+		synchronized (LOCK) {
+			log.info("====Begin cleanAndToDB ");
+			long currentTime = System.currentTimeMillis();
+			currentTime = currentTime - 1000 * historyTimer;
 
-		log.info("====Begin cleanAndToDB before "
-				+ TimeParaser.formatTimeInSeconds(currentTime));
-		// 要入库的订购记录列表
-		ArrayList<OrderRecord> insertList = new ArrayList<OrderRecord>();
+			log.info("====Begin cleanAndToDB before "
+					+ TimeParaser.formatTimeInSeconds(currentTime));
+			// 要入库的订购记录列表
+			ArrayList<OrderRecord> insertList = new ArrayList<OrderRecord>();
 
-		// 遍历
-		Iterator<Map.Entry<String, ArrayList<OrderRecord>>> itMsisdn = orderMap
-				.entrySet().iterator();
-		while (itMsisdn.hasNext()) {
-			Map.Entry<String, ArrayList<OrderRecord>> entry = itMsisdn.next();
-			// 获取一个用户的订购列表
-			ArrayList<OrderRecord> orderList = entry.getValue();
-			Iterator<OrderRecord> itOrder = orderList.iterator();
-			while (itOrder.hasNext()) {
-				// 获取该用户某次订购
-				OrderRecord oneRecord = itOrder.next();
-				// 如果订购时间小于阀值
-				if (oneRecord.getRecordTime() < currentTime) {
-					// 要入库的订购记录列表
-					insertList.add(oneRecord);
-					count("drop");
-					// 删除此条订购记录
-					itOrder.remove();
+			// 遍历
+			Iterator<Map.Entry<String, ArrayList<OrderRecord>>> itMsisdn = orderMap
+					.entrySet().iterator();
+			while (itMsisdn.hasNext()) {
+				Map.Entry<String, ArrayList<OrderRecord>> entry = itMsisdn
+						.next();
+				// 获取一个用户的订购列表
+				ArrayList<OrderRecord> orderList = entry.getValue();
+				Iterator<OrderRecord> itOrder = orderList.iterator();
+				while (itOrder.hasNext()) {
+					// 获取该用户某次订购
+					OrderRecord oneRecord = itOrder.next();
+					// 如果订购时间小于阀值
+					if (oneRecord.getRecordTime() < currentTime) {
+						// 要入库的订购记录列表
+						insertList.add(oneRecord);
+						count("drop");
+						// 删除此条订购记录
+						itOrder.remove();
+					}
+				}
+				// 如果用户的订购列表为空，则删除该用户
+				if (orderList.size() == 0) {
+					itMsisdn.remove();
 				}
 			}
-			// 如果用户的订购列表为空，则删除该用户
-			if (orderList.size() == 0) {
-				itMsisdn.remove();
-			}
+			// 将删除的订购记录批量入库
+			insertOrdersToDB(insertList);
+			log.info("====cleanAndToDB result size: "
+					+ String.valueOf(orderMap.size()));
 		}
-		// 将删除的订购记录批量入库
-		insertOrdersToDB(insertList);
-		log.info("====cleanAndToDB result size: " + String.valueOf(orderMap.size()));
 	}
 
 	// 批量入库

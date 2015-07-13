@@ -59,10 +59,13 @@ public class RealTimeOutputBolt extends BaseBasicBolt {
         if (DBHelper == null) {
             DBHelper = new DBRealTimeOutputBoltHelper();
         }
+        // 检查是否清除要清除内存到数据库  --测试发现Capacity指标太大，看不到负荷情况
+        //DBHelper.checkClear();
+        // 开始处理消息
         if (input.getSourceStreamId().equals(StreamId.DATASTREAM2.name())) {
         	count("recv");
             //从DataWarehouse发来的正常统计数据流
-            dealNormalDate(input);
+            dealNormalData(input);
         } else if (input.getSourceStreamId().equals(StreamId.ABNORMALDATASTREAM2.name())) {
             //从DataWarehouse发来的异常订购数据流
             dealAbnormalData(input);
@@ -103,7 +106,7 @@ public class RealTimeOutputBolt extends BaseBasicBolt {
     /**
      * 处理正常数据流
      */
-    private void dealNormalDate(Tuple input) {
+    private void dealNormalData(Tuple input) {
         String msisdn = input.getStringByField(FName.MSISDN.name());
         Long recordTime = input.getLongByField(FName.RECORDTIME.name());
         double realInfoFee = input.getDoubleByField(FName.REALINFORFEE.name());

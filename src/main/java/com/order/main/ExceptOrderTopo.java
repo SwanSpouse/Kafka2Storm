@@ -53,13 +53,13 @@ public class ExceptOrderTopo {
          *
          */
         //浏览话单发射、分词bolt
-        builder.setSpout(StreamId.Portal_Pageview.name(), new KafkaSpout(pageViewSpoutConfigTopic), 8);
+        builder.setSpout(StreamId.Portal_Pageview.name(), new KafkaSpout(pageViewSpoutConfigTopic), 16);
         builder.setBolt(StreamId.PageViewSplit.name(), new PageviewSplit(), 120)
                 .shuffleGrouping(StreamId.Portal_Pageview.name());
 
         //订购话单发射、分词bolt
-        builder.setSpout(StreamId.report_cdr.name(), new KafkaSpout(orderSpoutConfigTopic), 5);
-        builder.setBolt(StreamId.OrderSplit.name(), new OrderSplit(), 5)
+        builder.setSpout(StreamId.report_cdr.name(), new KafkaSpout(orderSpoutConfigTopic), 8);
+        builder.setBolt(StreamId.OrderSplit.name(), new OrderSplit(), 150)
                 .shuffleGrouping(StreamId.report_cdr.name());
 
         //统计bolt
@@ -68,18 +68,18 @@ public class ExceptOrderTopo {
                 .fieldsGrouping(StreamId.OrderSplit.name(), StreamId.ORDERDATA.name(), new Fields(FName.MSISDN.name()));
 
         //仓库入库bolt
-        builder.setBolt(StreamId.DataWarehouseBolt.name(), new DataWarehouseBolt(), 200)
+        builder.setBolt(StreamId.DataWarehouseBolt.name(), new DataWarehouseBolt(), 400)
                 .fieldsGrouping(StreamId.StatisticsBolt.name(), StreamId.DATASTREAM.name(), new Fields(FName.MSISDN.name()))
                 .fieldsGrouping(StreamId.StatisticsBolt.name(), StreamId.ABNORMALDATASTREAM.name(), new Fields(FName.MSISDN.name()));
         //实时输出接口bolt
-        builder.setBolt(StreamId.RealTimeOutputBolt.name(), new RealTimeOutputBolt(), 200)
+        builder.setBolt(StreamId.RealTimeOutputBolt.name(), new RealTimeOutputBolt(), 400)
                 .fieldsGrouping(StreamId.DataWarehouseBolt.name(), StreamId.DATASTREAM2.name(),
                         new Fields(FName.CHANNELCODE.name(), FName.PROVINCEID.name(), FName.CONTENTID.name(), FName.CONTENTTYPE.name()))
                 .fieldsGrouping(StreamId.DataWarehouseBolt.name(), StreamId.ABNORMALDATASTREAM2.name(),
                         new Fields(FName.CHANNELCODE.name(), FName.PROVINCEID.name(), FName.CONTENTID.name(), FName.CONTENTTYPE.name()));
 
         // Run Topo on Cluster
-        conf.setNumWorkers(50);
+        conf.setNumWorkers(100);
         conf.setNumAckers(0);
 //        conf.setMaxSpoutPending(10000);
 //        conf.setMessageTimeoutSecs(30);
