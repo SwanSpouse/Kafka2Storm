@@ -97,8 +97,8 @@ public class DBDataWarehouseBoltRedisHelper implements Serializable {
                     while (true) {
                         try {
                             // 每隔一个一段时间清理一次。
-                            cleaner.sleep(clearTimer * 1000);
-                            log.info("Begin Clean DataWareHouse cache ...");
+                            cleaner.sleep(clearTimer * 1000L);
+                            log.info("Begin Clean DataWareHouse cache ... every 5 minutes ");
                             cleanAndToDB();
                         } catch (InterruptedException e) {
                             e.printStackTrace();

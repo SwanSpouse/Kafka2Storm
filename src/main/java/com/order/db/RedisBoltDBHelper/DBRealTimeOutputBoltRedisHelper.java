@@ -4,6 +4,7 @@ package com.order.db.RedisBoltDBHelper;
  * Created by LiMingji on 15/7/13.
  */
 
+import com.order.bolt.Redis.RealTimeOutputDBItem;
 import com.order.constant.Rules;
 import com.order.db.DBHelper.DBTimer;
 import com.order.db.JDBCUtil;
@@ -15,6 +16,7 @@ import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * Created by LiMingji on 2015/6/4.
@@ -28,15 +30,15 @@ public class DBRealTimeOutputBoltRedisHelper implements Serializable {
     private transient Connection conn = null;
 
     //Key: date|provinceId|channelCode|content|contextType|
-    public ConcurrentHashMap<String, Double> abnormalFee = null;
-    //Key: date|provinceId|channelCode|content|contextType|ruleID
-    public ConcurrentHashMap<String, Double> totalFee = null;
+    public ConcurrentLinkedQueue<RealTimeOutputDBItem> dbItems;
     // 定时清除
     private transient DBTimer storageData2DBTimer = null;
     private transient Object LOCK = null;
+
     public Object getLOCK() {
         return LOCK;
     }
+
     public void setLOCK(Object lOCK) {
         LOCK = lOCK;
     }
@@ -60,14 +62,10 @@ public class DBRealTimeOutputBoltRedisHelper implements Serializable {
         }
         if (LOCK == null)
             LOCK = new Object();
-        synchronized (LOCK) {
-            totalFee = new ConcurrentHashMap<String, Double>();
-            abnormalFee = new ConcurrentHashMap<String, Double>();
-        }
 
         //从redis获取总费用和异常费用。
         this.redisHelper = redisHelper;
-
+        dbItems = new ConcurrentLinkedQueue<RealTimeOutputDBItem>();
         try {
             conn = this.getConn();
         } catch (SQLException e) {
@@ -76,37 +74,25 @@ public class DBRealTimeOutputBoltRedisHelper implements Serializable {
     }
 
     /**
-     * orderType = 21 为自定义类型。
-     * ps说明：
-     * ordertype = 4 内容id里填写产品id，内容类型填包月
-     * ordertype = 5 内容id里填写产品id，内容类型填促销包
-     * ordertype 非4、5 内容id里填写图书id，内容类型填图书
-     * 可以建立一个内容类型维表，1 包月 2 促销包 3 图书
+     *  将数据插入缓冲区。这里面的rules就是数字1 2 3 4这样的。
      */
     public void insert2Cache(Long time, String provinceId, String channelCode, String contentId,
                              String contentType, String rules, double realInfoFee) {
         if (LOCK == null)
             LOCK = new Object();
-        synchronized (LOCK) {
-            if (storageData2DBTimer == null) {
-                storageData2DBTimer = new DBTimer(this);
-                storageData2DBTimer.setDaemon(true);
-                storageData2DBTimer.start();
-            }
-            String currentTime = TimeParaser.formatTimeInDay(time);
 
-            // 总费用key值
-            String totalFeeKey = currentTime + "|" + provinceId + "|"
-                    + channelCode + "|" + contentId + "|" + contentType;
-
-            totalFee.put(totalFeeKey, redisHelper.getTotalFeeFromRedis(time, provinceId, channelCode,
-                    contentId, contentType, realInfoFee));
-
-            int ruleId = getRuleNumFromString(rules);
-            String abnFeeKey = totalFeeKey + "|" + ruleId;
-            abnormalFee.put(abnFeeKey, redisHelper.getAbnFeeFromRedis(time, provinceId, channelCode,
-                                                         contentId, contentType, realInfoFee, ruleId+""));
+        if (storageData2DBTimer == null) {
+            storageData2DBTimer = new DBTimer(this);
+            storageData2DBTimer.setDaemon(true);
+            storageData2DBTimer.start();
         }
+        String currentTime = TimeParaser.formatTimeInDay(time);
+
+        RealTimeOutputDBItem item = new RealTimeOutputDBItem();
+        item.setRecordTime(currentTime).setProvinceId(provinceId).setChannelCode(channelCode)
+                .setContentId(contentId).setContentType(contentType).setRule(rules).setRealInfoFee(realInfoFee);
+
+        dbItems.add(item);
     }
 
     /* 获取异常规则对应的数字编号 */

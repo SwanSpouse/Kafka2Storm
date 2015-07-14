@@ -1,16 +1,18 @@
 package com.order.db.DBHelper;
 
+import com.order.Redis.RedisClient;
+import com.order.bolt.Redis.RealTimeOutputDBItem;
 import com.order.constant.Constant;
 import com.order.db.JDBCUtil;
 import com.order.db.RedisBoltDBHelper.DBRealTimeOutputBoltRedisHelper;
+import com.order.db.RedisBoltDBHelper.DBRedisHelper.DBTotalFeeRedisHelper;
 import com.order.util.StormConf;
 import org.apache.log4j.Logger;
 
 import java.sql.*;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Random;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * Created by LiMingji on 2015/6/9.
@@ -20,19 +22,17 @@ public class DBTimer extends Thread {
 
     private Connection conn = null;
     private DBRealTimeOutputBoltRedisHelper helper = null;
+    private DBTotalFeeRedisHelper totalFeeRedisHelper = null;
 
     // 新增两个MAP用于入库时的内存复制
-    public ConcurrentHashMap<String, Double> abnormalFeeTmp = null;
-    public ConcurrentHashMap<String, Double> totalFeeTmp = null;
+    private ConcurrentLinkedQueue<RealTimeOutputDBItem> dbItemsTmp;
 
     //入库间隔为1分钟
     private static final long updateInterval = Constant.ONE_MINUTE * 1000L;
     
     public DBTimer(DBRealTimeOutputBoltRedisHelper helper) {
         this.helper = helper;
-    	// 初始化两个Map
-    	abnormalFeeTmp = new ConcurrentHashMap<String, Double>();
-    	totalFeeTmp = new ConcurrentHashMap<String, Double>();
+        totalFeeRedisHelper = new DBTotalFeeRedisHelper();
     }
     
 	@Override
@@ -49,16 +49,12 @@ public class DBTimer extends Thread {
                     helper.setLOCK(new Object());
                 synchronized (helper.getLOCK()) {
                     // 将内存中的数据复制过来后，清空原Map使excute正常访问
-                    abnormalFeeTmp.clear();
-                    abnormalFeeTmp.putAll(helper.abnormalFee);
-                    helper.abnormalFee.clear();
-                    totalFeeTmp.clear();
-                    totalFeeTmp.putAll(helper.totalFee);
-                    helper.totalFee.clear();
+                    dbItemsTmp.clear();
+                    dbItemsTmp.addAll(helper.dbItems);
+                    helper.dbItems.clear();
                 }
                 this.updateCachedData2DB();
-                abnormalFeeTmp.clear();
-                totalFeeTmp.clear();
+                dbItemsTmp.clear();
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -67,32 +63,29 @@ public class DBTimer extends Thread {
         }
     }
 
-    private void updateCachedData2DB() throws SQLException{
-        Iterator<String> it = abnormalFeeTmp.keySet().iterator();
+    private void updateCachedData2DB() throws SQLException {
+        Iterator<RealTimeOutputDBItem> it = dbItemsTmp.iterator();
         while (it.hasNext()) {
-            String abnKey = it.next();
-            String[] fields = abnKey.split("\\|");
-            if (fields.length != 6) {
-                log.error("字段错误: " + abnKey);
-                continue;
-            }
-            String currentTime = fields[0];
-            String provinceId = fields[1];
-            String channelCode = fields[2];
-            String contentId = fields[3];
-            String contentType = fields[4];
-            String ruleId = fields[5];
+            RealTimeOutputDBItem item = it.next();
+            String currentTime = item.getRecordTime();
+            String provinceId = item.getProvinceId();
+            String channelCode = item.getChannelCode();
+            String contentId = item.getContentId();
+            String contentType = item.getContentType();
+            String ruleId = item.getRule();
+            Double realInfoFee = item.getRealInfoFee();
 
-            Double abnFee = abnormalFeeTmp.get(abnKey);
+            if (totalFeeRedisHelper == null) {
+                totalFeeRedisHelper = new DBTotalFeeRedisHelper();
+            }
             String totalFeeKey = currentTime + "|" + provinceId + "|"
                     + channelCode + "|" + contentId + "|" + contentType;
 
-            double totalFee = 0.0;
-            if (totalFeeTmp.containsKey(totalFeeKey)) {
-                 totalFee = totalFeeTmp.get(totalFeeKey);
-            } else {
-                totalFee = abnFee;
-            }
+            String abnFeeKey = totalFeeKey + "|" + ruleId;
+
+            double totalFee = totalFeeRedisHelper.getTotalFeeFromRedis(totalFeeKey, realInfoFee);
+            double abnFee = totalFeeRedisHelper.getAbnFeeFromRedis(abnFeeKey);
+
             if (updateFee(currentTime, provinceId, contentId, contentType, channelCode, ruleId, abnFee, totalFee) <= 0) {
                 insertAbnormalFee(currentTime, provinceId, contentId, contentType, channelCode, ruleId, abnFee, totalFee);
             }

@@ -38,34 +38,22 @@ public class DBTotalFeeRedisHelper {
         }
     }
 
-    public double getTotalFeeFromRedis(Long time, String provinceId, String channelCode, String contentId, String contentType,
-                                  Double realInfoFee) {
-        String currentTime = TimeParaser.formatTimeInDay(time);
-        // 将总费用插入Redis，并设置今晚过期
-        String totalFeeKey = currentTime + "|" + provinceId + "|"
-                + channelCode + "|" + contentId + "|" + contentType ;
+    public double getTotalFeeFromRedis(String key, Double realInfofFee) {
+        double totalFee = redisClient.getFee(key);
+        if (totalFee == -1.0) {
+            redisClient.insertFeeToRedis(key, realInfofFee);
+            return 0;
+        }
+        return totalFee;
+    }
 
-        double abnFee = redisClient.getAbnFee(totalFeeKey);
+    public double getAbnFeeFromRedis(String key) {
+        double abnFee = redisClient.getFee(key);
         if (abnFee == -1.0) {
-            redisClient.insertFeeToRedis(totalFeeKey, realInfoFee);
+            return 0;
         }
         return abnFee;
     }
-
-    public double getAbnFeeFromRedis(Long time, String provinceId, String channelCode, String contentId, String contentType,
-                                     Double realInfoFee, String rules) {
-        String currentTime = TimeParaser.formatTimeInDay(time);
-        String totalFeeKey = currentTime + "|" + provinceId + "|"
-                + channelCode + "|" + contentId + "|" + contentType ;
-        String abnormallFeeKey = totalFeeKey + "|" + rules;
-        double abnFee = redisClient.getAbnFee(abnormallFeeKey);
-        if (abnFee == -1.0) {
-            redisClient.insertFeeToRedis(totalFeeKey, realInfoFee);
-            redisClient.insertFeeToRedis(abnormallFeeKey, realInfoFee);
-        }
-        return abnFee;
-    }
-
 
     /* 获取异常规则对应的数字编号 */
     public int getRuleNumFromString(String rule) {

@@ -49,7 +49,7 @@ public class RedisClient implements Serializable{
     }
 
     //根据Key从Redis取数据
-    public double getAbnFee(String key) {
+    public double getFee(String key) {
         if (jedis.exists(key)) {
             return Double.parseDouble(jedis.get(key));
         } else {
