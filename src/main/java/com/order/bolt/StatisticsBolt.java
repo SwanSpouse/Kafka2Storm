@@ -1,5 +1,6 @@
 package com.order.bolt;
 
+import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.BasicOutputCollector;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseBasicBolt;
@@ -23,6 +24,7 @@ import com.order.util.TimeParaser;
 import org.apache.log4j.Logger;
 
 import java.sql.SQLException;
+import java.util.Map;
 
 /**
  * Created by LiMingji on 2015/5/24.
@@ -46,19 +48,29 @@ public class StatisticsBolt extends BaseBasicBolt {
     private transient Thread loader = null;
 
     @Override
+    public void prepare(Map stormConf, TopologyContext context) {
+    	super.prepare(stormConf, context);
+    	try {
+			DBStatisticBoltHelper.getData();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+    }
+    
+    @Override
     public void execute(Tuple input, BasicOutputCollector collector) {
-       if (loader == null) {
+       /*if (loader == null) {
             //启动线程每天3点准时load数据
             loader = new Thread(new Runnable() {
                 @Override
                 public void run() {
                     while (true) {
                         try {
-                            DBStatisticBoltHelper.getData();
                             long sleepTime = TimeParaser.getMillisFromNowToThreeOclock();
                             if (sleepTime > 0) {
                                 loader.sleep(sleepTime);
                             }
+                            DBStatisticBoltHelper.getData();
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         } catch (SQLException e) {
@@ -69,7 +81,7 @@ public class StatisticsBolt extends BaseBasicBolt {
             });
             loader.setDaemon(true);
             loader.start();
-        }
+        }*/
         if (userInfoCleaner == null) {
             userInfoCleaner = new UserInfoCleaner(this);
             userInfoCleaner.setDaemon(true);
