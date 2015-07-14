@@ -6,6 +6,9 @@ import backtype.storm.spout.SchemeAsMultiScheme;
 import backtype.storm.topology.TopologyBuilder;
 import backtype.storm.tuple.Fields;
 import com.order.bolt.*;
+import com.order.bolt.Redis.DataWarehouseRedisBolt;
+import com.order.bolt.Redis.RealTimeOutputRedisBolt;
+import com.order.bolt.Redis.StatisticsRedisBolt;
 import com.order.util.FName;
 import com.order.util.StormConf;
 import com.order.util.StreamId;
@@ -63,19 +66,16 @@ public class ExceptOrderTopo {
                 .shuffleGrouping(StreamId.report_cdr.name());
 
         //统计bolt
-        builder.setBolt(StreamId.StatisticsBolt.name(), new StatisticsBolt(), 600)
+        builder.setBolt(StreamId.StatisticRedisBolt.name(), new StatisticsRedisBolt(), 600)
                 .fieldsGrouping(StreamId.PageViewSplit.name(), StreamId.BROWSEDATA.name(), new Fields(FName.MSISDN.name()))
                 .fieldsGrouping(StreamId.OrderSplit.name(), StreamId.ORDERDATA.name(), new Fields(FName.MSISDN.name()));
 
         //仓库入库bolt
-        builder.setBolt(StreamId.DataWarehouseBolt.name(), new DataWarehouseBolt(), 400)
-                .fieldsGrouping(StreamId.StatisticsBolt.name(), StreamId.DATASTREAM.name(), new Fields(FName.MSISDN.name()))
-                .fieldsGrouping(StreamId.StatisticsBolt.name(), StreamId.ABNORMALDATASTREAM.name(), new Fields(FName.MSISDN.name()));
+        builder.setBolt(StreamId.DataWarehouseRedisBolt.name(), new DataWarehouseRedisBolt(), 400)
+                .fieldsGrouping(StreamId.StatisticRedisBolt.name(), StreamId.REDISDATASTREAM.name(), new Fields(FName.MSISDN.name()));
         //实时输出接口bolt
-        builder.setBolt(StreamId.RealTimeOutputBolt.name(), new RealTimeOutputBolt(), 400)
-                .fieldsGrouping(StreamId.DataWarehouseBolt.name(), StreamId.DATASTREAM2.name(),
-                        new Fields(FName.CHANNELCODE.name(), FName.PROVINCEID.name(), FName.CONTENTID.name(), FName.CONTENTTYPE.name()))
-                .fieldsGrouping(StreamId.DataWarehouseBolt.name(), StreamId.ABNORMALDATASTREAM2.name(),
+        builder.setBolt(StreamId.RealTimeOutputRedisBolt.name(), new RealTimeOutputRedisBolt(), 400)
+                .fieldsGrouping(StreamId.DataWarehouseRedisBolt.name(), StreamId.REDISREALTIMEDATA.name(),
                         new Fields(FName.CHANNELCODE.name(), FName.PROVINCEID.name(), FName.CONTENTID.name(), FName.CONTENTTYPE.name()));
 
         // Run Topo on Cluster
