@@ -1,7 +1,6 @@
 package com.order.databean.cleaner;
 
 import com.order.bolt.Redis.StatisticsRedisBolt;
-import com.order.bolt.StatisticsBolt;
 import com.order.constant.Constant;
 import com.order.databean.SessionInfo;
 import com.order.databean.TimeCacheStructures.Pair;

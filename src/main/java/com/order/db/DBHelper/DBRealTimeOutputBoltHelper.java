@@ -52,29 +52,29 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
     }
 
 
-	public void cleanup() {
-		if (LOCK == null)
-			LOCK = new Object();
-		synchronized (LOCK) {
-			try {
-				((DBTimer) storageData2DBTimer).updateAllTotalFeeToDB();
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
-			try {
-				((DBTimer) storageData2DBTimer).updateAllAbnormalFeeToDB();
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
-		}
-	}
+//	public void cleanup() {
+//		if (LOCK == null)
+//			LOCK = new Object();
+//		synchronized (LOCK) {
+//			try {
+//				((DBTimer) storageData2DBTimer).updateAllTotalFeeToDB();
+//			} catch (SQLException e) {
+//				e.printStackTrace();
+//			}
+//			try {
+//				((DBTimer) storageData2DBTimer).updateAllAbnormalFeeToDB();
+//			} catch (SQLException e) {
+//				e.printStackTrace();
+//			}
+//		}
+//	}
 
 	public DBRealTimeOutputBoltHelper() {
-        if (storageData2DBTimer == null) {
-            storageData2DBTimer = new DBTimer(this);
-            storageData2DBTimer.setDaemon(true);
-            storageData2DBTimer.start();
-        }
+//        if (storageData2DBTimer == null) {
+//            storageData2DBTimer = new DBTimer(this);
+//            storageData2DBTimer.setDaemon(true);
+//            storageData2DBTimer.start();
+//        }
 		if (LOCK == null)
 			LOCK = new Object();
 		synchronized (LOCK) {
@@ -103,11 +103,11 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
 		if (LOCK == null)
 			LOCK = new Object();
 		synchronized (LOCK) {
-			if (storageData2DBTimer == null) {
-				storageData2DBTimer = new DBTimer(this);
-				storageData2DBTimer.setDaemon(true);
-				storageData2DBTimer.start();
-			}
+//			if (storageData2DBTimer == null) {
+//				storageData2DBTimer = new DBTimer(this);
+//				storageData2DBTimer.setDaemon(true);
+//				storageData2DBTimer.start();
+//			}
 			String currentTime = TimeParaser.formatTimeInDay(time);
 
 			// 总费用key值
@@ -301,7 +301,4 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
         return result;
     }
 
-	public void checkClear() {
-		((DBTimer) storageData2DBTimer).checkClear();		
-	}
 }

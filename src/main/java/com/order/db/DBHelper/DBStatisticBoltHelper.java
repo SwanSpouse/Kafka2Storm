@@ -1,7 +1,6 @@
 package com.order.db.DBHelper;
 
 import com.order.db.JDBCUtil;
-import com.order.util.LogUtil;
 import com.order.util.StormConf;
 import org.apache.log4j.Logger;
 
@@ -27,7 +26,6 @@ public class DBStatisticBoltHelper implements Serializable {
      * 获取营销参数 二级渠道维表
      */
     public static void getData() throws SQLException{
-        LogUtil.printLog("加载二维渠道维表" + new Date());
         if (parameterId2ChannelIds == null) {
             parameterId2ChannelIds = new ConcurrentHashMap<String, String>();
         } else {
