@@ -1,4 +1,4 @@
-package com.order.bolt;
+package com.order.bolt.Redis;
 
 import backtype.storm.topology.BasicOutputCollector;
 import backtype.storm.topology.OutputFieldsDeclarer;
@@ -15,7 +15,6 @@ import com.order.databean.TimeCacheStructures.RealTimeCacheList;
 import com.order.databean.UserInfo;
 import com.order.databean.cleaner.SessionInfoCleaner;
 import com.order.databean.cleaner.UserInfoCleaner;
-import com.order.db.DBHelper.DBOrderCount;
 import com.order.db.DBHelper.DBStatisticBoltHelper;
 import com.order.util.FName;
 import com.order.util.StreamId;
@@ -25,20 +24,19 @@ import org.apache.log4j.Logger;
 import java.sql.SQLException;
 
 /**
- * Created by LiMingji on 2015/5/24.
+ * Created by LiMingji on 15/7/13.
  */
-public class StatisticsBolt extends BaseBasicBolt {
+public class StatisticsRedisBolt extends BaseBasicBolt {
     public static boolean isDebug = false;
-    private static Logger log = Logger.getLogger(StatisticsBolt.class);
-    private long recvnum = 0, dropnum = 0, sendnum = 0;
+    private static Logger log = Logger.getLogger(StatisticsRedisBolt.class);
 
     //存储字段为msisdn 和 UserInfo
-    public  RealTimeCacheList<Pair<String, UserInfo>> userInfos =
+    public RealTimeCacheList<Pair<String, UserInfo>> userInfos =
             new RealTimeCacheList<Pair<String, UserInfo>>(Constant.ONE_HOUR);
     private UserInfoCleaner userInfoCleaner = null;
 
     //存储字段为msisdn 和 SessionInfo
-    public  RealTimeCacheList<Pair<String, SessionInfo>> sessionInfos =
+    public RealTimeCacheList<Pair<String, SessionInfo>> sessionInfos =
             new RealTimeCacheList<Pair<String, SessionInfo>>(Constant.ONE_DAY);
     private SessionInfoCleaner sessionInfoCleaner = null;
 
@@ -47,7 +45,7 @@ public class StatisticsBolt extends BaseBasicBolt {
 
     @Override
     public void execute(Tuple input, BasicOutputCollector collector) {
-       if (loader == null) {
+        if (loader == null) {
             //启动线程每天3点准时load数据
             loader = new Thread(new Runnable() {
                 @Override
@@ -70,16 +68,16 @@ public class StatisticsBolt extends BaseBasicBolt {
             loader.setDaemon(true);
             loader.start();
         }
-//        if (userInfoCleaner == null) {
-//            userInfoCleaner = new UserInfoCleaner(this);
-//            userInfoCleaner.setDaemon(true);
-//            userInfoCleaner.start();
-//        }
-//        if (sessionInfoCleaner == null) {
-//            sessionInfoCleaner = new SessionInfoCleaner(this);
-//            sessionInfoCleaner.setDaemon(true);
-//            sessionInfoCleaner.start();
-//        }
+        if (userInfoCleaner == null) {
+            userInfoCleaner = new UserInfoCleaner(this);
+            userInfoCleaner.setDaemon(true);
+            userInfoCleaner.start();
+        }
+        if (sessionInfoCleaner == null) {
+            sessionInfoCleaner = new SessionInfoCleaner(this);
+            sessionInfoCleaner.setDaemon(true);
+            sessionInfoCleaner.start();
+        }
         if (input.getSourceStreamId().equals(StreamId.BROWSEDATA.name())) {
             //阅读浏览话单
             try {
@@ -88,7 +86,6 @@ public class StatisticsBolt extends BaseBasicBolt {
                 e.printStackTrace();
             }
         } else if (input.getSourceStreamId().equals(StreamId.ORDERDATA.name())) {
-            count("recv");     
             // 订购话单
             try {
                 this.constructInfoFromOrderData(input, collector);
@@ -147,10 +144,6 @@ public class StatisticsBolt extends BaseBasicBolt {
             sessionId = msisdn;
         }
 
-        count("send");
-        //所有订单数据先统一发送正常数据流。用作数据统计。
-        collector.emit(StreamId.DATASTREAM.name(), new Values(msisdn, sessionId, recordTime,
-                realInfoFee, channelCode, productId, provinceId, orderType, bookId));
         //更新订购话单的SessionInfos信息
         Pair<String, SessionInfo> sessionInfoPair = new Pair<String, SessionInfo>(msisdn, null);
         SessionInfo currentSessionInfo;
@@ -164,15 +157,30 @@ public class StatisticsBolt extends BaseBasicBolt {
                     chapterId, recordTime, orderType, realInfoFee, channelCode, productId, provinceId);
             sessionInfos.put(new Pair<String, SessionInfo>(msisdn, currentSessionInfo));
         }
-        
+
+        String disobeyReuls = "";
+
         //检测相应的各个规则。
-        currentSessionInfo.checkRule123(bookId, new EmitDatas(collector));
-        currentSessionInfo.checkRule4(new EmitDatas(collector));
-        currentSessionInfo.checkRule5(channelCode, new EmitDatas(collector));
-        currentSessionInfo.checkRule6(new EmitDatas(collector));
-        currentSessionInfo.checkRule7(new EmitDatas(collector));
-        currentSessionInfo.checkRule8(bookId, new EmitDatas(collector));
-        currentSessionInfo.checkRule12(platform, new EmitDatas(collector));
+        String rule123 = currentSessionInfo.checkRule123(bookId, new EmitDatas(collector));
+        disobeyReuls = rule123.trim().equals("") ? disobeyReuls : disobeyReuls + rule123;
+
+        String rule4 = currentSessionInfo.checkRule4(new EmitDatas(collector));
+        disobeyReuls = rule4.trim().equals("") ? disobeyReuls : disobeyReuls + rule4 + "|";
+
+        String rule5 = currentSessionInfo.checkRule5(channelCode, new EmitDatas(collector));
+        disobeyReuls = rule5.trim().equals("") ? disobeyReuls : disobeyReuls + rule5 + "|";
+
+        String rule6 = currentSessionInfo.checkRule6(new EmitDatas(collector));
+        disobeyReuls = rule6.trim().equals("") ? disobeyReuls : disobeyReuls + rule6 + "|";
+
+        String rule7 = currentSessionInfo.checkRule7(new EmitDatas(collector));
+        disobeyReuls = rule7.trim().equals("") ? disobeyReuls : disobeyReuls + rule7 + "|";
+
+        String rule8 = currentSessionInfo.checkRule8(bookId, new EmitDatas(collector));
+        disobeyReuls = rule8.trim().equals("") ? disobeyReuls : disobeyReuls + rule8 + "|";
+
+        String rule12 = currentSessionInfo.checkRule12(platform, new EmitDatas(collector));
+        disobeyReuls = rule12.trim().equals("") ? disobeyReuls : disobeyReuls + rule12 + "|";
 
         //更新订购话单UserInfos信息
         Pair<String, UserInfo> userInfoPair = new Pair<String, UserInfo>(msisdn, null);
@@ -188,58 +196,30 @@ public class StatisticsBolt extends BaseBasicBolt {
 
         boolean[] isObeyRules = currentUserInfo.isObeyRules();
         if (!isObeyRules[UserInfo.SESSION_CHECK_BIT]) {
-            collector.emit(StreamId.ABNORMALDATASTREAM.name(),
-                    new Values(msisdn, sessionId, recordTime, realInfoFee, channelCode, productId,
-                            provinceId, orderType, bookId, Rules.NINE.name()));
+            disobeyReuls = disobeyReuls + Rules.NINE.name() + "|";
         }
-        
+
         if (!isObeyRules[UserInfo.IP_CHECK_BIT]) {
-            collector.emit(StreamId.ABNORMALDATASTREAM.name(),
-                    new Values(msisdn, sessionId, recordTime, realInfoFee, channelCode, productId,
-                            provinceId, orderType, bookId, Rules.TEN.name()));
+            disobeyReuls = disobeyReuls + Rules.TEN.name() + "|";
         }
 
         if (!isObeyRules[UserInfo.UA_CHECK_BIT]) {
-            collector.emit(StreamId.ABNORMALDATASTREAM.name(),
-                    new Values(msisdn, sessionId, recordTime, realInfoFee, channelCode, productId,
-                            provinceId, orderType, bookId, Rules.ELEVEN.name()));
+            disobeyReuls = disobeyReuls + Rules.ELEVEN.name() + "|";
         }
-    }
 
-    public void count(String colume) {
-    	if (colume.equals("recv")) {
-	    	recvnum++;
-	    	if (recvnum >= 1000) {
-	    		DBOrderCount.updateDbSum("StatisticsBolt", "recv", 1000);
-	    		recvnum=0;
-	    	}
-    	} else if (colume.equals("drop")) {
-    		dropnum++;
-	    	if (dropnum >= 1000) {
-	    		DBOrderCount.updateDbSum("StatisticsBolt", "drop", 1000);
-	    		dropnum=0;
-	    	}
-	    } else if (colume.equals("send")) {
-	    	sendnum++;
-	    	if (sendnum >= 1000) {
-	    		DBOrderCount.updateDbSum("StatisticsBolt", "send", 1000);
-	    		sendnum=0;
-	    	}
-	    }
+        collector.emit(StreamId.REDISDATASTREAM.name(),
+                new Values(msisdn, sessionId, recordTime,
+                        realInfoFee, channelCode, productId,
+                        provinceId, orderType, bookId,
+                        disobeyReuls));
     }
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
-        declarer.declareStream(StreamId.DATASTREAM.name(),
-                new Fields(FName.MSISDN.name(), FName.SESSIONID.name(), FName.RECORDTIME.name(),
-                        FName.REALINFORFEE.name(), FName.CHANNELCODE.name(), FName.PRODUCTID.name(),
-                        FName.PROVINCEID.name(), FName.ORDERTYPE.name(), FName.BOOKID.name()));
-
-        declarer.declareStream(StreamId.ABNORMALDATASTREAM.name(),
+        declarer.declareStream(StreamId.REDISDATASTREAM.name(),
                 new Fields(FName.MSISDN.name(), FName.SESSIONID.name(), FName.RECORDTIME.name(),
                         FName.REALINFORFEE.name(), FName.CHANNELCODE.name(), FName.PRODUCTID.name(),
                         FName.PROVINCEID.name(), FName.ORDERTYPE.name(), FName.BOOKID.name(),
                         FName.RULES.name()));
-
     }
 }

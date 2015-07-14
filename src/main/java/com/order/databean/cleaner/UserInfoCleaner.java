@@ -1,5 +1,6 @@
 package com.order.databean.cleaner;
 
+import com.order.bolt.Redis.StatisticsRedisBolt;
 import com.order.bolt.StatisticsBolt;
 import com.order.constant.Constant;
 import com.order.databean.TimeCacheStructures.Pair;
@@ -14,9 +15,9 @@ import java.util.Iterator;
 public class UserInfoCleaner extends Thread {
 
     private static Logger log = Logger.getLogger(UserInfoCleaner.class);
-    private StatisticsBolt bolt = null;
+    private StatisticsRedisBolt bolt = null;
 
-    public UserInfoCleaner(StatisticsBolt bolt) {
+    public UserInfoCleaner(StatisticsRedisBolt bolt) {
         this.bolt = bolt;
     }
 

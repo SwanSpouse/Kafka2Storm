@@ -193,25 +193,21 @@ public class SessionInfo implements Serializable{
      * @param callback
      */
     private transient Thread rule123Checker = null;
-    public void checkRule123(final String bookId, final RulesCallback callback) {
+    public String checkRule123(final String bookId, final RulesCallback callback) {
 
         if (orderType == 4 || orderType == 5 || orderType == 9 || orderType == 99) {
-            return;
+            return "";
         }
         //根据特定图书浏览次数来判断违反的是哪条规则
-        Rules rule = null;
         if (bookReadPv.sizeById(bookId) == Constant.READPV_ZERO_TIMES) {
-            rule = Rules.ONE;
+            return  Rules.ONE.name();
         } else if (bookReadPv.sizeById(bookId) == Constant.READPV_ONE_TIMES) {
-            rule = Rules.TWO;
+            return Rules.TWO.name();
         } else if (bookReadPv.sizeById(bookId) <= Constant.READPV_THREASHOLD
                 && bookReadPv.sizeById(bookId) > Constant.READPV_ONE_TIMES) {
-            rule = Rules.THREE;
+            return Rules.THREE.name();
         }
-        if (rule != null) {
-            callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
-                    channelId, productId, rule.name(), provinceId, orderType, bookId);
-        }
+        return "";
     }
 
     /**
@@ -220,11 +216,11 @@ public class SessionInfo implements Serializable{
      *
      * @param callback
      */
-    public void checkRule4(final RulesCallback callback) {
+    public String checkRule4(final RulesCallback callback) {
         if (orderChannelCodeByDay.size(lastUpdateTime) >= 3) {
-            callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee, channelId,
-                    productId, Rules.FOUR.name(), provinceId, orderType, bookId);
+            return Rules.FOUR.name();
         }
+        return "";
     }
 
     /**
@@ -234,18 +230,18 @@ public class SessionInfo implements Serializable{
      *
      * @param callback
      */
-    public void checkRule5(String channelId, final RulesCallback callback) {
+    public String checkRule5(String channelId, final RulesCallback callback) {
         if (orderType != 1) {
-            return;
+            return "";
         }
         Pair<String, Double> userChannelInfoFee = new Pair<String, Double>(channelId, null);
         if (channelOrderpv.contains(userChannelInfoFee)) {
             Pair<String, Double> currentUserChannelInFee = channelOrderpv.get(userChannelInfoFee);
             if (currentUserChannelInFee.getValue() > 10) {
-                callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
-                        channelId, productId, Rules.FIVE.name(), provinceId, orderType, bookId);
+                return Rules.FIVE.name();
             }
         }
+        return "";
     }
 
     /**
@@ -255,18 +251,18 @@ public class SessionInfo implements Serializable{
      *
      * @param callback
      */
-    public void checkRule6(final RulesCallback callback) {
+    public String checkRule6(final RulesCallback callback) {
         if (orderType != 4) {
-            return;
+            return "";
         }
         int orderTimes = 0;
         for (String bookId : bookOrderPv.keySet()) {
             orderTimes += bookOrderPv.sizeOfBookOrderTimesWithOrderType(bookId, 4);
         }
         if (orderTimes >= Constant.ORDER_BY_MONTH_THRESHOLD) {
-            callback.hanleData(msisdnId, sessionId, lastUpdateTime,
-                    realInfoFee, channelId, productId, Rules.SIX.name(), provinceId, orderType, bookId);
+            return Rules.SIX.name();
         }
+        return "";
     }
 
     /**
@@ -276,9 +272,9 @@ public class SessionInfo implements Serializable{
      *
      * @param callback
      */
-    public void checkRule7(final RulesCallback callback) {
+    public String checkRule7(final RulesCallback callback) {
         if (orderType != 1 || orderType != 21) {
-            return;
+            return "";
         }
         int bookOrderNums = 0;
         int bookReadPvs = 0;
@@ -288,9 +284,9 @@ public class SessionInfo implements Serializable{
             bookReadPvs += bookReadPv.sizeWithTimeThreshold(bookId, lastUpdateTime, Constant.FIVE_MINUTES);
         }
         if (bookOrderNums >= 2 && bookOrderNums < 5 * bookReadPvs) {
-            callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
-                    channelId, productId, Rules.SEVEN.name(), provinceId, orderType, bookId);
+            return Rules.SEVEN.name();
         }
+        return "";
     }
 
     /**
@@ -301,16 +297,16 @@ public class SessionInfo implements Serializable{
      *
      * @param callback
      */
-    public void checkRule8(String bookId, final RulesCallback callback) {
+    public String checkRule8(String bookId, final RulesCallback callback) {
         if (orderType != 2) {
-            return;
+            return "";
         }
         int orderPvs = bookOrderPv.sizeOfBookOrderTimesWithOrderType(bookId, 2);
         int readPvs = bookReadPv.sizeWithTimeThreshold(bookId, lastUpdateTime, Constant.FIVE_MINUTES);
         if (orderPvs >= 10 && orderPvs <= 2 * readPvs) {
-            callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
-                    channelId, productId, Rules.EIGHT.name(), provinceId, orderType, bookId);
+            return Rules.EIGHT.name();
         }
+        return "";
     }
 
     /**
@@ -321,14 +317,14 @@ public class SessionInfo implements Serializable{
      * @param callback
      */
     private transient Thread rule12Checker = null;
-    public void checkRule12(String platform, final RulesCallback callback) {
+    public String checkRule12(String platform, final RulesCallback callback) {
         if (orderType != 4 || Integer.parseInt(platform) == 6) {
-            return;
+            return "";
         }
         if (bookReadPv.size(lastUpdateTime) == 0) {
-            callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
-                    channelId, productId, Rules.TWELVE.name(), provinceId, orderType,bookId);
+            return Rules.TWELVE.name();
         }
+        return "";
     }
 
     public boolean isOutOfTime() {
