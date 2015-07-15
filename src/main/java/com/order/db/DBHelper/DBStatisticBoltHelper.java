@@ -27,7 +27,7 @@ public class DBStatisticBoltHelper implements Serializable {
      * 获取营销参数 二级渠道维表
      */
     public static void getData() throws SQLException{
-        LogUtil.printLog("加载二维渠道维表" + new Date());
+        log.info("加载二维渠道维表" + new Date());
         if (parameterId2ChannelIds == null) {
             parameterId2ChannelIds = new ConcurrentHashMap<String, String>();
         } else {
@@ -51,16 +51,19 @@ public class DBStatisticBoltHelper implements Serializable {
             while (resultSet.next()) {
                 //营销参数均应该大写。
                 String firstChannelId = resultSet.getString("FIRST_CHANNEL_ID");
-                firstChannelId = firstChannelId == null ? null : firstChannelId.toUpperCase();
+                firstChannelId = firstChannelId == null ? "NULL" : firstChannelId.toUpperCase();
 
                 String secondChannelId = resultSet.getString("SECOND_CHANNEL_ID");
-                secondChannelId = secondChannelId == null ? null : secondChannelId.toUpperCase();
+                secondChannelId = secondChannelId == null ? "NULL" : secondChannelId.toUpperCase();
 
                 String thirdChannelId = resultSet.getString("THIRD_CHANNEL_ID");
-                thirdChannelId = thirdChannelId == null ? null : thirdChannelId.toUpperCase();
+                thirdChannelId = thirdChannelId == null ? "NULL" : thirdChannelId.toUpperCase();
 
                 String parameterId = resultSet.getString("PARAMETER_ID");
-                parameterId = parameterId == null ? null : parameterId.toUpperCase();
+                if (parameterId == null) {
+                	continue;
+                }
+                //parameterId = parameterId == null ? "NULL" : parameterId.toUpperCase();
 
                 parameterId2SecChannelId.put(parameterId, secondChannelId);
                 parameterId2ChannelIds.put(parameterId, firstChannelId + "|" + secondChannelId + "|" + thirdChannelId);

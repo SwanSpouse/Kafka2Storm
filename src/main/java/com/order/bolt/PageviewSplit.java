@@ -62,6 +62,8 @@ if (countMsg % 5000 == 0 ) {
             String pageType = words[15];// pageType Varchar2(8)
             String msisdn = words[27];// msisdn Varchar2(20)
             String channelCode = words[33]; // channelCode Varchar2(8)
+            //营销参数应均为大写。
+            channelCode = channelCode == null ? null : channelCode.toUpperCase();
             String bookId = words[47]; //exColumn1 扩展字段1 Varchar2(255)
             String chapterId = words[48]; //exColumn2 扩展字段2
             if (pageType.trim().equals("2") || pageType.trim().equals("3")) {

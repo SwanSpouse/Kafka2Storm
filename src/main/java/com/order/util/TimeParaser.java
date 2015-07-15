@@ -115,20 +115,6 @@ public class TimeParaser {
         return calendar3Oclock.getTimeInMillis() - calendar.getTimeInMillis();
     }
 
-    //获取明天零点的毫秒数 用于设置总费用和异常费用过期时间。
-    public static long getTomorrowZeroOclockMillis() {
-        Calendar calendar = Calendar.getInstance();
-        Calendar calendarZeroOclock = Calendar.getInstance();
-        System.out.println(calendar.getTime());
-        calendarZeroOclock.add(Calendar.DATE, 1);
-        calendarZeroOclock.set(Calendar.HOUR_OF_DAY, 0);
-        calendarZeroOclock.set(Calendar.MINUTE, 0);
-        calendarZeroOclock.set(Calendar.SECOND, 0);
-        calendarZeroOclock.set(Calendar.MILLISECOND, 0);
-        System.out.println(calendarZeroOclock.getTime());
-        return calendarZeroOclock.getTimeInMillis();
-    }
-
     public static long getMillisFromTimeToNetFiveMinutes(long time) {
         Calendar now = Calendar.getInstance();
         Calendar next = Calendar.getInstance();
