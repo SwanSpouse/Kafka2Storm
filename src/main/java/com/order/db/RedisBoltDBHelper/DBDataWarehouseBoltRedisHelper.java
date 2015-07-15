@@ -3,6 +3,7 @@ package com.order.db.RedisBoltDBHelper;
 import com.order.constant.Rules;
 import com.order.db.JDBCUtil;
 import com.order.util.OrderRecord;
+import com.order.util.RuleUtil;
 import com.order.util.StormConf;
 import com.order.util.TimeParaser;
 import org.apache.log4j.Logger;
@@ -132,7 +133,7 @@ public class DBDataWarehouseBoltRedisHelper implements Serializable {
             if (ruleArr[i].trim().equals("")) {
                 continue;
             }
-            orderRecord.getRules().put(this.getRuleNumFromString(ruleArr[i]), 0);
+            orderRecord.getRules().put(RuleUtil.getRuleNumFromString(ruleArr[i]), 0);
         }
     }
 
@@ -192,35 +193,5 @@ public class DBDataWarehouseBoltRedisHelper implements Serializable {
 				conn = null;
 			}
 		}
-	}
-
-	/* 获取异常规则对应的数字编号 */
-	public int getRuleNumFromString(String rule) {
-		if (rule.equals(Rules.ONE.name())) {
-			return 1;
-		} else if (rule.equals(Rules.TWO.name())) {
-			return 2;
-		} else if (rule.equals(Rules.THREE.name())) {
-			return 3;
-		} else if (rule.equals(Rules.FOUR.name())) {
-			return 4;
-		} else if (rule.equals(Rules.FIVE.name())) {
-			return 5;
-		} else if (rule.equals(Rules.SIX.name())) {
-			return 6;
-		} else if (rule.equals(Rules.SEVEN.name())) {
-			return 7;
-		} else if (rule.equals(Rules.EIGHT.name())) {
-			return 8;
-		} else if (rule.equals(Rules.NINE.name())) {
-			return 9;
-		} else if (rule.equals(Rules.TEN.name())) {
-			return 10;
-		} else if (rule.equals(Rules.ELEVEN.name())) {
-			return 11;
-		} else if (rule.equals(Rules.TWELVE.name())) {
-			return 12;
-		}
-		return 0;
 	}
 }

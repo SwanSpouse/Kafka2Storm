@@ -13,6 +13,7 @@ import com.order.constant.Rules;
 import com.order.db.RedisBoltDBHelper.DBRealTimeOutputBoltRedisHelper;
 import com.order.db.RedisBoltDBHelper.DBRedisHelper.DBTotalFeeRedisHelper;
 import com.order.util.FName;
+import com.order.util.RuleUtil;
 import com.order.util.StreamId;
 import org.apache.log4j.Logger;
 
@@ -94,7 +95,7 @@ public class RealTimeOutputRedisBolt extends BaseBasicBolt {
             if (ruleArr[i].trim().equals("")) {
                 continue;
             }
-            int ruleId = this.getRuleNumFromString(ruleArr[i]);
+            int ruleId = RuleUtil.getRuleNumFromString(ruleArr[i]);
             if (ruleId == 0) {
                 continue;
             }
@@ -106,36 +107,6 @@ public class RealTimeOutputRedisBolt extends BaseBasicBolt {
     @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
         //Do Nothing
-    }
-
-    /* 获取异常规则对应的数字编号 */
-    public int getRuleNumFromString(String rule) {
-        if (rule.equals(Rules.ONE.name())) {
-            return 1;
-        } else if (rule.equals(Rules.TWO.name())) {
-            return 2;
-        } else if (rule.equals(Rules.THREE.name())) {
-            return 3;
-        } else if (rule.equals(Rules.FOUR.name())) {
-            return 4;
-        } else if (rule.equals(Rules.FIVE.name())) {
-            return 5;
-        } else if (rule.equals(Rules.SIX.name())) {
-            return 6;
-        } else if (rule.equals(Rules.SEVEN.name())) {
-            return 7;
-        } else if (rule.equals(Rules.EIGHT.name())) {
-            return 8;
-        } else if (rule.equals(Rules.NINE.name())) {
-            return 9;
-        } else if (rule.equals(Rules.TEN.name())) {
-            return 10;
-        } else if (rule.equals(Rules.ELEVEN.name())) {
-            return 11;
-        } else if (rule.equals(Rules.TWELVE.name())) {
-            return 12;
-        }
-        return 0;
     }
 }
 

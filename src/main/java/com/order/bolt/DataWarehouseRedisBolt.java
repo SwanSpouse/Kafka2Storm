@@ -11,8 +11,13 @@ import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
 import com.order.db.RedisBoltDBHelper.DBDataWarehouseBoltRedisHelper;
+import com.order.db.RedisBoltDBHelper.DBRedisHelper.OrderInRedisHelper;
 import com.order.util.FName;
+import com.order.util.RuleUtil;
 import com.order.util.StreamId;
+import com.order.util.TimeParaser;
+
+import java.util.List;
 
 /**
  * 仓库接口。计算异常率，定时写入数据库
@@ -44,6 +49,7 @@ public class DataWarehouseRedisBolt extends BaseBasicBolt {
 
     private static final long serialVersionUID = 1L;
     private DBDataWarehouseBoltRedisHelper dbHelper = new DBDataWarehouseBoltRedisHelper();
+    private OrderInRedisHelper orderInRedisHelper = new OrderInRedisHelper();
 
     @Override
     public void execute(Tuple input, BasicOutputCollector collector) {
@@ -81,12 +87,51 @@ public class DataWarehouseRedisBolt extends BaseBasicBolt {
             contentId = bookId;
         }
 
-        //TODO 这里应该有追溯。从数据库和内存中将追溯的数据再发出去。
+        //订单入缓存
         dbHelper.insertDataToCache(recordTime, msisdn, sessionId, channelCode, bookId, productId, realInfoFee, rule);
+        //订单入Redis 用于追溯。
+        orderInRedisHelper.putOrderInRedis(msisdn, recordTime, realInfoFee, channelCode, provinceId, contentId, contentType, rule);
 
+        //订单发送到RealTimeBolt
         collector.emit(StreamId.REDISREALTIMEDATA.name(),
                 new Values(recordTime, realInfoFee, channelCode, provinceId,
                         contentId, contentType, rule));
+        /**
+         * 实现追溯功能
+         * 1 2 3 5 6 7 8 这些规则是向前追溯该渠道下1小时数据。
+         4    追溯一天的数据
+         9 10 11 追溯自然小时的数据。
+         */
+        String[] ruleArr = rule.split("\\|");
+        for (int i = 0; i < ruleArr.length; i++) {
+            if (ruleArr[i].trim().equals("")) {
+                continue;
+            }
+            int ruleId = RuleUtil.getRuleNumFromString(ruleArr[i]);
+            if (ruleId == 0) {
+                continue;
+            }
+            Long traceBackTime ;
+            if (ruleId == 1 || ruleId == 2 || ruleId == 3 ||
+                    ruleId == 5 || ruleId == 6 || ruleId == 7 || ruleId == 8) {
+                traceBackTime = TimeParaser.OneHourAgo(recordTime);
+            } else if (ruleId == 4) {
+                traceBackTime = TimeParaser.OneDayAgo(recordTime);
+            } else {
+                traceBackTime = TimeParaser.NormalHourAgo(recordTime);
+            }
+
+            //追溯。
+            List<String> list = orderInRedisHelper.traceOrderFromRedis(channelCode, msisdn, traceBackTime, ruleId);
+            for (String order : list) {
+                String[] orderFields = order.split("\\|");
+//              0 channelCode + "|" + 1 msisdn + "|" + 2 recordTime;
+//              3 realInfoFee + "|" + 4 provinceId + "|" + 5 contentId + "|" + 6 contentType + "|" + 7 rulesInRedis;
+                collector.emit(StreamId.REDISREALTIMEDATA.name(),
+                        new Values(orderFields[2], orderFields[3], orderFields[0], orderFields[4],
+                                orderFields[5], orderFields[6], ruleId));
+            }
+        }
     }
 
     @Override

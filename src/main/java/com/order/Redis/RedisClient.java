@@ -1,5 +1,6 @@
 package com.order.Redis;
 
+import com.order.util.OrderRecord;
 import com.order.util.TimeParaser;
 import redis.clients.jedis.*;
 
@@ -55,5 +56,33 @@ public class RedisClient implements Serializable{
         } else {
             return -1.0;
         }
+    }
+
+    public void putOrderInRedis(String key, String value) {
+        jedis.set(key, value);
+        jedis.expireAt(key, TimeParaser.getTomorrowZeroOclockMillis());
+    }
+
+
+//    String redisOrderKey = channelCode + "|" + msisdn + "|" + recordTime;
+//    String redisOrderValue = realInfoFee + "|" + provinceId + "|" + contentId + "|" + contentType + "|" + rulesInRedis;
+    public List<String> getOrderInRedis(String orderKeyInRedis, Long traceTime, int ruleId) {
+        List<String> tracebackOrders = new ArrayList<String>();
+        Iterator<String> it = jedis.keys(orderKeyInRedis).iterator();
+        while (it.hasNext()) {
+            String eachKey = it.next();
+            String[] fields = eachKey.split("\\|");
+            String value = jedis.get(eachKey);
+            //找到要追溯的记录。然后根据时间将追溯记录让如List中。
+            if (Long.parseLong(fields[2]) < traceTime) {
+                tracebackOrders.add(eachKey + "|" + value);
+            }
+            //追溯过后将字段修改为1.
+            String[] valuesFields = value.split("\\|");
+            StringBuffer sb = new StringBuffer(valuesFields[4]);
+            sb.setCharAt(ruleId - 1, '1');
+            jedis.set(eachKey, valuesFields[0] + "|" + valuesFields[1] + "|" + valuesFields[2] + "|" + valuesFields[3] + "|" + sb.toString());
+        }
+        return tracebackOrders;
     }
 }
