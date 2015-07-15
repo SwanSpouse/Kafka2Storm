@@ -56,30 +56,30 @@ public class ExceptOrderTopo {
          *
          */
         //浏览话单发射、分词bolt
-        builder.setSpout(StreamId.Portal_Pageview.name(), new KafkaSpout(pageViewSpoutConfigTopic), 16);
-        builder.setBolt(StreamId.PageViewSplit.name(), new PageviewSplit(), 120)
+        builder.setSpout(StreamId.Portal_Pageview.name(), new KafkaSpout(pageViewSpoutConfigTopic), 8);
+        builder.setBolt(StreamId.PageViewSplit.name(), new PageviewSplit(), 60)
                 .shuffleGrouping(StreamId.Portal_Pageview.name());
 
         //订购话单发射、分词bolt
-        builder.setSpout(StreamId.report_cdr.name(), new KafkaSpout(orderSpoutConfigTopic), 8);
-        builder.setBolt(StreamId.OrderSplit.name(), new OrderSplit(), 150)
+        builder.setSpout(StreamId.report_cdr.name(), new KafkaSpout(orderSpoutConfigTopic), 3);
+        builder.setBolt(StreamId.OrderSplit.name(), new OrderSplit(), 5)
                 .shuffleGrouping(StreamId.report_cdr.name());
 
         //统计bolt
-        builder.setBolt(StreamId.StatisticRedisBolt.name(), new StatisticsRedisBolt(), 600)
+        builder.setBolt(StreamId.StatisticRedisBolt.name(), new StatisticsRedisBolt(), 200)
                 .fieldsGrouping(StreamId.PageViewSplit.name(), StreamId.BROWSEDATA.name(), new Fields(FName.MSISDN.name()))
                 .fieldsGrouping(StreamId.OrderSplit.name(), StreamId.ORDERDATA.name(), new Fields(FName.MSISDN.name()));
 
         //仓库入库bolt
-        builder.setBolt(StreamId.DataWarehouseRedisBolt.name(), new DataWarehouseRedisBolt(), 400)
+        builder.setBolt(StreamId.DataWarehouseRedisBolt.name(), new DataWarehouseRedisBolt(), 10)
                 .fieldsGrouping(StreamId.StatisticRedisBolt.name(), StreamId.REDISDATASTREAM.name(), new Fields(FName.MSISDN.name()));
         //实时输出接口bolt
-        builder.setBolt(StreamId.RealTimeOutputRedisBolt.name(), new RealTimeOutputRedisBolt(), 400)
+        builder.setBolt(StreamId.RealTimeOutputRedisBolt.name(), new RealTimeOutputRedisBolt(), 10)
                 .fieldsGrouping(StreamId.DataWarehouseRedisBolt.name(), StreamId.REDISREALTIMEDATA.name(),
                         new Fields(FName.CHANNELCODE.name(), FName.PROVINCEID.name(), FName.CONTENTID.name(), FName.CONTENTTYPE.name()));
 
         // Run Topo on Cluster
-        conf.setNumWorkers(100);
+        conf.setNumWorkers(30);
         conf.setNumAckers(0);
 //        conf.setMaxSpoutPending(10000);
 //        conf.setMessageTimeoutSecs(30);
