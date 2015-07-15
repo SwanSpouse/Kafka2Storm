@@ -1,4 +1,4 @@
-package com.order.bolt.Redis;
+package com.order.bolt;
 
 import backtype.storm.topology.BasicOutputCollector;
 import backtype.storm.topology.OutputFieldsDeclarer;

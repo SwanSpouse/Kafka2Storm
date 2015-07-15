@@ -1,4 +1,4 @@
-package com.order.bolt.Redis;
+package com.order.bolt;
 
 /**
  * Created by LiMingji on 15/7/13.

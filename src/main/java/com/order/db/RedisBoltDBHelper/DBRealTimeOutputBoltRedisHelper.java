@@ -4,7 +4,7 @@ package com.order.db.RedisBoltDBHelper;
  * Created by LiMingji on 15/7/13.
  */
 
-import com.order.bolt.Redis.RealTimeOutputDBItem;
+import com.order.bolt.Bean.RealTimeOutputDBItem;
 import com.order.constant.Rules;
 import com.order.db.DBHelper.DBTimer;
 import com.order.db.JDBCUtil;
@@ -15,7 +15,6 @@ import org.apache.log4j.Logger;
 import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
@@ -88,41 +87,12 @@ public class DBRealTimeOutputBoltRedisHelper implements Serializable {
         }
         String currentTime = TimeParaser.formatTimeInDay(time);
 
+        //一个Item对应数据库里的一条记录。
         RealTimeOutputDBItem item = new RealTimeOutputDBItem();
         item.setRecordTime(currentTime).setProvinceId(provinceId).setChannelCode(channelCode)
                 .setContentId(contentId).setContentType(contentType).setRule(rules).setRealInfoFee(realInfoFee);
 
         dbItems.add(item);
-    }
-
-    /* 获取异常规则对应的数字编号 */
-    public static int getRuleNumFromString(String rule) {
-        if (rule.equals(Rules.ONE.name())) {
-            return 1;
-        } else if (rule.equals(Rules.TWO.name())) {
-            return 2;
-        } else if (rule.equals(Rules.THREE.name())) {
-            return 3;
-        } else if (rule.equals(Rules.FOUR.name())) {
-            return 4;
-        } else if (rule.equals(Rules.FIVE.name())) {
-            return 5;
-        } else if (rule.equals(Rules.SIX.name())) {
-            return 6;
-        } else if (rule.equals(Rules.SEVEN.name())) {
-            return 7;
-        } else if (rule.equals(Rules.EIGHT.name())) {
-            return 8;
-        } else if (rule.equals(Rules.NINE.name())) {
-            return 9;
-        } else if (rule.equals(Rules.TEN.name())) {
-            return 10;
-        } else if (rule.equals(Rules.ELEVEN.name())) {
-            return 11;
-        } else if (rule.equals(Rules.TWELVE.name())) {
-            return 12;
-        }
-        return 0;
     }
 }
 

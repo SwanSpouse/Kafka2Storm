@@ -1,4 +1,4 @@
-package com.order.bolt.Redis;
+package com.order.bolt.Bean;
 
 import java.io.Serializable;
 

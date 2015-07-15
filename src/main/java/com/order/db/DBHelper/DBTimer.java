@@ -1,7 +1,6 @@
 package com.order.db.DBHelper;
 
-import com.order.Redis.RedisClient;
-import com.order.bolt.Redis.RealTimeOutputDBItem;
+import com.order.bolt.Bean.RealTimeOutputDBItem;
 import com.order.constant.Constant;
 import com.order.db.JDBCUtil;
 import com.order.db.RedisBoltDBHelper.DBRealTimeOutputBoltRedisHelper;
@@ -27,10 +26,11 @@ public class DBTimer extends Thread {
     // 新增两个MAP用于入库时的内存复制
     private ConcurrentLinkedQueue<RealTimeOutputDBItem> dbItemsTmp;
 
-    //入库间隔为1分钟
+    //实时入库  入库间隔为1分钟
     private static final long updateInterval = Constant.ONE_MINUTE * 1000L;
     
     public DBTimer(DBRealTimeOutputBoltRedisHelper helper) {
+        dbItemsTmp = new ConcurrentLinkedQueue<RealTimeOutputDBItem>();
         this.helper = helper;
         totalFeeRedisHelper = new DBTotalFeeRedisHelper();
     }
@@ -146,7 +146,6 @@ public class DBTimer extends Thread {
             prepStmt.setInt(12, Integer.parseInt(ruleId));
             prepStmt.execute();
             prepStmt.execute("commit");
-            //log.info("数据插入成功:" + insertDataSql);
         } catch (SQLException e) {
             log.error("插入sql错误:" + insertDataSql);
             e.printStackTrace();
@@ -187,7 +186,6 @@ public class DBTimer extends Thread {
             int count = prepStmt.executeUpdate();
             prepStmt.execute("commit");
             return count;
-            //log.info("DBTimer 更新数据成功" + updateSql);
         } catch (SQLException e) {
             log.error("更新sql错误" + updateSql);
             e.printStackTrace();
