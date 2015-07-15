@@ -80,7 +80,10 @@ public class DataWarehouseRedisBolt extends BaseBasicBolt {
             contentType = 3 + "";
             contentId = bookId;
         }
+
+        //TODO 这里应该有追溯。从数据库和内存中将追溯的数据再发出去。
         dbHelper.insertDataToCache(recordTime, msisdn, sessionId, channelCode, bookId, productId, realInfoFee, rule);
+
         collector.emit(StreamId.REDISREALTIMEDATA.name(),
                 new Values(recordTime, realInfoFee, channelCode, provinceId,
                         contentId, contentType, rule));
