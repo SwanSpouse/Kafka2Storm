@@ -84,7 +84,7 @@ public class ExceptOrderTopo {
         conf.setNumWorkers(30);
         conf.setNumAckers(10);
         conf.setMaxSpoutPending(100000);
-        conf.setMessageTimeoutSecs(30);
+        conf.setMessageTimeoutSecs(60000);
         conf.put(Config.TOPOLOGY_RECEIVER_BUFFER_SIZE,             8);
         conf.put(Config.TOPOLOGY_TRANSFER_BUFFER_SIZE,            32);
         conf.put(Config.TOPOLOGY_EXECUTOR_RECEIVE_BUFFER_SIZE, 16384);
