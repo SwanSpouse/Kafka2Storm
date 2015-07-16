@@ -36,11 +36,13 @@ public class ExceptOrderTopo {
         SpoutConfig pageViewSpoutConfigTopic = new SpoutConfig(brokerHosts, topics[0], zkRoot, kafkaZkId);
         pageViewSpoutConfigTopic.scheme = new SchemeAsMultiScheme(new StringScheme());
         pageViewSpoutConfigTopic.forceFromStart = false;
+        pageViewSpoutConfigTopic.socketTimeoutMs = 30000;
 
         //订购话单
         SpoutConfig orderSpoutConfigTopic = new SpoutConfig(brokerHosts, topics[1], zkRoot, kafkaZkId);
         orderSpoutConfigTopic.scheme = new SchemeAsMultiScheme(new StringScheme());
         orderSpoutConfigTopic.forceFromStart = false;
+        pageViewSpoutConfigTopic.socketTimeoutMs = 30000;
 
         Config conf = new Config();
         TopologyBuilder builder = new TopologyBuilder();
@@ -83,6 +85,10 @@ public class ExceptOrderTopo {
         conf.setNumAckers(10);
         conf.setMaxSpoutPending(100000);
         conf.setMessageTimeoutSecs(30);
+        conf.put(Config.TOPOLOGY_RECEIVER_BUFFER_SIZE,             8);
+        conf.put(Config.TOPOLOGY_TRANSFER_BUFFER_SIZE,            32);
+        conf.put(Config.TOPOLOGY_EXECUTOR_RECEIVE_BUFFER_SIZE, 16384);
+        conf.put(Config.TOPOLOGY_EXECUTOR_SEND_BUFFER_SIZE,    16384);
         StormSubmitter.submitTopology(StormConf.TOPONAME, conf, builder.createTopology());
     }
 }
