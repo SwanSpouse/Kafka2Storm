@@ -232,7 +232,7 @@ public class SessionInfo implements Serializable{
     /**
      * 检测规则 5
      * 规则5：一个用户日渠道ID中的按本订购费>10元，该用户异常渠道当天所有信息费为异常
-     * orderType=1
+     * orderType=1 系统中的单位是分。所以下面的10元要换成1000分。
      *
      * @param callback
      */
@@ -243,7 +243,7 @@ public class SessionInfo implements Serializable{
         Pair<String, Double> userChannelInfoFee = new Pair<String, Double>(channelId, null);
         if (channelOrderpv.contains(userChannelInfoFee)) {
             Pair<String, Double> currentUserChannelInFee = channelOrderpv.get(userChannelInfoFee);
-            if (currentUserChannelInFee.getValue() > 10) {
+            if (currentUserChannelInFee.getValue() > 1000) {
                 callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
                         channelId, productId, Rules.FIVE.name(), provinceId, orderType, bookId);
             }
