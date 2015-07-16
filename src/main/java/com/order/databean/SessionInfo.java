@@ -88,7 +88,8 @@ public class SessionInfo implements Serializable{
         }
         if (bookOrderId != null) {
             //为了方便规则7的判断。在此将orderType=21定义为批量订购
-            if (orderType == 2 && bookChapterOrderId == null) {
+            if ( (orderType == 2 && bookChapterOrderId == null) ||
+                    (orderType == 2 && bookChapterOrderId.trim().equals("")))  {
                 this.orderType = 21;
             }
             bookOrderPv.put(bookOrderId, orderType, lastUpdateTime);
@@ -134,7 +135,8 @@ public class SessionInfo implements Serializable{
             bookReadPv.put(bookReadId, lastUpdateTime);
         }
         if (bookOrderId != null) {
-            if (orderType == 2 && bookChapterOrderId == null) {
+            if ( (orderType == 2 && bookChapterOrderId == null) ||
+                    (orderType == 2 && bookChapterOrderId.trim().equals("")))  {
                 this.orderType = 21;
             }
             bookOrderPv.put(bookOrderId, orderType, lastUpdateTime);
