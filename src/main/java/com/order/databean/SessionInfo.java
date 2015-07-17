@@ -63,6 +63,14 @@ public class SessionInfo implements Serializable{
     public SessionInfo(String sessionId, String msisdnId, String bookReadId,
                        String bookOrderId, String bookChapterOrderId, Long currentTime,
                        int orderType, double realInfoFee, String channelId, String productId, String provinceId) {
+
+        this.sessionId = sessionId;
+        this.msisdnId = msisdnId;
+        this.orderType = orderType;
+        this.realInfoFee = realInfoFee;
+        this.channelId = channelId;
+        this.bookId = bookOrderId;
+
         if (currentTime != null) {
             this.lastUpdateTime = currentTime;
         } else {
@@ -72,12 +80,6 @@ public class SessionInfo implements Serializable{
             log.error("sessionId || msisdn should not be null");
             throw new IllegalArgumentException("sessionId || msisdn should not be null");
         }
-        this.sessionId = sessionId;
-        this.msisdnId = msisdnId;
-        this.orderType = orderType;
-        this.realInfoFee = realInfoFee;
-        this.channelId = channelId;
-        this.bookId = bookOrderId;
 
         if (productId != null) {
             this.productId = productId;
@@ -91,7 +93,7 @@ public class SessionInfo implements Serializable{
                     (orderType == 2 && bookChapterOrderId.trim().equals("")))  {
                 this.orderType = 21;
             }
-            bookOrderPv.put(bookOrderId, orderType, lastUpdateTime);
+            bookOrderPv.put(bookOrderId, this.orderType, lastUpdateTime);
         }
 
         this.provinceId = provinceId;
@@ -129,6 +131,14 @@ public class SessionInfo implements Serializable{
     public void updateSessionInfo(String sessionId, String bookReadId, String bookOrderId, String bookChapterOrderId,
                                   Long currentTime, int orderType, Double realInfoFee,
                                   String channelId, String productId, String provinceId) {
+
+        this.sessionId = sessionId;
+        this.bookId = bookOrderId;
+        this.provinceId = provinceId;
+        this.orderType = orderType;
+        this.realInfoFee = realInfoFee;
+        this.channelId = channelId;
+
         if (currentTime != null) {
             lastUpdateTime = currentTime;
         } else {
@@ -142,15 +152,8 @@ public class SessionInfo implements Serializable{
                     (orderType == 2 && bookChapterOrderId.trim().equals("")))  {
                 this.orderType = 21;
             }
-            bookOrderPv.put(bookOrderId, orderType, lastUpdateTime);
+            bookOrderPv.put(bookOrderId, this.orderType, lastUpdateTime);
         }
-
-        this.sessionId = sessionId;
-        this.bookId = bookOrderId;
-        this.provinceId = provinceId;
-        this.orderType = orderType;
-        this.realInfoFee = realInfoFee;
-        this.channelId = channelId;
 
         if (productId != null) {
             this.productId = productId;
