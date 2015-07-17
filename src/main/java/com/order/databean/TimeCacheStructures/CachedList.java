@@ -1,5 +1,8 @@
 package com.order.databean.TimeCacheStructures;
 
+import clojure.lang.IPersistentMap;
+import clojure.lang.Obj;
+
 import java.io.Serializable;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -45,11 +48,14 @@ public class CachedList<T> implements Serializable {
                 list.remove(key);
                 continue;
             }
-            Iterator<Long> it = clickTimes.iterator();
-            while (it.hasNext()) {
-                long currentTime = it.next();
-                if (currentTime <= timeThreshold) {
-                    it.remove();
+            //锁住
+            synchronized (new Object()) {
+                Iterator<Long> it = clickTimes.iterator();
+                while (it.hasNext()) {
+                    long currentTime = it.next();
+                    if (currentTime <= timeThreshold) {
+                        it.remove();
+                    }
                 }
             }
             if (clickTimes.size() == 0) {
