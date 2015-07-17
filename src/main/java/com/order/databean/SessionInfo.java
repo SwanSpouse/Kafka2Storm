@@ -51,7 +51,6 @@ public class SessionInfo implements Serializable{
     private CachedList<String> orderChannelCodeByDay = new CachedList<String>(Constant.ONE_DAY);
 
     @Override
-
     public String toString() {
         String context = "msisdnId: " + msisdnId + " realInfoFee : " + realInfoFee + " channelId " + channelId +
                 " lastUpdateTime : " + new Date(lastUpdateTime) + " orderType: " + orderType + " \n ";
@@ -108,6 +107,10 @@ public class SessionInfo implements Serializable{
                 channelOrderpv.put(pair, lastUpdateTime);
             }
         }
+        //如果不是订购话单就不需要判断扣费的二级渠道了。
+        if (orderType == -1) {
+            return;
+        }
         //将用户channelCode对应的二级渠道进行保存
         if (DBStatisticBoltHelper.parameterId2SecChannelId == null|| DBStatisticBoltHelper.parameterId2SecChannelId.isEmpty()) {
             try {
@@ -162,6 +165,10 @@ public class SessionInfo implements Serializable{
             } else {
                 channelOrderpv.put(pair, lastUpdateTime);
             }
+        }
+        //如果不是订购话单就不需要判断扣费的二级渠道了。
+        if (orderType == -1) {
+            return;
         }
         //将用户channelCode对应的二级渠道进行保存
         if (DBStatisticBoltHelper.parameterId2SecChannelId == null || DBStatisticBoltHelper.parameterId2SecChannelId.isEmpty()) {
@@ -293,6 +300,7 @@ public class SessionInfo implements Serializable{
             callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
                     channelId, productId, Rules.SEVEN.name(), provinceId, orderType, bookId);
         }
+        log.info("完本订购数量+批量订购： " + bookOrderNums + " 订购图书的pv: " + bookReadPvs);
     }
 
     /**
@@ -331,11 +339,5 @@ public class SessionInfo implements Serializable{
             callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
                     channelId, productId, Rules.TWELVE.name(), provinceId, orderType,bookId);
         }
-    }
-
-    public boolean isOutOfTime() {
-        return bookOrderPv.sizeOfOrderBooks(lastUpdateTime) == 0 &&
-                bookReadPv.size(lastUpdateTime) == 0 &&
-                channelOrderpv.size(lastUpdateTime) == 0;
     }
 }

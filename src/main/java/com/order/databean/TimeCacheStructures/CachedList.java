@@ -1,8 +1,5 @@
 package com.order.databean.TimeCacheStructures;
 
-import clojure.lang.IPersistentMap;
-import clojure.lang.Obj;
-
 import java.io.Serializable;
 import java.util.Iterator;
 import java.util.LinkedList;
