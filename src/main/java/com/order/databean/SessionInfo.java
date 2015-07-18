@@ -289,21 +289,19 @@ public class SessionInfo implements Serializable{
      * @param callback
      */
     public void checkRule7(final RulesCallback callback) {
-        if (orderType != 1 || orderType != 21) {
-            return;
+        if (orderType == 1 || orderType == 21) {
+            int bookOrderNums = 0;
+            int bookReadPvs = 0;
+            for (String bookId : bookOrderPv.keySet()) {
+                bookOrderNums += bookOrderPv.sizeOfBookOrderTimesWithOrderType(bookId, 1)
+                        + bookOrderPv.sizeOfBookOrderTimesWithOrderType(bookId, 21);
+                bookReadPvs += bookReadPv.sizeWithTimeThreshold(bookId, lastUpdateTime, Constant.FIVE_MINUTES);
+            }
+            if (bookOrderNums >= 2 && bookOrderNums < 5 * bookReadPvs) {
+                callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
+                        channelId, productId, Rules.SEVEN.name(), provinceId, orderType, bookId);
+            }
         }
-        int bookOrderNums = 0;
-        int bookReadPvs = 0;
-        for (String bookId : bookOrderPv.keySet()) {
-            bookOrderNums += bookOrderPv.sizeOfBookOrderTimesWithOrderType(bookId, 1)
-                    + bookOrderPv.sizeOfBookOrderTimesWithOrderType(bookId, 21);
-            bookReadPvs += bookReadPv.sizeWithTimeThreshold(bookId, lastUpdateTime, Constant.FIVE_MINUTES);
-        }
-        if (bookOrderNums >= 2 && bookOrderNums < 5 * bookReadPvs) {
-            callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
-                    channelId, productId, Rules.SEVEN.name(), provinceId, orderType, bookId);
-        }
-        log.info("完本订购数量+批量订购： " + bookOrderNums + " 订购图书的pv: " + bookReadPvs);
     }
 
     /**
