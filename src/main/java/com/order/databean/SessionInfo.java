@@ -297,7 +297,7 @@ public class SessionInfo implements Serializable{
                         + bookOrderPv.sizeOfBookOrderTimesWithOrderType(bookId, 21);
                 bookReadPvs += bookReadPv.sizeWithTimeThreshold(bookId, lastUpdateTime, Constant.FIVE_MINUTES);
             }
-            if (bookOrderNums >= 2 && bookOrderNums < 5 * bookReadPvs) {
+            if (bookOrderNums >= 2 && bookReadPvs <= 5 * bookOrderNums) {
                 callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
                         channelId, productId, Rules.SEVEN.name(), provinceId, orderType, bookId);
             }
