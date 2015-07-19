@@ -333,12 +333,11 @@ public class SessionInfo implements Serializable{
      */
     private transient Thread rule12Checker = null;
     public void checkRule12(String platform, final RulesCallback callback) {
-        if (orderType != 4 || Integer.parseInt(platform) == 6) {
-            return;
-        }
-        if (bookReadPv.size(lastUpdateTime) == 0) {
-            callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
-                    channelId, productId, Rules.TWELVE.name(), provinceId, orderType,bookId);
+        if (orderType == 4 && Integer.parseInt(platform) != 6) {
+            if (bookReadPv.size(lastUpdateTime) == 0) {
+                callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
+                        channelId, productId, Rules.TWELVE.name(), provinceId, orderType, bookId);
+            }
         }
     }
 }
