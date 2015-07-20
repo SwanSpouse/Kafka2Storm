@@ -203,10 +203,10 @@ public class DBTimer extends Thread {
 	            	continue;
 	            }
 
-	            String chl1 = null;
-	            String chl2 = null;
-	            String chl3 = null;
-	            if (!DBStatisticBoltHelper.parameterId2ChannelIds.containsKey(channelCode)) {
+	            String chl1;
+	            String chl2;
+                String chl3;
+                if (!DBStatisticBoltHelper.parameterId2ChannelIds.containsKey(channelCode)) {
 	                chl1 = chl2 = chl3 = "NULL";
 	            } else {
 	                String[] chls = DBStatisticBoltHelper.parameterId2ChannelIds.get(channelCode).split("\\|");

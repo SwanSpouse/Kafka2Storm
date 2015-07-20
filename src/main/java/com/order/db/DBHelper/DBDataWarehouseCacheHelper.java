@@ -52,10 +52,9 @@ public class DBDataWarehouseCacheHelper implements Serializable {
 	private transient Thread cleaner = null; // 清理线程
     private transient Object LOCK = null;
 
-	private final int clearTimer = 1 * 5 * 60; // 每5分钟秒清理一次
-	private final long historyTimer = 1 * 60 * 60; // 每次清理60分钟前的所有订购，并入库
-	private long dropnum = 0;
-	
+	private final int clearTimer = 1 * 5 * 60; // 每5分钟秒清理一次，清理historyTime前的数据。
+	private final long historyTime = 1 * 60 * 60; // 每次清理60分钟前的所有订购，并入库
+
 	// 用户订购记录
 	private ConcurrentHashMap<String, ArrayList<OrderRecord>> orderMap;
 
@@ -264,7 +263,7 @@ public class DBDataWarehouseCacheHelper implements Serializable {
 		synchronized (LOCK) {
 			log.info("====Begin cleanAndToDB ");
 			long currentTime = System.currentTimeMillis();
-			currentTime = currentTime - 1000 * historyTimer;
+			currentTime = currentTime - 1000 * historyTime;
 
 			log.info("====Begin cleanAndToDB before "
 					+ TimeParaser.formatTimeInSeconds(currentTime));
@@ -272,11 +271,9 @@ public class DBDataWarehouseCacheHelper implements Serializable {
 			ArrayList<OrderRecord> insertList = new ArrayList<OrderRecord>();
 
 			// 遍历
-			Iterator<Map.Entry<String, ArrayList<OrderRecord>>> itMsisdn = orderMap
-					.entrySet().iterator();
+			Iterator<Map.Entry<String, ArrayList<OrderRecord>>> itMsisdn = orderMap.entrySet().iterator();
 			while (itMsisdn.hasNext()) {
-				Map.Entry<String, ArrayList<OrderRecord>> entry = itMsisdn
-						.next();
+				Map.Entry<String, ArrayList<OrderRecord>> entry = itMsisdn.next();
 				// 获取一个用户的订购列表
 				ArrayList<OrderRecord> orderList = entry.getValue();
 				Iterator<OrderRecord> itOrder = orderList.iterator();
@@ -287,7 +284,6 @@ public class DBDataWarehouseCacheHelper implements Serializable {
 					if (oneRecord.getRecordTime() < currentTime) {
 						// 要入库的订购记录列表
 						insertList.add(oneRecord);
-						count("drop");
 						// 删除此条订购记录
 						itOrder.remove();
 					}
@@ -354,16 +350,6 @@ public class DBDataWarehouseCacheHelper implements Serializable {
 		}
 	}
 	
-    public void count(String colume) {
-    	if (colume.equals("drop")) {
-    		dropnum++;
-	    	if (dropnum >= 1000) {
-	    		DBOrderCount.updateDbSum("DataWarehouseBolt", "drop", 1000);
-	    		dropnum=0;
-	    	}
-	    }
-    }
-
 	public String toString() {
 		String result = "\n size of order Map is "
 				+ String.valueOf(orderMap.size()) + "\n";
