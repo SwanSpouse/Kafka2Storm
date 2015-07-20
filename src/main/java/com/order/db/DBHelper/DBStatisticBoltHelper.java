@@ -68,6 +68,7 @@ public class DBStatisticBoltHelper implements Serializable {
                 parameterId2SecChannelId.put(parameterId, secondChannelId);
                 parameterId2ChannelIds.put(parameterId, firstChannelId + "|" + secondChannelId + "|" + thirdChannelId);
             }
+            log.info("加载二维渠道维表成功，数据条数为：" + parameterId2ChannelIds.size());
         } catch (SQLException e) {
             log.error(sql + ":insert data to DB is failed.");
             e.printStackTrace();

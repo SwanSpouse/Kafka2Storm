@@ -59,7 +59,7 @@ public class StatisticsBolt extends BaseBasicBolt {
     
     @Override
     public void execute(Tuple input, BasicOutputCollector collector) {
-       /*if (loader == null) {
+       if (loader == null) {
             //启动线程每天3点准时load数据
             loader = new Thread(new Runnable() {
                 @Override
@@ -81,7 +81,7 @@ public class StatisticsBolt extends BaseBasicBolt {
             });
             loader.setDaemon(true);
             loader.start();
-        }*/
+        }
         if (userInfoCleaner == null) {
             userInfoCleaner = new UserInfoCleaner(this);
             userInfoCleaner.setDaemon(true);
