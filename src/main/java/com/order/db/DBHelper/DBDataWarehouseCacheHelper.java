@@ -53,7 +53,7 @@ public class DBDataWarehouseCacheHelper implements Serializable {
     private transient Object LOCK = null;
 
 	private final int clearTimer = 1 * 5 * 60; // 每5分钟秒清理一次
-	private final long historyTimer = 1 * 5 * 60; // 每次清理5分钟前的所有订购，并入库
+	private final long historyTimer = 1 * 60 * 60; // 每次清理60分钟前的所有订购，并入库
 	private long dropnum = 0;
 	
 	// 用户订购记录

@@ -121,9 +121,14 @@ public class SessionInfo implements Serializable{
                 e.printStackTrace();
             }
         }
-        String secondChannelId = DBStatisticBoltHelper.parameterId2SecChannelId.get(channelId.toUpperCase());
-        if (secondChannelId != null) {
-            this.orderChannelCodeByDay.put(secondChannelId, lastUpdateTime);
+        //在二维渠道表中找到二级渠道的话就增加到map中。找不到的话就填空。
+        if (DBStatisticBoltHelper.parameterId2SecChannelId.contains(channelId.toUpperCase())) {
+            String secondChannelId = DBStatisticBoltHelper.parameterId2SecChannelId.get(channelId.toUpperCase());
+            if (secondChannelId != null) {
+                this.orderChannelCodeByDay.put(secondChannelId, lastUpdateTime);
+            }
+        } else {
+            this.orderChannelCodeByDay.put("", lastUpdateTime);
         }
     }
 
@@ -181,9 +186,14 @@ public class SessionInfo implements Serializable{
                 e.printStackTrace();
             }
         }
-        String secondChannelId = DBStatisticBoltHelper.parameterId2SecChannelId.get(channelId.toUpperCase());
-        if (secondChannelId != null) {
-            this.orderChannelCodeByDay.put(secondChannelId, lastUpdateTime);
+        //在二维渠道表中找到二级渠道的话就增加到map中。找不到的话就填空。
+        if (DBStatisticBoltHelper.parameterId2SecChannelId.contains(channelId.toUpperCase())) {
+            String secondChannelId = DBStatisticBoltHelper.parameterId2SecChannelId.get(channelId.toUpperCase());
+            if (secondChannelId != null) {
+                this.orderChannelCodeByDay.put(secondChannelId, lastUpdateTime);
+            }
+        } else {
+            this.orderChannelCodeByDay.put("", lastUpdateTime);
         }
     }
 
