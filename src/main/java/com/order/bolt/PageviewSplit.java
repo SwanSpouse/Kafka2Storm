@@ -41,7 +41,6 @@ import java.util.Map;
 public class PageviewSplit extends BaseBasicBolt {
 
     private static final long serialVersionUID = 1L;
-private static long countMsg = 1;
     static Logger log = Logger.getLogger(PageviewSplit.class);
 
     @Override
@@ -51,9 +50,6 @@ private static long countMsg = 1;
 
     @Override
     public void execute(Tuple input, BasicOutputCollector collector) {
-if (countMsg % 5000 == 0 ) {
-    log.info("废弃浏览条数为： " + countMsg);
-}
         String line = input.getString(0);
         String[] words = line.split("\\|", -1);
         if (words.length >= 57) {
@@ -72,7 +68,6 @@ if (countMsg % 5000 == 0 ) {
                         channelCode, bookId, chapterId));
             }
         } else {
-countMsg += 1;
             log.info("Error data: " + line);
         }
     }

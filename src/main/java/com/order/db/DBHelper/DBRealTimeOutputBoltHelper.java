@@ -2,14 +2,11 @@ package com.order.db.DBHelper;
 
 import com.order.constant.Rules;
 import com.order.db.JDBCUtil;
-import com.order.util.StormConf;
 import com.order.util.TimeParaser;
 import org.apache.log4j.Logger;
 
 import java.io.Serializable;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.Map;
@@ -50,24 +47,6 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
         }
         return conn;
     }
-
-
-	public void cleanup() {
-		if (LOCK == null)
-			LOCK = new Object();
-		synchronized (LOCK) {
-			try {
-				((DBTimer) storageData2DBTimer).updateAllTotalFeeToDB();
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
-			try {
-				((DBTimer) storageData2DBTimer).updateAllAbnormalFeeToDB();
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
-		}
-	}
 
 	public DBRealTimeOutputBoltHelper() {
         if (storageData2DBTimer == null) {
@@ -156,102 +135,6 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
 		}
     }
 
-    private double getTotalFeeFromDB(String currentTime, String provinceId, String channelCode,
-                                     String contentId, String contentType) throws SQLException {
-        String selectSql = "SELECT ODR_FEE FROM " + StormConf.realTimeOutputTable
-                + " WHERE RECORD_DAY=? AND PROVINCE_ID=? AND SALE_PARM=? "
-                + " AND CONTENT_ID=? AND CONTENT_TYPE=? AND RULE_ID=0 ";
-        ResultSet rs = null;
-        PreparedStatement prepStmt = null;
-        double totalFee = 0;
-        Connection conn = null;
-        try {
-            conn = JDBCUtil.connUtil.getConnection();
-            conn.setAutoCommit(false);
-            prepStmt = conn.prepareStatement(selectSql);
-            prepStmt.setString(1, currentTime);
-            prepStmt.setString(2, provinceId);
-            prepStmt.setString(3, channelCode);
-            prepStmt.setString(4, contentId);
-            prepStmt.setString(5, contentType);
-            rs = prepStmt.executeQuery();
-            while (rs.next()) {
-                totalFee = rs.getFloat("ODR_FEE");
-            }
-            rs.close();
-            prepStmt.close();
-            //log.info("Get fee " + String.valueOf(totalFee));
-            return totalFee;
-        } catch (SQLException e) {
-            log.error("查询sql错误" + selectSql);
-            e.printStackTrace();
-        } finally {
-            if (rs != null) {
-                rs.close();
-            }
-            if (prepStmt != null) {
-                prepStmt.close();
-            }
-            if (conn != null) {
-                conn.close();
-                conn = null;
-            }
-        }
-        return totalFee;
-    }
-
-    private void getAllTotalFeeFromDB() throws SQLException {
-    	log.info("====getAllTotalFeeFromDB: Begin get all totalFee From DB====" );
-        String selectSql = "SELECT PROVINCE_ID,SALE_PARM,CONTENT_ID,CONTENT_TYPE," +
-        		"max(ODR_ABN_FEE) ODR_ABN_FEE,max(ODR_FEE) ODR_FEE " +
-        		"FROM " + StormConf.realTimeOutputTable + " WHERE RECORD_DAY=? " +
-        		"group by PROVINCE_ID, SALE_PARM, CONTENT_ID, CONTENT_TYPE";
-        ResultSet rs = null;
-        PreparedStatement prepStmt = null;
-        try {
-            conn = JDBCUtil.connUtil.getConnection();
-            conn.setAutoCommit(false);
-            prepStmt = conn.prepareStatement(selectSql);
-            String date = TimeParaser.formatTimeInDay(System.currentTimeMillis());
-            prepStmt.setString(1, date);
-
-            rs = prepStmt.executeQuery();
-            while (rs.next()) {
-                String provinceId = rs.getString("PROVINCE_ID");
-                String channelCode = rs.getString("SALE_PARM");
-                String content = rs.getString("CONTENT_ID");
-                String contentType = rs.getString("CONTENT_TYPE");
-                double abFee = rs.getFloat("ODR_ABN_FEE");
-                double totalFee = rs.getFloat("ODR_FEE");
-                // 防止数据库中异常费用比总费用大
-                if (abFee > totalFee) {
-                	totalFee = abFee;
-                }
-                String totalFeeKey = date + "|" + provinceId + "|" + channelCode + "|"
-                        + content + "|" + contentType;
-                totalFeeInDB.put(totalFeeKey, totalFee);
-                //log.info("======totalFromDBInfo is " + totalFeeKey + "====" + String.valueOf(totalFee)); //test
-            }
-            log.info("====getAllTotalFeeFromDB: Init totalFee map size is " + String.valueOf(this.totalFeeInDB.size()) + "!");
-        } catch (SQLException e) {
-            log.error("查询sql错误" + selectSql);
-            e.printStackTrace();
-        } finally {
-            if (rs != null) {
-                rs.close();
-            }
-            if (prepStmt != null) {
-                prepStmt.close();
-            }
-            if (conn != null) {
-                conn.close();
-                conn = null;
-            }
-        }
-        return;
-    }
-
-
     /* 获取异常规则对应的数字编号 */
     public static int getRuleNumFromString(String rule) {
         if (rule.equals(Rules.ONE.name())) {
@@ -300,8 +183,4 @@ public class DBRealTimeOutputBoltHelper implements Serializable {
 
         return result;
     }
-
-	public void checkClear() {
-		((DBTimer) storageData2DBTimer).checkClear();		
-	}
 }

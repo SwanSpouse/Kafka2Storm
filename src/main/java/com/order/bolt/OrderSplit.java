@@ -5,7 +5,6 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
-import com.order.db.DBHelper.DBOrderCount;
 import com.order.util.FName;
 import com.order.util.StreamId;
 
@@ -50,7 +49,6 @@ public class OrderSplit extends BaseBasicBolt {
 
     private static final long serialVersionUID = 1L;
     static Logger log = Logger.getLogger(OrderSplit.class);
-    private long recvnum = 0, dropnum = 0, sendnum = 0;
 
     @Override
     public void prepare(Map conf, TopologyContext context) {
@@ -83,7 +81,6 @@ public class OrderSplit extends BaseBasicBolt {
 
     @Override
     public void execute(Tuple input, BasicOutputCollector collector) {
-    	count("recv");
         String line = splitJson(input.getString(0));
         String[] words = line.split("\\|", -1);
         if (words.length >= 49) {
@@ -108,34 +105,9 @@ public class OrderSplit extends BaseBasicBolt {
             collector.emit(StreamId.ORDERDATA.name(), new Values(msisdn,
                     recordTime, terminal, platform, orderType, productID, bookID, chapterID,
                     channelCode, cost, provinceId, wapIp, sessionId, promotionid));
-            count("send");
-        } else {
-        	count("drop");
         }
     }
 
-    public void count(String colume) {
-    	if (colume.equals("recv")) {
-	    	recvnum++;
-	    	if (recvnum >= 1000) {
-	    		DBOrderCount.updateDbSum("OrderSplit", "recv", 1000);
-	    		recvnum=0;
-	    	}
-    	} else if (colume.equals("drop")) {
-    		dropnum++;
-	    	if (dropnum >= 1000) {
-	    		DBOrderCount.updateDbSum("OrderSplit", "drop", 1000);
-	    		dropnum=0;
-	    	}
-	    } else if (colume.equals("send")) {
-	    	sendnum++;
-	    	if (sendnum >= 1000) {
-	    		DBOrderCount.updateDbSum("OrderSplit", "send", 1000);
-	    		sendnum=0;
-	    	}
-	    }
-    }
-    
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
 
         declarer.declareStream(StreamId.ORDERDATA.name(),

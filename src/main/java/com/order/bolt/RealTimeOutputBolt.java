@@ -10,7 +10,6 @@ import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseBasicBolt;
 import backtype.storm.tuple.Tuple;
 
-import com.order.db.DBHelper.DBOrderCount;
 import com.order.db.DBHelper.DBRealTimeOutputBoltHelper;
 import com.order.util.FName;
 import com.order.util.StreamId;
@@ -45,8 +44,6 @@ public class RealTimeOutputBolt extends BaseBasicBolt {
 	private static final long serialVersionUID = 1L;
 	private DBRealTimeOutputBoltHelper DBHelper = null;
     private static Logger log = Logger.getLogger(RealTimeOutputBolt.class);
-    private long recvnum = 0, dropnum = 0, sendnum = 0;
-
     @Override
     public void prepare(Map stormConf, TopologyContext context) {
         if (DBHelper == null) {
@@ -63,7 +60,6 @@ public class RealTimeOutputBolt extends BaseBasicBolt {
         //DBHelper.checkClear();
         // 开始处理消息
         if (input.getSourceStreamId().equals(StreamId.DATASTREAM2.name())) {
-        	count("recv");
             //从DataWarehouse发来的正常统计数据流
             dealNormalData(input);
         } else if (input.getSourceStreamId().equals(StreamId.ABNORMALDATASTREAM2.name())) {
@@ -71,38 +67,7 @@ public class RealTimeOutputBolt extends BaseBasicBolt {
             dealAbnormalData(input);
         }
     }
-    
-    public void count(String colume) {
-    	if (colume.equals("recv")) {
-	    	recvnum++;
-	    	if (recvnum >= 1000) {
-	    		DBOrderCount.updateDbSum("RealTimeOutputBolt", "recv", 1000);
-	    		recvnum=0;
-	    	}
-    	} else if (colume.equals("drop")) {
-    		dropnum++;
-	    	if (dropnum >= 1000) {
-	    		DBOrderCount.updateDbSum("RealTimeOutputBolt", "drop", 1000);
-	    		dropnum=0;
-	    	}
-	    } else if (colume.equals("send")) {
-	    	sendnum++;
-	    	if (sendnum >= 1000) {
-	    		DBOrderCount.updateDbSum("RealTimeOutputBolt", "send", 1000);
-	    		sendnum=0;
-	    	}
-	    }
-    }
 
-    @Override
-    public void cleanup() {
-        try {
-            DBHelper.cleanup();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-    
     /**
      * 处理正常数据流
      */
