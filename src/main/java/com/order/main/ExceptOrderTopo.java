@@ -65,7 +65,7 @@ public class ExceptOrderTopo {
                 .shuffleGrouping(StreamId.report_cdr.name());
 
         //统计bolt
-        builder.setBolt(StreamId.StatisticsBolt.name(), new StatisticsBolt(), 200)
+        builder.setBolt(StreamId.StatisticsBolt.name(), new StatisticsBolt(), 100)
                 .fieldsGrouping(StreamId.PageViewSplit.name(), StreamId.BROWSEDATA.name(), new Fields(FName.MSISDN.name()))
                 .fieldsGrouping(StreamId.OrderSplit.name(), StreamId.ORDERDATA.name(), new Fields(FName.MSISDN.name()));
 
@@ -81,7 +81,7 @@ public class ExceptOrderTopo {
                         new Fields(FName.CHANNELCODE.name(), FName.PROVINCEID.name(), FName.CONTENTID.name(), FName.CONTENTTYPE.name()));
 
         // Run Topo on Cluster
-        conf.setNumWorkers(30);
+        conf.setNumWorkers(10);
         conf.setNumAckers(10);
         conf.setMaxSpoutPending(100000);
         conf.setMessageTimeoutSecs(60000);
