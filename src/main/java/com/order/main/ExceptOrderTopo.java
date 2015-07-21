@@ -56,7 +56,7 @@ public class ExceptOrderTopo {
          */
         //浏览话单发射、分词bolt
         builder.setSpout(StreamId.Portal_Pageview.name(), new KafkaSpout(pageViewSpoutConfigTopic), 8);
-        builder.setBolt(StreamId.PageViewSplit.name(), new PageviewSplit(), 60)
+        builder.setBolt(StreamId.PageViewSplit.name(), new PageviewSplit(), 50)
                 .shuffleGrouping(StreamId.Portal_Pageview.name());
 
         //订购话单发射、分词bolt
@@ -70,19 +70,19 @@ public class ExceptOrderTopo {
                 .fieldsGrouping(StreamId.OrderSplit.name(), StreamId.ORDERDATA.name(), new Fields(FName.MSISDN.name()));
 
         //仓库入库bolt
-        builder.setBolt(StreamId.DataWarehouseBolt.name(), new DataWarehouseBolt(), 10)
+        builder.setBolt(StreamId.DataWarehouseBolt.name(), new DataWarehouseBolt(), 6)
                 .fieldsGrouping(StreamId.StatisticsBolt.name(), StreamId.DATASTREAM.name(), new Fields(FName.MSISDN.name()))
                 .fieldsGrouping(StreamId.StatisticsBolt.name(), StreamId.ABNORMALDATASTREAM.name(), new Fields(FName.MSISDN.name()));
         //实时输出接口bolt
-        builder.setBolt(StreamId.RealTimeOutputBolt.name(), new RealTimeOutputBolt(), 10)
+        builder.setBolt(StreamId.RealTimeOutputBolt.name(), new RealTimeOutputBolt(), 6)
                 .fieldsGrouping(StreamId.DataWarehouseBolt.name(), StreamId.DATASTREAM2.name(),
                         new Fields(FName.CHANNELCODE.name(), FName.PROVINCEID.name(), FName.CONTENTID.name(), FName.CONTENTTYPE.name()))
                 .fieldsGrouping(StreamId.DataWarehouseBolt.name(), StreamId.ABNORMALDATASTREAM2.name(),
                         new Fields(FName.CHANNELCODE.name(), FName.PROVINCEID.name(), FName.CONTENTID.name(), FName.CONTENTTYPE.name()));
 
         // Run Topo on Cluster
-        conf.setNumWorkers(10);
-        conf.setNumAckers(10);
+        conf.setNumWorkers(20);
+        conf.setNumAckers(5);
         conf.setMaxSpoutPending(100000);
         conf.setMessageTimeoutSecs(60000);
         conf.put(Config.TOPOLOGY_RECEIVER_BUFFER_SIZE,             8);
