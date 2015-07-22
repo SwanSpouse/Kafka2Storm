@@ -44,9 +44,15 @@ public class UserInfo implements Serializable{
     public UserInfo(String msisdnId, long currentTime, String sessionInfo, String ipInfo, String terminalInfo) {
         this.msisdnId = msisdnId;
         this.lastUpdateTime = currentTime;
-        this.sessionInfos.put(sessionInfo, lastUpdateTime);
-        this.ipInfos.put(ipInfo, lastUpdateTime);
-        this.terminalInfos.put(terminalInfo, lastUpdateTime);
+        if (sessionInfo != null && !sessionInfo.trim().equals("") && !sessionInfo.equals("NULL")) {
+            this.sessionInfos.put(sessionInfo.trim(), lastUpdateTime);
+        }
+        if (ipInfo != null && !ipInfo.equals("")) {
+            this.ipInfos.put(ipInfo.trim(), lastUpdateTime);
+        }
+        if (terminalInfo != null && !terminalInfo.equals("")) {
+            this.terminalInfos.put(terminalInfo.trim(), lastUpdateTime);
+        }
     }
 
     //更新已存在用户的信息

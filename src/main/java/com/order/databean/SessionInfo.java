@@ -121,14 +121,10 @@ public class SessionInfo implements Serializable{
                 e.printStackTrace();
             }
         }
-        //在二维渠道表中找到二级渠道的话就增加到map中。找不到的话就填空。
+        //在二维渠道表中找到二级渠道的话就增加到map中。找不到的话就抛弃。
         if (DBStatisticBoltHelper.parameterId2SecChannelId.containsKey(channelId.toUpperCase())) {
             String secondChannelId = DBStatisticBoltHelper.parameterId2SecChannelId.get(channelId.toUpperCase());
-            if (secondChannelId != null) {
-                this.orderChannelCodeByDay.put(secondChannelId, lastUpdateTime);
-            }
-        } else {
-            this.orderChannelCodeByDay.put("", lastUpdateTime);
+            this.orderChannelCodeByDay.put(secondChannelId, lastUpdateTime);
         }
     }
 
@@ -186,14 +182,10 @@ public class SessionInfo implements Serializable{
                 e.printStackTrace();
             }
         }
-        //在二维渠道表中找到二级渠道的话就增加到map中。找不到的话就填空。
+        //在二维渠道表中找到二级渠道的话就增加到map中。找不到的话就抛弃。
         if (DBStatisticBoltHelper.parameterId2SecChannelId.containsKey(channelId.toUpperCase())) {
             String secondChannelId = DBStatisticBoltHelper.parameterId2SecChannelId.get(channelId.toUpperCase());
-            if (secondChannelId != null) {
-                this.orderChannelCodeByDay.put(secondChannelId, lastUpdateTime);
-            }
-        } else {
-            this.orderChannelCodeByDay.put("", lastUpdateTime);
+            this.orderChannelCodeByDay.put(secondChannelId, lastUpdateTime);
         }
     }
 
