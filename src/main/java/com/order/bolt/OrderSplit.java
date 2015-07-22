@@ -82,6 +82,9 @@ public class OrderSplit extends BaseBasicBolt {
     @Override
     public void execute(Tuple input, BasicOutputCollector collector) {
         String line = splitJson(input.getString(0));
+        if (line == null) {
+            return ;
+        }
         String[] words = line.split("\\|", -1);
         if (words.length >= 49) {
             String msisdn = words[0]; // msisdnID Varchar2(20)
