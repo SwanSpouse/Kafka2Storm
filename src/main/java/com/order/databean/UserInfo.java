@@ -53,13 +53,13 @@ public class UserInfo implements Serializable{
     public void upDateUserInfo(long currentTime, String sessionInfo, String ipInfo, String terminalInfo) {
         this.lastUpdateTime = currentTime;
         if (sessionInfo != null && !sessionInfo.trim().equals("")) {
-            this.sessionInfos.put(sessionInfo, lastUpdateTime);
+            this.sessionInfos.put(sessionInfo.trim(), lastUpdateTime);
         }
         if (ipInfo != null && !ipInfo.trim().equals("")) {
-            this.ipInfos.put(ipInfo, lastUpdateTime);
+            this.ipInfos.put(ipInfo.trim(), lastUpdateTime);
         }
         if (terminalInfo != null && !terminalInfo.trim().equals("")) {
-            this.terminalInfos.put(terminalInfo, lastUpdateTime);
+            this.terminalInfos.put(terminalInfo.trim(), lastUpdateTime);
         }
     }
 
@@ -83,19 +83,19 @@ public class UserInfo implements Serializable{
      */
     public boolean[] isObeyRules() {
         boolean[] checkMarkBit = new boolean[3];
-        if (sessionInfos.size(lastUpdateTime) >= Constant.SESSION_CHANGE_THRESHOLD) {
+        if (sessionInfos.size(lastUpdateTime) >= 3) {
             checkMarkBit[SESSION_CHECK_BIT] = false;
         } else {
             checkMarkBit[SESSION_CHECK_BIT] = true;
         }
 
-        if (ipInfos.size(lastUpdateTime) >= Constant.IP_CHANGE_THRESHOLD) {
+        if (ipInfos.size(lastUpdateTime) >= 3) {
             checkMarkBit[IP_CHECK_BIT] = false;
         } else {
             checkMarkBit[IP_CHECK_BIT] = true;
         }
 
-        if (terminalInfos.size(lastUpdateTime) >= Constant.UA_CHANGE_THRESHOLD) {
+        if (terminalInfos.size(lastUpdateTime) >= 2) {
             checkMarkBit[UA_CHECK_BIT] = false;
         } else {
             checkMarkBit[UA_CHECK_BIT] = true;
