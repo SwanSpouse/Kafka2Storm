@@ -152,8 +152,9 @@ public class StatisticsBolt extends BaseBasicBolt {
         int orderType = Integer.parseInt(orderTypeStr);
         double realInfoFee = Double.parseDouble(realInfoFeeStr);
 
+        //如果无sessionId 则将sessionId设置为NULL。
         if (sessionId == null || sessionId.trim().equals("")) {
-            sessionId = msisdn;
+            sessionId = "NULL";
         }
 
         //所有订单数据先统一发送正常数据流。用作数据统计。
@@ -174,13 +175,15 @@ public class StatisticsBolt extends BaseBasicBolt {
         }
         
         //检测相应的各个规则。
-        currentSessionInfo.checkRule123(bookId, new EmitDatas(collector));
+        if (!sessionId.equals("NULL")) {
+            currentSessionInfo.checkRule123(bookId, new EmitDatas(collector));
+            currentSessionInfo.checkRule6(new EmitDatas(collector));
+            currentSessionInfo.checkRule7(new EmitDatas(collector));
+            currentSessionInfo.checkRule8(bookId, new EmitDatas(collector));
+            currentSessionInfo.checkRule12(platform, new EmitDatas(collector));
+        }
         currentSessionInfo.checkRule4(new EmitDatas(collector));
         currentSessionInfo.checkRule5(channelCode, new EmitDatas(collector));
-        currentSessionInfo.checkRule6(new EmitDatas(collector));
-        currentSessionInfo.checkRule7(new EmitDatas(collector));
-        currentSessionInfo.checkRule8(bookId, new EmitDatas(collector));
-        currentSessionInfo.checkRule12(platform, new EmitDatas(collector));
 
         //更新订购话单UserInfos信息
         Pair<String, UserInfo> userInfoPair = new Pair<String, UserInfo>(msisdn, null);

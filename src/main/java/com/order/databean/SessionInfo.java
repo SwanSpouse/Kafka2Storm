@@ -207,9 +207,9 @@ public class SessionInfo implements Serializable{
 
     /**
      * 检测规则 1、2、3
-     * 规则1：用户5分钟内，对图书有订购行为，且前1小时后5分钟内对该产品的点击pv=0 ordertype not in ( 4 5 9 99)
-     * 规则2：用户5分钟内，对图书有订购行为，且前1小时后5分钟内对该产品的点击pv=1 ordertype not in ( 4 5 9 99)
-     * 规则3：用户5分钟内，对图书有订购行为，且前1小时后5分钟内对该产品的点击 1<pv<=5 ordertype not in ( 4 5 9 99)
+     * 规则1：用户有sessionid且5分钟内，对图书有订购行为，且前1小时后5分钟内对该产品的点击pv=0 ordertype not in ( 4 5 9 99)
+     * 规则2：用户有sessionid且5分钟内，对图书有订购行为，且前1小时后5分钟内对该产品的点击pv=1 ordertype not in ( 4 5 9 99)
+     * 规则3：用户有sessionid且5分钟内，对图书有订购行为，且前1小时后5分钟内对该产品的点击 1<pv<=5 ordertype not in ( 4 5 9 99)
      *
      * @param bookId
      * @param callback
@@ -272,7 +272,7 @@ public class SessionInfo implements Serializable{
 
     /**
      * 检测规则 6
-     * 规则6：用户3分钟内，包月订购>=2次
+     * 规则6：用户有sessionid且分钟内，包月订购>=2次
      * orderType = 4
      *
      * @param callback
@@ -293,7 +293,7 @@ public class SessionInfo implements Serializable{
 
     /**
      * 检测规则 7
-     * 新版7：用户5分钟内，完本图书订购本数+批量订购本数>=2, 且对订购图书的pv<=5*本数
+     * 新版7：用户有sessionid且5分钟内，完本图书订购本数+批量订购本数>=2, 且对订购图书的pv<=5*本数
      * orderType = 1 || ( orderType = 2 且 chapterId == null ) 将此情况的orderType 定为 21
      *
      * @param callback
@@ -316,7 +316,7 @@ public class SessionInfo implements Serializable{
 
     /**
      * 检测规则 8
-     * 规则8：用户5分钟内，连载图书订购章数>=10，且对订购图书的pv<=2*章数
+     * 规则8：用户有sessionid且5分钟内，连载图书订购章数>=10，且对订购图书的pv<=2*章数
      * 不满10个。后续判断不触发。
      * orderType=2
      *
