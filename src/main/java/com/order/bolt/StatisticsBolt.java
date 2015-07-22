@@ -116,7 +116,7 @@ public class StatisticsBolt extends BaseBasicBolt {
         String bookId = input.getStringByField(FName.BOOKID.name());
         String chapterId = input.getStringByField(FName.CHAPTERID.name());
 
-        if (sessionId == null || sessionId.trim().equals("") || sessionId.equals("NULL")) {
+        if (sessionId == null || sessionId.trim().equals("")) {
             //浏览话单若无sessionId则直接丢弃。
             return;
         }
