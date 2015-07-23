@@ -214,12 +214,12 @@ public class SessionInfo implements Serializable{
         }
         //根据特定图书浏览次数来判断违反的是哪条规则
         Rules rule = null;
-        if (bookReadPv.sizeById(bookId) == Constant.READPV_ZERO_TIMES) {
+        int thisBookReadPv = bookReadPv.sizeById(bookId, lastUpdateTime, Constant.SIXTYFIVE_MINUTES);
+        if (thisBookReadPv == Constant.READPV_ZERO_TIMES) {
             rule = Rules.ONE;
-        } else if (bookReadPv.sizeById(bookId) == Constant.READPV_ONE_TIMES) {
+        } else if (thisBookReadPv == Constant.READPV_ONE_TIMES) {
             rule = Rules.TWO;
-        } else if (bookReadPv.sizeById(bookId) <= Constant.READPV_THREASHOLD
-                && bookReadPv.sizeById(bookId) > Constant.READPV_ONE_TIMES) {
+        } else if (thisBookReadPv <= Constant.READPV_THREASHOLD && thisBookReadPv > Constant.READPV_ONE_TIMES) {
             rule = Rules.THREE;
         }
         if (rule != null) {
@@ -277,7 +277,7 @@ public class SessionInfo implements Serializable{
         for (String bookId : bookOrderPv.keySet()) {
             orderTimes += bookOrderPv.sizeOfBookOrderTimesWithOrderType(bookId, 4);
         }
-        if (orderTimes >= Constant.ORDER_BY_MONTH_THRESHOLD) {
+        if (orderTimes >= 2) {
             callback.hanleData(msisdnId, sessionId, lastUpdateTime,
                     realInfoFee, channelId, productId, Rules.SIX.name(), provinceId, orderType, bookId);
         }

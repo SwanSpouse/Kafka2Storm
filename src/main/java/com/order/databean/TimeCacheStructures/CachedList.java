@@ -1,8 +1,8 @@
 package com.order.databean.TimeCacheStructures;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -14,17 +14,18 @@ public class CachedList<T> implements Serializable {
 
     private static int mapSize = 100;
 
-    private ConcurrentHashMap<T, LinkedList<Long>> list = new ConcurrentHashMap<T, LinkedList<Long>>();
+    private ConcurrentHashMap<T, ArrayList<Long>> list = new ConcurrentHashMap<T, ArrayList<Long>>();
     protected int expirationSecs = 0;
 
     public CachedList(int expirationSecs) {
         if (list == null) {
-            list = new ConcurrentHashMap<T, LinkedList<Long>>(this.mapSize);
+            list = new ConcurrentHashMap<T, ArrayList<Long>>(this.mapSize);
         }
         this.expirationSecs = expirationSecs;
     }
 
     /**
+     * 获取整个List中Key的个数。
      * @param currentTime
      * @return
      */
@@ -34,13 +35,78 @@ public class CachedList<T> implements Serializable {
     }
 
     /**
+     * 获取某个ID(Key)下的List大小。
+     * @param key id
+     * @return
+     */
+    public int sizeById(T key) {
+        if (!list.containsKey(key)) {
+            return 0;
+        }
+        if (list.get(key) == null || list.get(key).size() == 0) {
+            list.remove(key);
+            return 0;
+        }
+        return list.get(key).size();
+    }
+
+    /**
+     * 获取某个ID(KEY)下的，符合时间要求的List大小。
+     * @param key    id
+     * @param endTime   key的时间。消息达到时间。
+     * @param timeOutSeconds 数据过期时间。单位s
+     * @return
+     */
+    public int sizeById(T key, long endTime, int timeOutSeconds) {
+        if (!list.containsKey(key)) {
+            return 0;
+        }
+        if (list.get(key) == null || list.get(key).size() == 0) {
+            list.remove(key);
+            return 0;
+        }
+        long startTime = endTime - timeOutSeconds * 1000l;
+        ArrayList<Long> clickTimes = list.get(key);
+        int count = 0;
+        for (int i = 0; i < clickTimes.size(); i++) {
+            if (clickTimes.get(i) > startTime && clickTimes.get(i) < endTime) {
+                count += 1;
+            }
+        }
+        return count;
+    }
+
+    /**
+     * 获取某个ID下未过期的数据。
+     * @param key
+     * @param endTime            当前时间(long)。
+     * @param thresholdInSeconds 数据过期时间(s)。
+     * @return
+     */
+    public int sizeWithTimeThreshold(T key, Long endTime, int thresholdInSeconds) {
+        long startTime = endTime - thresholdInSeconds * 1000L;
+        if (!list.containsKey(key) || list.get(key) == null) {
+            return 0;
+        }
+        Iterator<Long> it = list.get(key).iterator();
+        int countSize = 0;
+        while (it.hasNext()) {
+            Long currentClickTime = it.next();
+            if (currentClickTime > startTime && currentClickTime < endTime) {
+                countSize += 1;
+            }
+        }
+        return countSize;
+    }
+
+    /**
      * 对list中过期的数据进行清理。
      * @param lastUpdateTime 过期时间阈值
      */
     public void removeTimeOutData(long lastUpdateTime) {
         long timeThreshold = lastUpdateTime - expirationSecs * 1000L;
         for (T key : list.keySet()) {
-            LinkedList<Long> clickTimes = list.get(key);
+            ArrayList<Long> clickTimes = list.get(key);
             if (clickTimes == null || clickTimes.size() == 0) {
                 list.remove(key);
                 continue;
@@ -62,55 +128,30 @@ public class CachedList<T> implements Serializable {
     }
 
     /**
-     * 获取某个ID下的List大小。
-     * @param key id
-     * @return
+     * 将数据iD和数据到达时间放到表里。
+     * @param key    ID
+     * @param currentTime 数据到达时间。
      */
-    public int sizeById(T key) {
-        if (!list.containsKey(key) || list.get(key) == null) {
-            return 0;
-        }
-        return list.get(key).size();
-    }
-
-    /**
-     * 获取某个ID下未过期的数据。
-     * @param key
-     * @param currentTime
-     * @param thresholdInSeconds
-     * @return
-     */
-    public int sizeWithTimeThreshold(T key, Long currentTime, int thresholdInSeconds) {
-        long timeThreshold = currentTime - thresholdInSeconds * 1000L;
-        if (!list.containsKey(key) || list.get(key) == null) {
-            return 0;
-        }
-        Iterator<Long> it = list.get(key).iterator();
-        int countSize = 0;
-        while (it.hasNext()) {
-            Long currentClickTime = it.next();
-            if (currentClickTime > timeThreshold) {
-                countSize += 1;
-            }
-        }
-        return countSize;
-    }
-
     public void put(T key, Long currentTime) {
         if (currentTime == null) {
             currentTime = System.currentTimeMillis();
         }
         if (!list.containsKey(key) || list.get(key) == null) {
-            LinkedList<Long> clickTimes = new LinkedList<Long>();
+            ArrayList<Long> clickTimes = new ArrayList<Long>();
             clickTimes.add(currentTime);
             list.put(key, clickTimes);
         } else {
-            LinkedList<Long> clickTimes = list.get(key);
+            ArrayList<Long> clickTimes = list.get(key);
             clickTimes.add(currentTime);
             list.put(key, clickTimes);
         }
     }
 
+    /**
+     * 用在BookOrderList和SessionInfos UserInfos中。
+     * @param value 通过Key来获取一个Key-Value对。
+     * @return
+     */
     public Pair get(T value) {
         if (!(value instanceof Pair)) {
             return null;
