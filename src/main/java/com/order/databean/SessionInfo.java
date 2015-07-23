@@ -250,7 +250,7 @@ public class SessionInfo implements Serializable {
 
     public boolean clear() {
         //size 自带清理功能。
-        return bookReadPv.size(lastUpdateTime) == 0 &&
+        return bookReadPv.size(lastUpdateTime, -1) == 0 &&
                 bookOrderPv.sizeOfOrderBooks(lastUpdateTime) == 0 &&
                 !this.orderChannelCodeByDay.containsKey(day) &&
                 !this.channelOrderPv.containsKey(day);
@@ -265,7 +265,6 @@ public class SessionInfo implements Serializable {
      * @param bookId
      * @param callback
      */
-    private transient Thread rule123Checker = null;
     public void checkRule123(final String bookId, final RulesCallback callback) {
         if (orderType == 4 || orderType == 5 || orderType == 9 || orderType == 99) {
             return;
@@ -392,10 +391,10 @@ public class SessionInfo implements Serializable {
      * @param platform  platform = accesstype
      * @param callback
      */
-    private transient Thread rule12Checker = null;
     public void checkRule12(String platform, final RulesCallback callback) {
         if (orderType == 4 && Integer.parseInt(platform) != 6) {
-            if (bookReadPv.size(lastUpdateTime) == 0) {
+            //将当前时间推后5分钟。然后取前65分钟的pv数
+            if (bookReadPv.size(lastUpdateTime + Constant.FIVE_MINUTES * 1000l, Constant.SIXTYFIVE_MINUTES) == 0) {
                 callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
                         channelId, productId, Rules.TWELVE.name(), provinceId, orderType, bookId);
             }

@@ -25,29 +25,21 @@ public class CachedList<T> implements Serializable {
     }
 
     /**
-     * 获取整个List中Key的个数。
+     * 获取整个List中Key的个数。key的个数取决于key 对应的list中元素不为零的个数。
      * @param currentTime
+     * @param timeOutSeconds  过期时间。单位s
      * @return
      */
-    public int size(long currentTime) {
+    public int size(long currentTime, int timeOutSeconds) {
+        if (timeOutSeconds == -1) {
+            timeOutSeconds = expirationSecs;
+        }
         this.removeTimeOutData(currentTime);
-        return list.size();
-    }
-
-    /**
-     * 获取某个ID(Key)下的List大小。
-     * @param key id
-     * @return
-     */
-    public int sizeById(T key) {
-        if (!list.containsKey(key)) {
-            return 0;
+        int count = 0;
+        for (T key : list.keySet()) {
+            count += sizeById(key, currentTime, timeOutSeconds) == 0 ? 0 : 1;
         }
-        if (list.get(key) == null || list.get(key).size() == 0) {
-            list.remove(key);
-            return 0;
-        }
-        return list.get(key).size();
+        return count;
     }
 
     /**

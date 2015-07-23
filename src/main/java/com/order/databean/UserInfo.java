@@ -22,14 +22,19 @@ public class UserInfo implements Serializable{
     private String msisdnId;
     private long lastUpdateTime;
 
+    /**
+     * 这里把过期的时间配置成1小时10分钟是因为订单缓存了5分钟。为防止删除1小时过期数据删除了部分订单前一小时数据。
+     * 把过期时间配置成1小时10分钟。取size的时候是根据时间窗口取的。和这个过期时间没有影响。
+     */
+
     //统计用户session信息。
-    private CachedList<String> sessionInfos = new CachedList<String>(Constant.ONE_HOUR);
+    private CachedList<String> sessionInfos = new CachedList<String>(Constant.ONE_HOUR + Constant.FIVE_MINUTES * 2);
 
     //统计用户ip信息。
-    private CachedList<String> ipInfos = new CachedList<String>(Constant.ONE_HOUR);
+    private CachedList<String> ipInfos = new CachedList<String>(Constant.ONE_HOUR + Constant.FIVE_MINUTES * 2);
 
     //统计用户终端信息。
-    private CachedList<String> terminalInfos = new CachedList<String>(Constant.ONE_HOUR);
+    private CachedList<String> terminalInfos = new CachedList<String>(Constant.ONE_HOUR + Constant.FIVE_MINUTES * 2);
 
     @Override
     public String toString() {
@@ -75,9 +80,9 @@ public class UserInfo implements Serializable{
      */
     public boolean clear() {
         //size()自带清理功能
-        return sessionInfos.size(lastUpdateTime) == 0 &&
-                terminalInfos.size(lastUpdateTime) == 0 &&
-                ipInfos.size(lastUpdateTime) == 0;
+        return sessionInfos.size(lastUpdateTime, -1) == 0 &&
+                terminalInfos.size(lastUpdateTime, -1) == 0 &&
+                ipInfos.size(lastUpdateTime, -1) == 0;
     }
 
     /**
@@ -89,19 +94,19 @@ public class UserInfo implements Serializable{
      */
     public boolean[] isObeyRules() {
         boolean[] checkMarkBit = new boolean[3];
-        if (sessionInfos.size(lastUpdateTime) >= 3) {
+        if (sessionInfos.size(lastUpdateTime, Constant.ONE_HOUR) >= 3) {
             checkMarkBit[SESSION_CHECK_BIT] = false;
         } else {
             checkMarkBit[SESSION_CHECK_BIT] = true;
         }
 
-        if (ipInfos.size(lastUpdateTime) >= 3) {
+        if (ipInfos.size(lastUpdateTime, Constant.ONE_HOUR) >= 3) {
             checkMarkBit[IP_CHECK_BIT] = false;
         } else {
             checkMarkBit[IP_CHECK_BIT] = true;
         }
 
-        if (terminalInfos.size(lastUpdateTime) >= 2) {
+        if (terminalInfos.size(lastUpdateTime, Constant.ONE_HOUR) >= 2) {
             checkMarkBit[UA_CHECK_BIT] = false;
         } else {
             checkMarkBit[UA_CHECK_BIT] = true;

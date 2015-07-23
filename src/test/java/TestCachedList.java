@@ -15,7 +15,7 @@ public class TestCachedList {
         list.put(3, 3001L);
         list.put(3, 3002L);
 
-        System.out.println(list.size(4000L));
+        System.out.println(list.size(4000L, -1));
         System.out.println(list);
     }
 }

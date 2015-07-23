@@ -60,7 +60,7 @@ public class BookOrderList implements Serializable {
         for (String key : map.keySet()) {
             CachedList<Integer> list = map.get(key);
             //这个size()方法自带清理功能。
-            if (list.size(currentTime) == 0) {
+            if (list.size(currentTime, -1) == 0) {
                 map.remove(key);
             }
         }
