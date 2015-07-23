@@ -131,6 +131,16 @@ public class TimeParaser {
         return hour == 0 && minute == 0;
     }
 
+    /**
+     * 通过long获得日期。
+     * @param time
+     * @return
+     */
+    public static int getDateFromLong(long time) {
+        Date date = new Date(time);
+        return date.getDay();
+    }
+
     public static void main(String[] args) {
 //        Long time =1433494523823L;
 //        System.out.println(formatTimeInDay(time));
@@ -141,7 +151,7 @@ public class TimeParaser {
 //        System.out.println(getMillisFromTimeToNetFiveMinutes(System.currentTimeMillis()));
 //        System.out.println(NormalHourAgo(System.currentTimeMillis()));
 
-        System.out.println(isTimeToClearData(System.currentTimeMillis()));
+        System.out.println(getDateFromLong(System.currentTimeMillis()));
 
     }
 }
