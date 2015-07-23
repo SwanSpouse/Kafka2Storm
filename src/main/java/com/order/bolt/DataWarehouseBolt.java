@@ -8,7 +8,6 @@ import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
 
 import com.order.db.DBHelper.DBDataWarehouseCacheHelper;
-import com.order.db.DBHelper.DBOrderCount;
 import com.order.util.FName;
 import com.order.util.OrderRecord;
 import com.order.util.StreamId;
@@ -156,23 +155,29 @@ public class DataWarehouseBolt extends BaseBasicBolt {
         }
         /**
          * 1 2 3 5 6 7 8 这些规则是向前追溯该渠道下1小时数据。
-         4    追溯一天的数据
-         9 10 11 追溯自然小时的数据。
+         4    追溯该渠道一天的数据
+         9 10 11 追溯自然小时的所有订购数据（不指定渠道）。
          */
-        String traceBackTime = "";
+        Long traceBackBeginTime = (long) 0;
+        Long traceBackEndTime = (long) 0;
+        String traceBackChannelCode = channelCode;
         if (ruleId == 1 || ruleId == 2 || ruleId == 3 ||
                 ruleId == 5 || ruleId == 6 || ruleId == 7 || ruleId == 8) {
-            traceBackTime = TimeParaser.OneHourAgo(recordTime);
+        	traceBackBeginTime = recordTime - 60*60*1000L;
+        	traceBackEndTime = recordTime;
         } else if (ruleId == 4) {
-            traceBackTime = TimeParaser.OneDayAgo(recordTime);
+        	traceBackBeginTime = TimeParaser.splitTime(TimeParaser.OneDayAgo(recordTime));
+        	traceBackEndTime = recordTime;
         } else if (ruleId == 9 || ruleId == 10 || ruleId == 11) {
-            traceBackTime = TimeParaser.NormalHourAgo(recordTime);
+        	traceBackBeginTime = TimeParaser.splitTime(TimeParaser.NormalHourAgo(recordTime));
+        	traceBackEndTime = recordTime;
+        	traceBackChannelCode = "";
         } else {
             return;
         }
 
         ArrayList<OrderRecord> list = DBHelper.traceBackOrders(msisdn,
-                channelCode, TimeParaser.splitTime(traceBackTime), ruleId);
+        		traceBackChannelCode, traceBackBeginTime, traceBackEndTime, ruleId);
         // 将回溯的订购发送
         Iterator<OrderRecord> itOrder = list.iterator();
         while (itOrder.hasNext()) {

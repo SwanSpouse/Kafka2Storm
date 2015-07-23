@@ -220,7 +220,7 @@ public class DBDataWarehouseCacheHelper implements Serializable {
 	}
 
 	/* 回溯前一段时间的订购，返回之前判断为正常的订购 */
-    public ArrayList<OrderRecord> traceBackOrders(String msisdn, String channelCode, Long traceBackTime, int ruleID) {
+    public ArrayList<OrderRecord> traceBackOrders(String msisdn, String channelCode, Long beginTime, Long endTime, int ruleID) {
 		ArrayList<OrderRecord> relist = new ArrayList<OrderRecord>();
 		// 加锁
 		if (LOCK == null)
@@ -239,9 +239,8 @@ public class DBDataWarehouseCacheHelper implements Serializable {
 						&& !oneRecord.getChannelCode().equals(channelCode)) {
 					continue;
 				}
-				// 如果traceBackTime不为空，则需要订购时间大于等于traceBackTime
-				if (traceBackTime != null
-						&& oneRecord.getRecordTime() < traceBackTime) {
+				// 话单时间不在要回溯的时间段内
+				if (!(oneRecord.getRecordTime() > beginTime && oneRecord.getRecordTime() < endTime)) {
 					continue;
 				}
 				// 如果ruleID为1-12，则获取之前为判断之前为正常的订购，并将状态改为异常
