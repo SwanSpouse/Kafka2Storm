@@ -212,9 +212,9 @@ public class SessionInfo implements Serializable{
         if (orderType == 4 || orderType == 5 || orderType == 9 || orderType == 99) {
             return;
         }
-        //根据特定图书浏览次数来判断违反的是哪条规则
+        //根据特定图书浏览次数来判断违反的是哪条规则 获取的是当前时间延后5分钟的数据。所以要+5 * 60 * 1000l
         Rules rule = null;
-        int thisBookReadPv = bookReadPv.sizeById(bookId, lastUpdateTime, Constant.SIXTYFIVE_MINUTES);
+        int thisBookReadPv = bookReadPv.sizeById(bookId, lastUpdateTime + 5 * 60 * 1000l, Constant.SIXTYFIVE_MINUTES);
         if (thisBookReadPv == Constant.READPV_ZERO_TIMES) {
             rule = Rules.ONE;
         } else if (thisBookReadPv == Constant.READPV_ONE_TIMES) {
