@@ -239,10 +239,10 @@ public class DBDataWarehouseCacheHelper implements Serializable {
 						&& !oneRecord.getChannelCode().equals(channelCode)) {
 					continue;
 				}
-				// 话单时间不在要回溯的时间段内
-				if (!(oneRecord.getRecordTime() > beginTime && oneRecord.getRecordTime() < endTime)) {
-					continue;
-				}
+                // 话单时间不在要回溯的时间段内
+                if (!(oneRecord.getRecordTime() > beginTime && oneRecord.getRecordTime() < endTime)) {
+                    continue;
+                }
 				// 如果ruleID为1-12，则获取之前为判断之前为正常的订购，并将状态改为异常
 				if (ruleID >= 1 && ruleID <= 12
 						&& oneRecord.getRules().get(ruleID) == 1) {

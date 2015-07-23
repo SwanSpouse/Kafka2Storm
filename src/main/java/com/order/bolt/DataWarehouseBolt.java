@@ -154,20 +154,22 @@ public class DataWarehouseBolt extends BaseBasicBolt {
             return;
         }
         /**
-         * 1 2 3 5 6 7 8 这些规则是向前追溯该渠道下1小时数据。
-         4    追溯该渠道一天的数据
+         * 1 2 3 6 7 8 这些规则是向前追溯该渠道下1小时数据。
+         4 5  追溯该渠道一天的数据
          9 10 11 追溯自然小时的所有订购数据（不指定渠道）。
          */
         Long traceBackBeginTime = (long) 0;
         Long traceBackEndTime = (long) 0;
-        String traceBackChannelCode = channelCode;
+        String traceBackChannelCode;
         if (ruleId == 1 || ruleId == 2 || ruleId == 3 ||
-                ruleId == 5 || ruleId == 6 || ruleId == 7 || ruleId == 8) {
+               ruleId == 6 || ruleId == 7 || ruleId == 8) {
         	traceBackBeginTime = recordTime - 60*60*1000L;
         	traceBackEndTime = recordTime;
-        } else if (ruleId == 4) {
+        	traceBackChannelCode = channelCode;
+        } else if (ruleId == 4 || ruleId == 5) {
         	traceBackBeginTime = TimeParaser.splitTime(TimeParaser.OneDayAgo(recordTime));
         	traceBackEndTime = recordTime;
+        	traceBackChannelCode = "";
         } else if (ruleId == 9 || ruleId == 10 || ruleId == 11) {
         	traceBackBeginTime = TimeParaser.splitTime(TimeParaser.NormalHourAgo(recordTime));
         	traceBackEndTime = recordTime;
