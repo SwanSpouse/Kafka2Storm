@@ -5,20 +5,22 @@ import com.order.constant.Rules;
 import com.order.databean.RulesCallback.RulesCallback;
 import com.order.databean.TimeCacheStructures.BookOrderList;
 import com.order.databean.TimeCacheStructures.CachedList;
-import com.order.databean.TimeCacheStructures.Pair;
 import com.order.db.DBHelper.DBStatisticBoltHelper;
+import com.order.util.TimeParaser;
 import org.apache.log4j.Logger;
 
 import java.io.Serializable;
 import java.sql.SQLException;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 根据浏览pv和订购pv生成SessionInfo。
  *
  * Created by LiMingji on 2015/5/21.
  */
-public class SessionInfo implements Serializable{
+public class SessionInfo implements Serializable {
     private static final long serialVersionUID = 1L;
     private static Logger log = Logger.getLogger(SessionInfo.class);
 
@@ -34,6 +36,9 @@ public class SessionInfo implements Serializable{
     private String productId = null;
     private long lastUpdateTime;
 
+    //通过lastUpdateTime算出来的今天是星期几 和昨天是星期几。
+    private int day;
+    private int yesterday;
     //图书ID
     private String bookId = null;
     //手机号码对应的省ID
@@ -45,10 +50,10 @@ public class SessionInfo implements Serializable{
     private CachedList<String> bookReadPv = new CachedList<String>(Constant.SIXTYFIVE_MINUTES);
     //图书购买pv,
     private BookOrderList bookOrderPv = new BookOrderList();
-    //各个渠道下的日购买费用 Pair值为用户 channelCode 和 信息费。
-    private CachedList<Pair<String, Double>> channelOrderpv = new CachedList<Pair<String, Double>>(Constant.ONE_DAY);
-    //用户营销Id对应的扣费二级渠道。
-    private CachedList<String> orderChannelCodeByDay = new CachedList<String>(Constant.ONE_DAY);
+    //各个渠道下的日购买费用 Key为日期。Value为用户日期下的 渠道和渠道下的购买费用。
+    private ConcurrentHashMap<Integer, ConcurrentHashMap<String, Double>> channelOrderPv = new ConcurrentHashMap<Integer, ConcurrentHashMap<String, Double>>();
+    //用户营销Id对应的扣费二级渠道。 Key是日期，Value为用户日期下的所有二级渠道个数。
+    private ConcurrentHashMap<Integer, HashSet<String>> orderChannelCodeByDay = new ConcurrentHashMap<Integer, HashSet<String>>();
 
     @Override
     public String toString() {
@@ -89,8 +94,8 @@ public class SessionInfo implements Serializable{
         }
         if (bookOrderId != null) {
             //为了方便规则7的判断。在此将orderType=21定义为批量订购
-            if ( (orderType == 2 && bookChapterOrderId == null) ||
-                    (orderType == 2 && bookChapterOrderId.trim().equals("")))  {
+            if ((orderType == 2 && bookChapterOrderId == null) ||
+                    (orderType == 2 && bookChapterOrderId.trim().equals(""))) {
                 this.orderType = 21;
             }
             bookOrderPv.put(bookOrderId, this.orderType, lastUpdateTime);
@@ -98,23 +103,38 @@ public class SessionInfo implements Serializable{
 
         this.provinceId = provinceId;
 
+        day = TimeParaser.getDateFromLong(lastUpdateTime);
+        yesterday = day == 0 ? 6 : day - 1;
+
         //统计orderType == 1情况下的用户日渠道信息费。
         if (orderType == 1) {
-            Pair<String, Double> pair = new Pair<String, Double>(channelId, realInfoFee);
-            if (channelOrderpv.contains(pair)) {
-                Pair<String, Double> currentPair = channelOrderpv.get(pair);
-                currentPair.setValue(currentPair.getValue() + realInfoFee);
-                channelOrderpv.put(currentPair, lastUpdateTime);
+            //清除前一天的数据。
+            if (channelOrderPv.containsKey(yesterday)) {
+                channelOrderPv.remove(yesterday);
+            }
+            //如果包含今天的日期。就修改日期内渠道下的异常费用。
+            if (channelOrderPv.containsKey(day)) {
+                ConcurrentHashMap<String, Double> map = channelOrderPv.get(day);
+                if (map.containsKey(channelId)) {
+                    double fee = map.get(channelId) + realInfoFee;
+                    map.put(channelId, fee);
+                } else {
+                    map.put(channelId, realInfoFee);
+                }
             } else {
-                channelOrderpv.put(pair, lastUpdateTime);
+                //不包含今天的日期。就将今天的日期添加到map中。
+                ConcurrentHashMap<String, Double> map = new ConcurrentHashMap<String, Double>();
+                map.put(this.channelId, realInfoFee);
+                channelOrderPv.put(day, map);
             }
         }
+
         //如果不是订购话单就不需要判断扣费的二级渠道了。
         if (orderType == -1) {
             return;
         }
         //将用户channelCode对应的二级渠道进行保存
-        if (DBStatisticBoltHelper.parameterId2SecChannelId == null|| DBStatisticBoltHelper.parameterId2SecChannelId.isEmpty()) {
+        if (DBStatisticBoltHelper.parameterId2SecChannelId == null || DBStatisticBoltHelper.parameterId2SecChannelId.isEmpty()) {
             try {
                 DBStatisticBoltHelper.getData();
             } catch (SQLException e) {
@@ -124,7 +144,18 @@ public class SessionInfo implements Serializable{
         //在二维渠道表中找到二级渠道的话就增加到map中。找不到的话就抛弃。
         if (DBStatisticBoltHelper.parameterId2SecChannelId.containsKey(channelId.toUpperCase())) {
             String secondChannelId = DBStatisticBoltHelper.parameterId2SecChannelId.get(channelId.toUpperCase());
-            this.orderChannelCodeByDay.put(secondChannelId, lastUpdateTime);
+            //清除昨天的数据
+            if (this.orderChannelCodeByDay.containsKey(yesterday)) {
+                this.orderChannelCodeByDay.remove(yesterday);
+            }
+            //若今天有数据。则将channel直接add进Set。若今天无数据。创建一个Set存放今天所有的二级渠道。
+            if (this.orderChannelCodeByDay.containsKey(day) && this.orderChannelCodeByDay.get(day) != null) {
+                this.orderChannelCodeByDay.get(day).add(secondChannelId);
+            } else {
+                HashSet<String> todayChannelCodes = new HashSet<String>();
+                todayChannelCodes.add(secondChannelId);
+                this.orderChannelCodeByDay.put(day, todayChannelCodes);
+            }
         }
     }
 
@@ -149,8 +180,8 @@ public class SessionInfo implements Serializable{
             bookReadPv.put(bookReadId, lastUpdateTime);
         }
         if (bookOrderId != null) {
-            if ( (orderType == 2 && bookChapterOrderId == null) ||
-                    (orderType == 2 && bookChapterOrderId.trim().equals("")))  {
+            if ((orderType == 2 && bookChapterOrderId == null) ||
+                    (orderType == 2 && bookChapterOrderId.trim().equals(""))) {
                 this.orderType = 21;
             }
             bookOrderPv.put(bookOrderId, this.orderType, lastUpdateTime);
@@ -159,17 +190,33 @@ public class SessionInfo implements Serializable{
         if (productId != null) {
             this.productId = productId;
         }
+
+        day = TimeParaser.getDateFromLong(lastUpdateTime);
+        yesterday = day == 0 ? 6 : day - 1;
+
         //统计orderType == 1情况下的用户日渠道信息费。
         if (orderType == 1) {
-            Pair<String, Double> pair = new Pair<String, Double>(channelId, realInfoFee);
-            if (channelOrderpv.contains(pair)) {
-                Pair<String, Double> currentPair = channelOrderpv.get(pair);
-                currentPair.setValue(currentPair.getValue() + realInfoFee);
-                channelOrderpv.put(currentPair, lastUpdateTime);
+            //清除前一天的数据。
+            if (channelOrderPv.containsKey(yesterday)) {
+                channelOrderPv.remove(yesterday);
+            }
+            //如果包含今天的日期。就修改日期内渠道下的异常费用。
+            if (channelOrderPv.containsKey(day)) {
+                ConcurrentHashMap<String, Double> map = channelOrderPv.get(day);
+                if (map.containsKey(channelId)) {
+                    double fee = map.get(channelId) + realInfoFee;
+                    map.put(channelId, fee);
+                } else {
+                    map.put(channelId, realInfoFee);
+                }
             } else {
-                channelOrderpv.put(pair, lastUpdateTime);
+                //不包含今天的日期。就将今天的日期添加到map中。
+                ConcurrentHashMap<String, Double> map = new ConcurrentHashMap<String, Double>();
+                map.put(this.channelId, realInfoFee);
+                channelOrderPv.put(day, map);
             }
         }
+
         //如果不是订购话单就不需要判断扣费的二级渠道了。
         if (orderType == -1) {
             return;
@@ -185,16 +232,27 @@ public class SessionInfo implements Serializable{
         //在二维渠道表中找到二级渠道的话就增加到map中。找不到的话就抛弃。
         if (DBStatisticBoltHelper.parameterId2SecChannelId.containsKey(channelId.toUpperCase())) {
             String secondChannelId = DBStatisticBoltHelper.parameterId2SecChannelId.get(channelId.toUpperCase());
-            this.orderChannelCodeByDay.put(secondChannelId, lastUpdateTime);
+            //清除昨天的数据
+            if (this.orderChannelCodeByDay.containsKey(yesterday)) {
+                this.orderChannelCodeByDay.remove(yesterday);
+            }
+            //若今天有数据。则将channel直接add进Set。若今天无数据。创建一个Set存放今天所有的二级渠道。
+            if (this.orderChannelCodeByDay.containsKey(day) && this.orderChannelCodeByDay.get(day) != null) {
+                this.orderChannelCodeByDay.get(day).add(secondChannelId);
+            } else {
+                HashSet<String> todayChannelCodes = new HashSet<String>();
+                todayChannelCodes.add(secondChannelId);
+                this.orderChannelCodeByDay.put(day, todayChannelCodes);
+            }
         }
     }
 
     public boolean clear() {
         //size 自带清理功能。
         return bookReadPv.size(lastUpdateTime) == 0 &&
-                channelOrderpv.size(lastUpdateTime) == 0 &&
-                orderChannelCodeByDay.size(lastUpdateTime) == 0 &&
-                bookOrderPv.sizeOfOrderBooks(lastUpdateTime) == 0;
+                bookOrderPv.sizeOfOrderBooks(lastUpdateTime) == 0 &&
+                !this.orderChannelCodeByDay.containsKey(day) &&
+                !this.channelOrderPv.containsKey(day);
     }
 
     /**
@@ -207,6 +265,7 @@ public class SessionInfo implements Serializable{
      * @param callback
      */
     private transient Thread rule123Checker = null;
+
     public void checkRule123(final String bookId, final RulesCallback callback) {
 
         if (orderType == 4 || orderType == 5 || orderType == 9 || orderType == 99) {
@@ -235,9 +294,11 @@ public class SessionInfo implements Serializable{
      * @param callback
      */
     public void checkRule4(final RulesCallback callback) {
-        if (orderChannelCodeByDay.size(lastUpdateTime) >= 3) {
-            callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee, channelId,
-                    productId, Rules.FOUR.name(), provinceId, orderType, bookId);
+        if (orderChannelCodeByDay.containsKey(day) ) {
+            if (orderChannelCodeByDay.get(day).size() >= 3) {
+                callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee, channelId,
+                        productId, Rules.FOUR.name(), provinceId, orderType, bookId);
+            }
         }
     }
 
@@ -252,10 +313,9 @@ public class SessionInfo implements Serializable{
         if (orderType != 1) {
             return;
         }
-        Pair<String, Double> userChannelInfoFee = new Pair<String, Double>(channelId, null);
-        if (channelOrderpv.contains(userChannelInfoFee)) {
-            Pair<String, Double> currentUserChannelInFee = channelOrderpv.get(userChannelInfoFee);
-            if (currentUserChannelInFee.getValue() > 1000) {
+        if (channelOrderPv.containsKey(day)) {
+            ConcurrentHashMap<String, Double> userChannelFee = channelOrderPv.get(day);
+            if (userChannelFee.containsKey(channelId) && userChannelFee.get(channelId) > 1000) {
                 callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,
                         channelId, productId, Rules.FIVE.name(), provinceId, orderType, bookId);
             }
