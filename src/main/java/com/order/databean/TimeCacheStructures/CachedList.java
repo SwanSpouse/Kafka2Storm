@@ -61,7 +61,7 @@ public class CachedList<T> implements Serializable {
         ArrayList<Long> clickTimes = list.get(key);
         int count = 0;
         for (int i = 0; i < clickTimes.size(); i++) {
-            if (clickTimes.get(i) > startTime && clickTimes.get(i) < endTime) {
+            if (clickTimes.get(i) >= startTime && clickTimes.get(i) <= endTime) {
                 count += 1;
             }
         }
@@ -84,7 +84,7 @@ public class CachedList<T> implements Serializable {
         int countSize = 0;
         while (it.hasNext()) {
             Long currentClickTime = it.next();
-            if (currentClickTime > startTime && currentClickTime < endTime) {
+            if (currentClickTime >= startTime && currentClickTime <= endTime) {
                 countSize += 1;
             }
         }
