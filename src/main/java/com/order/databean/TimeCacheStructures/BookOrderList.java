@@ -43,9 +43,9 @@ public class BookOrderList implements Serializable {
         } else {
             CachedList<Integer> orderTypeList;
             if (orderType == 4) {
-                orderTypeList = new CachedList<Integer>(Constant.THREE_MINUTES);
+                orderTypeList = new CachedList<Integer>(Constant.THREE_MINUTES * 2);
             } else {
-                orderTypeList = new CachedList<Integer>(Constant.FIVE_MINUTES);
+                orderTypeList = new CachedList<Integer>(Constant.FIVE_MINUTES * 2);
             }
             orderTypeList.put(orderType, currentTime);
             map.put(bookId, orderTypeList);
@@ -82,12 +82,12 @@ public class BookOrderList implements Serializable {
      *  id为图书id
      *  orderType 为订购类型。
      */
-    public int sizeOfBookOrderTimesWithOrderType(String id, int orderType) {
+    public int sizeOfBookOrderTimesWithOrderType(String id, int orderType, long currentTime, int timeOutSeconds) {
         if (!map.containsKey(id)) {
             return 0;
         }
         CachedList<Integer> orderList = map.get(id);
-        return orderList.sizeById(orderType);
+        return orderList.sizeById(orderType, currentTime, timeOutSeconds);
     }
 
     /**

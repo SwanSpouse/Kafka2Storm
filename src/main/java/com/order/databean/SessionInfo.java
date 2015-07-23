@@ -46,8 +46,9 @@ public class SessionInfo implements Serializable {
     //订单类型
     private int orderType = 0;
 
-    //图书阅读浏览pv，
-    private CachedList<String> bookReadPv = new CachedList<String>(Constant.SIXTYFIVE_MINUTES);
+    //图书阅读浏览pv， 多缓存10 分钟的数据。防止订单时序错乱造成的错误
+    private CachedList<String> bookReadPv = new CachedList<String>(Constant.SIXTYFIVE_MINUTES + 10 * 60);
+
     //图书购买pv,
     private BookOrderList bookOrderPv = new BookOrderList();
     //各个渠道下的日购买费用 Key为日期。Value为用户日期下的 渠道和渠道下的购买费用。
@@ -265,15 +266,13 @@ public class SessionInfo implements Serializable {
      * @param callback
      */
     private transient Thread rule123Checker = null;
-
     public void checkRule123(final String bookId, final RulesCallback callback) {
-
         if (orderType == 4 || orderType == 5 || orderType == 9 || orderType == 99) {
             return;
         }
         //根据特定图书浏览次数来判断违反的是哪条规则 获取的是当前时间延后5分钟的数据。所以要+5 * 60 * 1000l
         Rules rule = null;
-        int thisBookReadPv = bookReadPv.sizeById(bookId, lastUpdateTime + 5 * 60 * 1000l, Constant.SIXTYFIVE_MINUTES);
+        int thisBookReadPv = bookReadPv.sizeById(bookId, lastUpdateTime + Constant.FIVE_MINUTES * 1000L, Constant.SIXTYFIVE_MINUTES);
         if (thisBookReadPv == Constant.READPV_ZERO_TIMES) {
             rule = Rules.ONE;
         } else if (thisBookReadPv == Constant.READPV_ONE_TIMES) {
@@ -324,7 +323,7 @@ public class SessionInfo implements Serializable {
 
     /**
      * 检测规则 6
-     * 规则6：用户有sessionid且分钟内，包月订购>=2次
+     * 规则6：用户有sessionid且3分钟内，包月订购>=2次
      * orderType = 4
      *
      * @param callback
@@ -335,7 +334,7 @@ public class SessionInfo implements Serializable {
         }
         int orderTimes = 0;
         for (String bookId : bookOrderPv.keySet()) {
-            orderTimes += bookOrderPv.sizeOfBookOrderTimesWithOrderType(bookId, 4);
+            orderTimes += bookOrderPv.sizeOfBookOrderTimesWithOrderType(bookId, 4, lastUpdateTime, Constant.THREE_MINUTES);
         }
         if (orderTimes >= 2) {
             callback.hanleData(msisdnId, sessionId, lastUpdateTime,
@@ -355,8 +354,8 @@ public class SessionInfo implements Serializable {
             int bookOrderNums = 0;
             int bookReadPvs = 0;
             for (String bookId : bookOrderPv.keySet()) {
-                bookOrderNums += bookOrderPv.sizeOfBookOrderTimesWithOrderType(bookId, 1)
-                        + bookOrderPv.sizeOfBookOrderTimesWithOrderType(bookId, 21);
+                bookOrderNums += bookOrderPv.sizeOfBookOrderTimesWithOrderType(bookId, 1, lastUpdateTime, Constant.FIVE_MINUTES)
+                        + bookOrderPv.sizeOfBookOrderTimesWithOrderType(bookId, 21, lastUpdateTime, Constant.FIVE_MINUTES);
                 bookReadPvs += bookReadPv.sizeWithTimeThreshold(bookId, lastUpdateTime, Constant.FIVE_MINUTES);
             }
             if (bookOrderNums >= 2 && bookReadPvs <= 5 * bookOrderNums) {
@@ -378,7 +377,7 @@ public class SessionInfo implements Serializable {
         if (orderType != 2) {
             return;
         }
-        int orderPvs = bookOrderPv.sizeOfBookOrderTimesWithOrderType(bookId, 2);
+        int orderPvs = bookOrderPv.sizeOfBookOrderTimesWithOrderType(bookId, 2, lastUpdateTime, Constant.FIVE_MINUTES);
         int readPvs = bookReadPv.sizeWithTimeThreshold(bookId, lastUpdateTime, Constant.FIVE_MINUTES);
         if (orderPvs >= 10 && readPvs <= 2 * orderPvs) {
             callback.hanleData(msisdnId, sessionId, lastUpdateTime, realInfoFee,

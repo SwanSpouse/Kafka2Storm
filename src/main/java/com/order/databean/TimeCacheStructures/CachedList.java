@@ -167,13 +167,6 @@ public class CachedList<T> implements Serializable {
         return null;
     }
 
-    public boolean contains(T key) {
-        if (key == null) {
-            return false;
-        }
-        return list.containsKey(key);
-    }
-
     @Override
     public String toString() {
         if (list == null || list.size() == 0) {
