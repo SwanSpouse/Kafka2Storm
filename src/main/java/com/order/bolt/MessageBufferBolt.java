@@ -25,8 +25,6 @@ public class MessageBufferBolt extends BaseBasicBolt {
     static Logger log = Logger.getLogger(MessageBufferBolt.class);
     private static final long FIVEMINUTES = 5 * 60 * 1000L;
 
-    private BasicOutputCollector collector = null;
-
     //缓存的订购消息
     private LinkedList<OrderItem> orderQueue = null;
     //最近一条浏览消息的时间
@@ -36,6 +34,7 @@ public class MessageBufferBolt extends BaseBasicBolt {
 
 	private transient Thread cleaner = null; // 清理线程
     private transient Object LOCK = null;
+    private BasicOutputCollector collector = null;
 
     @Override
     public void prepare(Map conf, TopologyContext context) {
@@ -45,49 +44,48 @@ public class MessageBufferBolt extends BaseBasicBolt {
     
     @Override
     public void execute(Tuple input, BasicOutputCollector collector) {
-        this.createCleanThread();
-
         LOCK = LOCK == null ? new Object() : LOCK;
         synchronized (LOCK) {
-            this.collector = collector;
-            if (input.getSourceStreamId().equals(StreamId.BROWSEDATA.name())) {
-                // 浏览消息
-                Long recordTime = TimeParaser.splitTime(input.getStringByField(FName.RECORDTIME.name()));
-                String sessionId = input.getStringByField(FName.SESSIONID.name());
-                String pageType = input.getStringByField(FName.PAGETYPE.name());
-                String msisdn = input.getStringByField(FName.MSISDN.name());
-                String channelCode = input.getStringByField(FName.CHANNELCODE.name());
-                String bookId = input.getStringByField(FName.BOOKID.name());
-                String chapterId = input.getStringByField(FName.CHAPTERID.name());
-                collector.emit(StreamId.BROWSEDATA.name(), new Values(
-                        recordTime, sessionId, pageType, msisdn,
-                        channelCode, bookId, chapterId));
-                lastViewTime = recordTime;
-            } else if (input.getSourceStreamId().equals(StreamId.ORDERDATA.name())) {
-                // 订购消息
-                String msisdn = input.getStringByField(FName.MSISDN.name());
-                Long recordTime = input.getLongByField(FName.RECORDTIME.name());
-                String userAgent = input.getStringByField(FName.TERMINAL.name());
-                String platform = input.getStringByField(FName.PLATFORM.name());
-                String orderTypeStr = input.getStringByField(FName.ORDERTYPE.name());
-                String productId = input.getStringByField(FName.PRODUCTID.name());
-                String bookId = input.getStringByField(FName.BOOKID.name());
-                String chapterId = input.getStringByField(FName.CHAPTERID.name());
-                String channelCode = input.getStringByField(FName.CHANNELCODE.name());
-                String realInfoFeeStr = input.getStringByField(FName.COST.name());
-                String provinceId = input.getStringByField(FName.PROVINCEID.name());
-                String wapIp = input.getStringByField(FName.WAPIP.name());
-                String sessionId = input.getStringByField(FName.SESSIONID.name());
-                String promotionid = input.getStringByField(FName.PROMOTIONID.name());
-                OrderItem item = new OrderItem(msisdn, recordTime, userAgent, platform,
-                        orderTypeStr, productId, bookId, chapterId,
-                        channelCode, realInfoFeeStr, provinceId, wapIp,
-                        sessionId, promotionid);
-                orderQueue.addLast(item);
-            }
-            // 不管收到订购消息还是浏览消息，都检查一下是否需要将缓存发送（后续可改为收到订购消息检查）。
+			this.collector = collector;
+			if (input.getSourceStreamId().equals(StreamId.BROWSEDATA.name())) {
+	        	// 浏览消息
+	            Long recordTime = TimeParaser.splitTime(input.getStringByField(FName.RECORDTIME.name()));
+	            String sessionId = input.getStringByField(FName.SESSIONID.name());
+	            String pageType = input.getStringByField(FName.PAGETYPE.name());
+	            String msisdn = input.getStringByField(FName.MSISDN.name());
+	            String channelCode = input.getStringByField(FName.CHANNELCODE.name());
+	            String bookId = input.getStringByField(FName.BOOKID.name());
+	            String chapterId = input.getStringByField(FName.CHAPTERID.name());
+	            collector.emit(StreamId.BROWSEDATA.name(), new Values(
+	                    recordTime, sessionId, pageType, msisdn,
+	                    channelCode, bookId, chapterId));
+	            lastViewTime = recordTime;
+	        } else if (input.getSourceStreamId().equals(StreamId.ORDERDATA.name())) {
+	            // 订购消息
+	            String msisdn = input.getStringByField(FName.MSISDN.name());
+	            Long recordTime = input.getLongByField(FName.RECORDTIME.name());
+	            String userAgent = input.getStringByField(FName.TERMINAL.name());
+	            String platform = input.getStringByField(FName.PLATFORM.name());
+	            String orderTypeStr = input.getStringByField(FName.ORDERTYPE.name());
+	            String productId = input.getStringByField(FName.PRODUCTID.name());
+	            String bookId = input.getStringByField(FName.BOOKID.name());
+	            String chapterId = input.getStringByField(FName.CHAPTERID.name());
+	            String channelCode = input.getStringByField(FName.CHANNELCODE.name());
+	            String realInfoFeeStr = input.getStringByField(FName.COST.name());
+	            String provinceId = input.getStringByField(FName.PROVINCEID.name());
+	            String wapIp = input.getStringByField(FName.WAPIP.name());
+	            String sessionId = input.getStringByField(FName.SESSIONID.name());
+	            String promotionid = input.getStringByField(FName.PROMOTIONID.name());
+	            OrderItem item = new OrderItem(msisdn, recordTime, userAgent, platform,
+	            		orderTypeStr, productId, bookId, chapterId,
+	            		channelCode, realInfoFeeStr, provinceId, wapIp,
+	            		sessionId, promotionid);
+	            orderQueue.addLast(item);
+	         }
+			// 不管收到订购消息还是浏览消息，都检查一下是否需要将缓存发送（后续可改为收到订购消息检查）。
             emitCachedOrderData(collector, lastViewTime - FIVEMINUTES);
-        }
+		 }
+    	this.createCleanThread();
     }
     
     private void createCleanThread() {	
@@ -99,8 +97,7 @@ public class MessageBufferBolt extends BaseBasicBolt {
 						try {
                             // 每隔一个一段时间清理一次。
                             cleaner.sleep(FIVEMINUTES);
-                            if (LOCK == null)
-                                LOCK = new Object();
+                            LOCK = LOCK == null ? new Object() : LOCK;
                             synchronized (LOCK) {
                                 //如果lastViewTime在这10分钟内无变化，说明已无消息，清理入库
                                 if (lastViewTime == preViewTime) {
