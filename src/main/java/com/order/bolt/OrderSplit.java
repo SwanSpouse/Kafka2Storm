@@ -1,11 +1,8 @@
 package com.order.bolt;
 
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.Map;
 
-import com.order.util.OrderItem;
-import com.order.util.TimeParaser;
 import org.apache.log4j.Logger;
 
 import com.order.util.FName;
@@ -52,10 +49,6 @@ public class OrderSplit extends BaseBasicBolt {
 
     private static final long serialVersionUID = 1L;
     static Logger log = Logger.getLogger(OrderSplit.class);
-
-    //缓存5分钟的订单。
-    private LinkedList<OrderItem> orderItemQueue = new LinkedList<OrderItem>();
-    private static final long FIVEMINUTES = 5 * 60 * 1000L;
 
     @Override
     public void prepare(Map conf, TopologyContext context) {
@@ -111,41 +104,10 @@ public class OrderSplit extends BaseBasicBolt {
 
             //营销参数应均为大写。
             channelCode = channelCode == null ? null : channelCode.toUpperCase();
-            Long orderTime = TimeParaser.splitTime(recordTime);
-            //利用数据构造订单。然后进行缓存。
-            OrderItem item = new OrderItem(msisdn, orderTime, terminal, platform,
-                            orderType, productID, bookID, chapterID,
-                            channelCode, cost, provinceId, wapIp,
-                            sessionId, promotionid);
 
-            if (orderItemQueue == null) {
-                orderItemQueue = new LinkedList<OrderItem>();
-            }
-            orderItemQueue.addLast(item);
-            emitCachedData(collector, orderTime);
-        }
-    }
-
-    /**
-     *  发送5分钟前的订单数据。
-     *  orderItemQueue是个队列。按照到达的时间进行插入。每次插入的时候都会从队首取出5分钟前的数据发射出去。
-     */
-    private void emitCachedData(BasicOutputCollector collector, Long currentTime) {
-        long time2emitData = currentTime - FIVEMINUTES;
-        while (!orderItemQueue.isEmpty()) {
-            OrderItem item = orderItemQueue.getFirst();
-            if (item.getRecordTime() <= time2emitData) {
-                collector.emit(StreamId.ORDERDATA.name(), new Values(
-                        item.getMsisdn(), item.getRecordTime(), item.getTerminal(), item.getPlatform(),
-                        item.getOrderType(), item.getProductID(), item.getBookID(), item.getChapterID(),
-                        item.getChannelCode(), item.getCost(), item.getProvinceId(), item.getWapIp(),
-                        item.getSessionId(), item.getPromotionid()
-                ));
-                //数据发送之后将数据移除。
-                orderItemQueue.removeFirst();
-            } else {
-                return;
-            }
+            collector.emit(StreamId.ORDERDATA.name(), new Values(msisdn,
+                    recordTime, terminal, platform, orderType, productID, bookID, chapterID,
+                    channelCode, cost, provinceId, wapIp, sessionId, promotionid));
         }
     }
 

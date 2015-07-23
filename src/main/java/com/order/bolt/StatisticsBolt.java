@@ -136,7 +136,7 @@ public class StatisticsBolt extends BaseBasicBolt {
 
     private void constructInfoFromOrderData(Tuple input, final BasicOutputCollector collector) throws NumberFormatException {
         String msisdn = input.getStringByField(FName.MSISDN.name());
-        Long recordTime = input.getLongByField(FName.RECORDTIME.name());
+        Long recordTime = TimeParaser.splitTime(input.getStringByField(FName.RECORDTIME.name()));
         String userAgent = input.getStringByField(FName.TERMINAL.name());
         String platform = input.getStringByField(FName.PLATFORM.name());
         String orderTypeStr = input.getStringByField(FName.ORDERTYPE.name());
