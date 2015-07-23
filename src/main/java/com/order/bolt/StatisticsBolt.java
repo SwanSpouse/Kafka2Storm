@@ -108,7 +108,7 @@ public class StatisticsBolt extends BaseBasicBolt {
     }
 
     private void constructInfoFromBrowseData(Tuple input) throws NumberFormatException {
-        Long recordTime = TimeParaser.splitTime(input.getStringByField(FName.RECORDTIME.name()));
+        Long recordTime = input.getLongByField(FName.RECORDTIME.name());
         String sessionId = input.getStringByField(FName.SESSIONID.name());
         String pageType = input.getStringByField(FName.PAGETYPE.name());
         String msisdn = input.getStringByField(FName.MSISDN.name());
