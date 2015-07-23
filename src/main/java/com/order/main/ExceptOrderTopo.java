@@ -33,15 +33,15 @@ public class ExceptOrderTopo {
         BrokerHosts brokerHosts = new ZkHosts(zkCfg);
 
         //浏览话单
-        SpoutConfig pageViewSpoutConfigTopic = new SpoutConfig(brokerHosts, topics[0], zkRoot, kafkaZkId);
+        SpoutConfig pageViewSpoutConfigTopic = new SpoutConfig(brokerHosts, topics[0], zkRoot, "pageview");
         pageViewSpoutConfigTopic.scheme = new SchemeAsMultiScheme(new StringScheme());
-        pageViewSpoutConfigTopic.forceFromStart = false;
+        pageViewSpoutConfigTopic.forceFromStart = true;
         pageViewSpoutConfigTopic.socketTimeoutMs = 60000;
 
         //订购话单
-        SpoutConfig orderSpoutConfigTopic = new SpoutConfig(brokerHosts, topics[1], zkRoot, kafkaZkId);
+        SpoutConfig orderSpoutConfigTopic = new SpoutConfig(brokerHosts, topics[1], zkRoot, "order");
         orderSpoutConfigTopic.scheme = new SchemeAsMultiScheme(new StringScheme());
-        orderSpoutConfigTopic.forceFromStart = false;
+        orderSpoutConfigTopic.forceFromStart = true;
         orderSpoutConfigTopic.socketTimeoutMs = 60000;
 
         Config conf = new Config();
@@ -55,19 +55,24 @@ public class ExceptOrderTopo {
          *
          */
         //浏览话单发射、分词bolt
-        builder.setSpout(StreamId.Portal_Pageview.name(), new KafkaSpout(pageViewSpoutConfigTopic), 8);
+        builder.setSpout(StreamId.Portal_Pageview.name(), new KafkaSpout(pageViewSpoutConfigTopic), 16);
         builder.setBolt(StreamId.PageViewSplit.name(), new PageviewSplit(), 50)
                 .shuffleGrouping(StreamId.Portal_Pageview.name());
 
         //订购话单发射、分词bolt
-        builder.setSpout(StreamId.report_cdr.name(), new KafkaSpout(orderSpoutConfigTopic), 3);
+        builder.setSpout(StreamId.report_cdr.name(), new KafkaSpout(orderSpoutConfigTopic), 8);
         builder.setBolt(StreamId.OrderSplit.name(), new OrderSplit(), 5)
                 .shuffleGrouping(StreamId.report_cdr.name());
+        
+        //缓存bolt
+        builder.setBolt(StreamId.MessageBufferBolt.name(), new MessageBufferBolt(), 50)
+                .fieldsGrouping(StreamId.PageViewSplit.name(), StreamId.BROWSEDATA.name(), new Fields(FName.MSISDN.name()))
+                .fieldsGrouping(StreamId.OrderSplit.name(), StreamId.ORDERDATA.name(), new Fields(FName.MSISDN.name()));
 
         //统计bolt
         builder.setBolt(StreamId.StatisticsBolt.name(), new StatisticsBolt(), 100)
-                .fieldsGrouping(StreamId.PageViewSplit.name(), StreamId.BROWSEDATA.name(), new Fields(FName.MSISDN.name()))
-                .fieldsGrouping(StreamId.OrderSplit.name(), StreamId.ORDERDATA.name(), new Fields(FName.MSISDN.name()));
+                .fieldsGrouping(StreamId.MessageBufferBolt.name(), StreamId.BROWSEDATA.name(), new Fields(FName.MSISDN.name()))
+                .fieldsGrouping(StreamId.MessageBufferBolt.name(), StreamId.ORDERDATA.name(), new Fields(FName.MSISDN.name()));
 
         //仓库入库bolt
         builder.setBolt(StreamId.DataWarehouseBolt.name(), new DataWarehouseBolt(), 6)
@@ -89,6 +94,6 @@ public class ExceptOrderTopo {
         conf.put(Config.TOPOLOGY_TRANSFER_BUFFER_SIZE,            32);
         conf.put(Config.TOPOLOGY_EXECUTOR_RECEIVE_BUFFER_SIZE, 16384);
         conf.put(Config.TOPOLOGY_EXECUTOR_SEND_BUFFER_SIZE,    16384);
-        StormSubmitter.submitTopology(StormConf.TOPONAME, conf, builder.createTopology());
+        StormSubmitter.submitTopology("Kafka", conf, builder.createTopology());
     }
 }

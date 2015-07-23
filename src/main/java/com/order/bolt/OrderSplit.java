@@ -3,6 +3,7 @@ package com.order.bolt;
 import java.util.Iterator;
 import java.util.Map;
 
+import com.order.util.TimeParaser;
 import org.apache.log4j.Logger;
 
 import com.order.util.FName;
@@ -104,9 +105,10 @@ public class OrderSplit extends BaseBasicBolt {
 
             //营销参数应均为大写。
             channelCode = channelCode == null ? null : channelCode.toUpperCase();
+            Long orderTime = TimeParaser.splitTime(recordTime);
 
             collector.emit(StreamId.ORDERDATA.name(), new Values(msisdn,
-                    recordTime, terminal, platform, orderType, productID, bookID, chapterID,
+                    orderTime, terminal, platform, orderType, productID, bookID, chapterID,
                     channelCode, cost, provinceId, wapIp, sessionId, promotionid));
         }
     }
