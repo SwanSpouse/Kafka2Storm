@@ -92,7 +92,7 @@ public class SessionInfo implements Serializable {
         if (bookReadId != null) {
             bookReadPv.put(bookReadId, lastUpdateTime);
         }
-        if (bookOrderId != null) {
+        if (bookOrderId != null && orderType != -1) {
             //为了方便规则7的判断。在此将orderType=21定义为批量订购
             if ((orderType == 2 && bookChapterOrderId == null) ||
                     (orderType == 2 && bookChapterOrderId.trim().equals(""))) {
@@ -107,7 +107,7 @@ public class SessionInfo implements Serializable {
         yesterday = day == 0 ? 6 : day - 1;
 
         //统计orderType == 1情况下的用户日渠道信息费。
-        if (orderType == 1) {
+        if (this.orderType == 1) {
             //清除前一天的数据。
             if (channelOrderPv.containsKey(yesterday)) {
                 channelOrderPv.remove(yesterday);
@@ -130,7 +130,7 @@ public class SessionInfo implements Serializable {
         }
 
         //如果不是订购话单就不需要判断扣费的二级渠道了。
-        if (orderType == -1) {
+        if (this.orderType == -1) {
             return;
         }
         //将用户channelCode对应的二级渠道进行保存
@@ -179,7 +179,8 @@ public class SessionInfo implements Serializable {
         if (bookReadId != null) {
             bookReadPv.put(bookReadId, lastUpdateTime);
         }
-        if (bookOrderId != null) {
+        if (bookOrderId != null && orderType != -1) {
+            //为了方便规则7的判断。在此将orderType=21定义为批量订购
             if ((orderType == 2 && bookChapterOrderId == null) ||
                     (orderType == 2 && bookChapterOrderId.trim().equals(""))) {
                 this.orderType = 21;
@@ -195,7 +196,7 @@ public class SessionInfo implements Serializable {
         yesterday = day == 0 ? 6 : day - 1;
 
         //统计orderType == 1情况下的用户日渠道信息费。
-        if (orderType == 1) {
+        if (this.orderType == 1) {
             //清除前一天的数据。
             if (channelOrderPv.containsKey(yesterday)) {
                 channelOrderPv.remove(yesterday);
@@ -218,7 +219,7 @@ public class SessionInfo implements Serializable {
         }
 
         //如果不是订购话单就不需要判断扣费的二级渠道了。
-        if (orderType == -1) {
+        if (this.orderType == -1) {
             return;
         }
         //将用户channelCode对应的二级渠道进行保存
@@ -286,7 +287,7 @@ public class SessionInfo implements Serializable {
 
     /**
      * 检测规则 4
-     * 规则5：一个用户日扣费二级渠道>=3个，
+     * 规则5：一个用户日扣费二级渠道>=3个，该用户异常渠道当天所有信息费为异常
      *
      * @param callback
      */
@@ -321,7 +322,7 @@ public class SessionInfo implements Serializable {
 
     /**
      * 检测规则 6
-     * 规则6：用户有sessionid且3分钟内，包月订购>=2次
+     * 规则6：用户有sessionid且3分钟内，包月订购>=2次,回溯一个小时内 异常渠道下的相关费用
      * orderType = 4
      *
      * @param callback
@@ -342,7 +343,7 @@ public class SessionInfo implements Serializable {
 
     /**
      * 检测规则 7
-     * 新版7：用户有sessionid且5分钟内，完本图书订购本数+批量订购本数>=2, 且对订购图书的pv<=5*本数
+     * 新版7：用户5分钟内，完本图书订购本数+批量订购本数>=2, 且对订购图书的pv<=5*本数
      * orderType = 1 || ( orderType = 2 且 chapterId == null ) 将此情况的orderType 定为 21
      *
      * @param callback
@@ -365,7 +366,7 @@ public class SessionInfo implements Serializable {
 
     /**
      * 检测规则 8
-     * 规则8：用户有sessionid且5分钟内，连载图书订购章数>=10，且对订购图书的pv<=2*章数
+     * 规则8：用户5分钟内，连载图书订购章数>=10，且对订购图书的pv<=2*章数
      * 不满10个。后续判断不触发。
      * orderType=2
      *

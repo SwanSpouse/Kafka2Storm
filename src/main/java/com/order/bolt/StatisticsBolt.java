@@ -178,12 +178,16 @@ public class StatisticsBolt extends BaseBasicBolt {
         if (!sessionId.equals("NULL")) {
             currentSessionInfo.checkRule123(bookId, new EmitDatas(collector));
             currentSessionInfo.checkRule6(new EmitDatas(collector));
-            currentSessionInfo.checkRule7(new EmitDatas(collector));
-            currentSessionInfo.checkRule8(bookId, new EmitDatas(collector));
             currentSessionInfo.checkRule12(platform, new EmitDatas(collector));
         }
         currentSessionInfo.checkRule4(new EmitDatas(collector));
         currentSessionInfo.checkRule5(channelCode, new EmitDatas(collector));
+        currentSessionInfo.checkRule7(new EmitDatas(collector));
+        currentSessionInfo.checkRule8(bookId, new EmitDatas(collector));
+
+        if (msisdn.equals("13413041448") || msisdn.equals("15973190232")) {
+            log.info(msisdn+ " 的记录详单为 : " + currentSessionInfo.toString());
+        }
 
         //更新订购话单UserInfos信息
         Pair<String, UserInfo> userInfoPair = new Pair<String, UserInfo>(msisdn, null);
