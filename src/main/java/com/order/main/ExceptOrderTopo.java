@@ -41,7 +41,6 @@ public class ExceptOrderTopo {
         pageViewSpoutConfigTopic.scheme = new SchemeAsMultiScheme(new StringScheme());
         pageViewSpoutConfigTopic.forceFromStart = false;
         pageViewSpoutConfigTopic.socketTimeoutMs = 60000;
-        pageViewSpoutConfigTopic.startOffsetTime = 453516458;
 
         //订购话单
         SpoutConfig orderSpoutConfigTopic = new SpoutConfig(brokerHosts, topics[1], zkRoot, "order");
@@ -49,7 +48,6 @@ public class ExceptOrderTopo {
         orderSpoutConfigTopic.scheme = new SchemeAsMultiScheme(new StringScheme());
         orderSpoutConfigTopic.forceFromStart = false;
         orderSpoutConfigTopic.socketTimeoutMs = 60000;
-        orderSpoutConfigTopic.startOffsetTime = 90618402;
 
         Config conf = new Config();
         TopologyBuilder builder = new TopologyBuilder();

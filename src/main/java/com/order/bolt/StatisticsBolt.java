@@ -132,13 +132,6 @@ public class StatisticsBolt extends BaseBasicBolt {
             sessionInfos.put(new Pair<String, SessionInfo>(msisdn, currentSessionInfo));
         }
 
-        //15869501999,45001447009,15077288941,15025826123
-        if (msisdn.equals("15869501999") || msisdn.equals("45001447009") ||
-                msisdn.equals("15077288941") || msisdn.equals("15025826123")) {
-            log.info(msisdn + " ===用户的pv为: === " + currentSessionInfo.toString());
-        } else {
-            log.info(msisdn + " 用户的pv为: " + currentSessionInfo.toString());
-        }
         //浏览话单不需要更新用户信息
     }
 
@@ -192,14 +185,6 @@ public class StatisticsBolt extends BaseBasicBolt {
         currentSessionInfo.checkRule5(channelCode, new EmitDatas(collector));
         currentSessionInfo.checkRule7(new EmitDatas(collector));
         currentSessionInfo.checkRule8(bookId, new EmitDatas(collector));
-
-        //15869501999,45001447009,15077288941,15025826123
-        if (msisdn.equals("15869501999") || msisdn.equals("45001447009") ||
-                msisdn.equals("15077288941") || msisdn.equals("15025826123")) {
-            log.info(msisdn + " =====用户详单为==== " + currentSessionInfo.toString());
-        } else {
-            log.info(msisdn + " 用户详单: " + currentSessionInfo.toString());
-        }
 
         //更新订购话单UserInfos信息
         Pair<String, UserInfo> userInfoPair = new Pair<String, UserInfo>(msisdn, null);
