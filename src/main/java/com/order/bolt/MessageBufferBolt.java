@@ -88,7 +88,7 @@ public class MessageBufferBolt extends BaseBasicBolt {
                     orderMap.put(recordTime, list);
                 }
                 // 不管收到订购消息还是浏览消息，都检查一下是否需要将缓存发送（后续可改为收到订购消息检查）。
-//                emitCachedOrderData(collector, lastViewTime - FIVEMINUTES * 2);
+                emitCachedOrderData(collector, lastViewTime - FIVEMINUTES);
             }
 		 }
     	this.createCleanThread();
@@ -102,7 +102,7 @@ public class MessageBufferBolt extends BaseBasicBolt {
 					while (true) {
 						try {
                             // 每隔一个一段时间清理一次。
-                            cleaner.sleep(THREEMINUTES);
+                            cleaner.sleep(FIVEMINUTES * 3);
                             LOCK = LOCK == null ? new Object() : LOCK;
                             synchronized (LOCK) {
                                 //如果lastViewTime在这10分钟内无变化，说明已无消息，清理入库
