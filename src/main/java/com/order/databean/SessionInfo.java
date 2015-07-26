@@ -32,6 +32,7 @@ public class SessionInfo implements Serializable {
     private double realInfoFee = 0.0;
     //渠道id 营销ID
     private String channelId = null;
+
     //产品ID
     private String productId = null;
     private long lastUpdateTime;
@@ -98,7 +99,10 @@ public class SessionInfo implements Serializable {
                     (orderType == 2 && bookChapterOrderId.trim().equals(""))) {
                 this.orderType = 21;
             }
-            bookOrderPv.put(bookOrderId, this.orderType, lastUpdateTime);
+            //对于orderType=4 且 sessionId为NULL的订单不存储。规则6、12用到。
+            if (!(orderType == 4 && sessionId.toUpperCase().equals("NULL"))) {
+                bookOrderPv.put(bookOrderId, this.orderType, lastUpdateTime);
+            }
         }
 
         this.provinceId = provinceId;

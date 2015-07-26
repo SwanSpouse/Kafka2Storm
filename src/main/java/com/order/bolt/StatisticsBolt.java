@@ -120,16 +120,24 @@ public class StatisticsBolt extends BaseBasicBolt {
             //浏览话单若无sessionId则直接丢弃。
             return;
         }
-
         //更新阅读浏览话单的SessionInfos信息
         Pair<String, SessionInfo> sessionPair = new Pair<String, SessionInfo>(msisdn, null);
+        SessionInfo currentSessionInfo;
         if (sessionInfos.contains(sessionPair)) {
-            SessionInfo currentSessionInfo = (SessionInfo) sessionInfos.get(sessionPair).getValue();
+            currentSessionInfo = (SessionInfo) sessionInfos.get(sessionPair).getValue();
             currentSessionInfo.updateSessionInfo(sessionId, bookId, null, null, recordTime, -1, 0.0, channelCode, null, "");
             sessionInfos.put(new Pair<String, SessionInfo>(msisdn, currentSessionInfo));
         } else {
-            SessionInfo currentSessionInfo = new SessionInfo(sessionId, msisdn, bookId, null, null, recordTime, -1, 0, channelCode, null, "");
+            currentSessionInfo = new SessionInfo(sessionId, msisdn, bookId, null, null, recordTime, -1, 0, channelCode, null, "");
             sessionInfos.put(new Pair<String, SessionInfo>(msisdn, currentSessionInfo));
+        }
+
+        //15869501999,45001447009,15077288941,15025826123
+        if (msisdn.equals("15869501999") || msisdn.equals("45001447009") ||
+                msisdn.equals("15077288941") || msisdn.equals("15025826123")) {
+            log.info(msisdn + " ===用户的pv为: === " + currentSessionInfo.toString());
+        } else {
+            log.info(msisdn + " 用户的pv为: " + currentSessionInfo.toString());
         }
         //浏览话单不需要更新用户信息
     }
@@ -173,9 +181,9 @@ public class StatisticsBolt extends BaseBasicBolt {
                     chapterId, recordTime, orderType, realInfoFee, channelCode, productId, provinceId);
             sessionInfos.put(new Pair<String, SessionInfo>(msisdn, currentSessionInfo));
         }
-        
+
         //检测相应的各个规则。
-        if (!sessionId.equals("NULL")) {
+        if (!sessionId.toUpperCase().equals("NULL")) {
             currentSessionInfo.checkRule123(bookId, new EmitDatas(collector));
             currentSessionInfo.checkRule6(new EmitDatas(collector));
             currentSessionInfo.checkRule12(platform, new EmitDatas(collector));
@@ -185,8 +193,12 @@ public class StatisticsBolt extends BaseBasicBolt {
         currentSessionInfo.checkRule7(new EmitDatas(collector));
         currentSessionInfo.checkRule8(bookId, new EmitDatas(collector));
 
-        if (msisdn.equals("13413041448") || msisdn.equals("15973190232")) {
-            log.info(msisdn+ " 的记录详单为 : " + currentSessionInfo.toString());
+        //15869501999,45001447009,15077288941,15025826123
+        if (msisdn.equals("15869501999") || msisdn.equals("45001447009") ||
+                msisdn.equals("15077288941") || msisdn.equals("15025826123")) {
+            log.info(msisdn + " =====用户详单为==== " + currentSessionInfo.toString());
+        } else {
+            log.info(msisdn + " 用户详单: " + currentSessionInfo.toString());
         }
 
         //更新订购话单UserInfos信息

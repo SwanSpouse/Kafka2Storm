@@ -162,24 +162,42 @@ public class DataWarehouseBolt extends BaseBasicBolt {
         Long traceBackEndTime = (long) 0;
         String traceBackChannelCode;
         if (ruleId == 1 || ruleId == 2 || ruleId == 3 ||
-               ruleId == 6 || ruleId == 7 || ruleId == 8) {
-        	traceBackBeginTime = recordTime - 60*60*1000L;
-        	traceBackEndTime = recordTime;
-        	traceBackChannelCode = channelCode;
+                ruleId == 6 || ruleId == 7 || ruleId == 8 || ruleId == 12) {
+            traceBackBeginTime = recordTime - 60 * 60 * 1000L;
+            traceBackEndTime = recordTime;
+            traceBackChannelCode = channelCode;
         } else if (ruleId == 4 || ruleId == 5) {
-        	traceBackBeginTime = TimeParaser.splitTime(TimeParaser.OneDayAgo(recordTime));
-        	traceBackEndTime = recordTime;
-        	traceBackChannelCode = "";
+            traceBackBeginTime = TimeParaser.splitTime(TimeParaser.OneDayAgo(recordTime));
+            traceBackEndTime = recordTime;
+            traceBackChannelCode = "";
         } else if (ruleId == 9 || ruleId == 10 || ruleId == 11) {
-        	traceBackBeginTime = TimeParaser.splitTime(TimeParaser.NormalHourAgo(recordTime));
-        	traceBackEndTime = recordTime;
-        	traceBackChannelCode = "";
+            traceBackBeginTime = TimeParaser.splitTime(TimeParaser.NormalHourAgo(recordTime));
+            traceBackEndTime = recordTime;
+            traceBackChannelCode = "";
         } else {
             return;
         }
 
         ArrayList<OrderRecord> list = DBHelper.traceBackOrders(msisdn,
         		traceBackChannelCode, traceBackBeginTime, traceBackEndTime, ruleId);
+        /**
+         *  对于规则6. 上面追溯过程追溯的是特定渠道的一个小时异常数据。
+         *  如果上一条正常数据渠道和本次判定异常渠道不同，且在三分钟内。那么上一条正常数据同样应该追溯。
+         *  下面代码段实现本功能。追溯三分钟。然后去掉重复订单。
+         */
+        if (ruleId == 6) {
+            traceBackBeginTime = recordTime - 3 * 60 * 1000l;
+            traceBackEndTime = recordTime;
+            traceBackChannelCode = "";
+        }
+        ArrayList<OrderRecord> list4Rule6 = DBHelper.traceBackOrders(msisdn,
+                traceBackChannelCode, traceBackBeginTime, traceBackEndTime, ruleId);
+        for (OrderRecord record : list4Rule6) {
+            if (!list.contains(record)) {
+                list.add(record);
+            }
+        }
+
         // 将回溯的订购发送
         Iterator<OrderRecord> itOrder = list.iterator();
         while (itOrder.hasNext()) {

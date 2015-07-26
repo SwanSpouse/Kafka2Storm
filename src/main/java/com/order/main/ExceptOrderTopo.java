@@ -19,6 +19,9 @@ public class ExceptOrderTopo {
 
     static Logger log = Logger.getLogger(ExceptOrderTopo.class);
 
+    public final static String viewTopic = "Portal.Pageview2";
+    public final static String orderTopic = "report.cdr2";
+
     public static void main(String[] args) throws Exception {
         log.info("Start topology.");
 
@@ -34,12 +37,14 @@ public class ExceptOrderTopo {
 
         //浏览话单
         SpoutConfig pageViewSpoutConfigTopic = new SpoutConfig(brokerHosts, topics[0], zkRoot, "pageview");
+//        SpoutConfig pageViewSpoutConfigTopic = new SpoutConfig(brokerHosts, viewTopic, zkRoot, "pageview");
         pageViewSpoutConfigTopic.scheme = new SchemeAsMultiScheme(new StringScheme());
         pageViewSpoutConfigTopic.forceFromStart = true;
         pageViewSpoutConfigTopic.socketTimeoutMs = 60000;
 
         //订购话单
         SpoutConfig orderSpoutConfigTopic = new SpoutConfig(brokerHosts, topics[1], zkRoot, "order");
+//        SpoutConfig orderSpoutConfigTopic = new SpoutConfig(brokerHosts, orderTopic, zkRoot, "order");
         orderSpoutConfigTopic.scheme = new SchemeAsMultiScheme(new StringScheme());
         orderSpoutConfigTopic.forceFromStart = true;
         orderSpoutConfigTopic.socketTimeoutMs = 60000;
@@ -94,6 +99,6 @@ public class ExceptOrderTopo {
         conf.put(Config.TOPOLOGY_TRANSFER_BUFFER_SIZE,            32);
         conf.put(Config.TOPOLOGY_EXECUTOR_RECEIVE_BUFFER_SIZE, 16384);
         conf.put(Config.TOPOLOGY_EXECUTOR_SEND_BUFFER_SIZE,    16384);
-        StormSubmitter.submitTopology("Kafka", conf, builder.createTopology());
+        StormSubmitter.submitTopology(StormConf.TOPONAME, conf, builder.createTopology());
     }
 }
