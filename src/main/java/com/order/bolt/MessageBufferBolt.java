@@ -1,10 +1,8 @@
 package com.order.bolt;
 
-import java.util.LinkedList;
-import java.util.Map;
+import java.util.*;
 
 import com.order.util.OrderItem;
-import com.order.util.TimeParaser;
 
 import org.apache.log4j.Logger;
 
@@ -24,9 +22,11 @@ public class MessageBufferBolt extends BaseBasicBolt {
     private static final long serialVersionUID = 1L;
     static Logger log = Logger.getLogger(MessageBufferBolt.class);
     private static final long FIVEMINUTES = 5 * 60 * 1000L;
+    private static final long THREEMINUTES = 3 * 60 * 1000l;
 
     //缓存的订购消息
-    private LinkedList<OrderItem> orderQueue = null;
+    private TreeMap<Long,LinkedList<OrderItem>> orderMap = null;
+
     //最近一条浏览消息的时间
     private long lastViewTime = 0;
     // 上次定时清理检查时间
@@ -39,7 +39,7 @@ public class MessageBufferBolt extends BaseBasicBolt {
     @Override
     public void prepare(Map conf, TopologyContext context) {
         super.prepare(conf, context);
-        orderQueue = new LinkedList<OrderItem>();
+        orderMap = new TreeMap<Long, LinkedList<OrderItem>>();
     }
     
     @Override
@@ -49,7 +49,7 @@ public class MessageBufferBolt extends BaseBasicBolt {
 			this.collector = collector;
 			if (input.getSourceStreamId().equals(StreamId.BROWSEDATA.name())) {
 	        	// 浏览消息
-	            Long recordTime = TimeParaser.splitTime(input.getStringByField(FName.RECORDTIME.name()));
+	            Long recordTime = input.getLongByField(FName.RECORDTIME.name());
 	            String sessionId = input.getStringByField(FName.SESSIONID.name());
 	            String pageType = input.getStringByField(FName.PAGETYPE.name());
 	            String msisdn = input.getStringByField(FName.MSISDN.name());
@@ -80,10 +80,16 @@ public class MessageBufferBolt extends BaseBasicBolt {
 	            		orderTypeStr, productId, bookId, chapterId,
 	            		channelCode, realInfoFeeStr, provinceId, wapIp,
 	            		sessionId, promotionid);
-	            orderQueue.addLast(item);
-	         }
-			// 不管收到订购消息还是浏览消息，都检查一下是否需要将缓存发送（后续可改为收到订购消息检查）。
-            emitCachedOrderData(collector, lastViewTime - FIVEMINUTES);
+                if (orderMap.containsKey(recordTime)) {
+                    orderMap.get(recordTime).addLast(item);
+                } else {
+                    LinkedList<OrderItem> list = new LinkedList<OrderItem>();
+                    list.addLast(item);
+                    orderMap.put(recordTime, list);
+                }
+                // 不管收到订购消息还是浏览消息，都检查一下是否需要将缓存发送（后续可改为收到订购消息检查）。
+//                emitCachedOrderData(collector, lastViewTime - FIVEMINUTES * 2);
+            }
 		 }
     	this.createCleanThread();
     }
@@ -96,7 +102,7 @@ public class MessageBufferBolt extends BaseBasicBolt {
 					while (true) {
 						try {
                             // 每隔一个一段时间清理一次。
-                            cleaner.sleep(FIVEMINUTES);
+                            cleaner.sleep(THREEMINUTES);
                             LOCK = LOCK == null ? new Object() : LOCK;
                             synchronized (LOCK) {
                                 //如果lastViewTime在这10分钟内无变化，说明已无消息，清理入库
@@ -125,19 +131,23 @@ public class MessageBufferBolt extends BaseBasicBolt {
      *  orderQueue是个队列。按照到达的时间进行插入。每次插入的时候都会从队首取出最近一条浏览数据5分钟前的数据发射出去。
      */
     private void emitCachedOrderData(BasicOutputCollector collector, long time2emitData) {
-        while (!orderQueue.isEmpty()) {
-            OrderItem item = orderQueue.getFirst();
-            if (item.getRecordTime() < time2emitData) {
-                collector.emit(StreamId.ORDERDATA.name(), new Values(
-                        item.getMsisdn(), item.getRecordTime(), item.getTerminal(), item.getPlatform(),
-                        item.getOrderType(), item.getProductID(), item.getBookID(), item.getChapterID(),
-                        item.getChannelCode(), item.getCost(), item.getProvinceId(), item.getWapIp(),
-                        item.getSessionId(), item.getPromotionid()
-                ));
-                //数据发送之后将数据移除。
-                orderQueue.removeFirst();
+        Iterator<Long> it = orderMap.keySet().iterator();
+        while (it.hasNext()) {
+            Long key = it.next();
+            if (key <= time2emitData) {
+                LinkedList<OrderItem> orderItems = orderMap.get(key);
+                while (!orderItems.isEmpty()) {
+                    OrderItem item = orderItems.pop();
+                    collector.emit(StreamId.ORDERDATA.name(), new Values(
+                            item.getMsisdn(), item.getRecordTime(), item.getTerminal(), item.getPlatform(),
+                            item.getOrderType(), item.getProductID(), item.getBookID(), item.getChapterID(),
+                            item.getChannelCode(), item.getCost(), item.getProvinceId(), item.getWapIp(),
+                            item.getSessionId(), item.getPromotionid()
+                    ));
+                }
+                it.remove();
             } else {
-                return;
+                break;
             }
         }
     }
@@ -157,5 +167,4 @@ public class MessageBufferBolt extends BaseBasicBolt {
                         FName.SESSIONID.name(), FName.PAGETYPE.name(), FName.MSISDN.name(),
                         FName.CHANNELCODE.name(), FName.BOOKID.name(), FName.CHAPTERID.name()));
     }
-
 }

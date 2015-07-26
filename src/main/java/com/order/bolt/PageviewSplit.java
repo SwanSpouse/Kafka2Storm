@@ -9,6 +9,7 @@ import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
 import com.order.util.FName;
 import com.order.util.StreamId;
+import com.order.util.TimeParaser;
 import org.apache.log4j.Logger;
 
 import java.util.Map;
@@ -62,9 +63,11 @@ public class PageviewSplit extends BaseBasicBolt {
             channelCode = channelCode == null ? null : channelCode.toUpperCase();
             String bookId = words[47]; //exColumn1 扩展字段1 Varchar2(255)
             String chapterId = words[48]; //exColumn2 扩展字段2
+
+            Long time = TimeParaser.splitTime(recordTime);
             if (pageType.trim().equals("2") || pageType.trim().equals("3")) {
                 collector.emit(StreamId.BROWSEDATA.name(), new Values(
-                        recordTime, sessionId, pageType, msisdn,
+                        time, sessionId, pageType, msisdn,
                         channelCode, bookId, chapterId));
             }
         } else {

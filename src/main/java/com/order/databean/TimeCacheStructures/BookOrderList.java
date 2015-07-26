@@ -43,9 +43,9 @@ public class BookOrderList implements Serializable {
         } else {
             CachedList<Integer> orderTypeList;
             if (orderType == 4) {
-                orderTypeList = new CachedList<Integer>(Constant.THREE_MINUTES * 2);
+                orderTypeList = new CachedList<Integer>(Constant.ONE_HOUR);
             } else {
-                orderTypeList = new CachedList<Integer>(Constant.FIVE_MINUTES * 2);
+                orderTypeList = new CachedList<Integer>(Constant.ONE_HOUR);
             }
             orderTypeList.put(orderType, currentTime);
             map.put(bookId, orderTypeList);

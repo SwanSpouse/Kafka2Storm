@@ -46,8 +46,8 @@ public class SessionInfo implements Serializable {
     //订单类型
     private int orderType = 0;
 
-    //图书阅读浏览pv， 多缓存10 分钟的数据。防止订单时序错乱造成的错误
-    private CachedList<String> bookReadPv = new CachedList<String>(Constant.SIXTYFIVE_MINUTES + 10 * 60);
+    //图书阅读浏览pv， 多缓存20 分钟的数据。防止订单时序错乱造成的错误
+    private CachedList<String> bookReadPv = new CachedList<String>(Constant.SIXTYFIVE_MINUTES + 2 * 10 * 60);
     //图书购买pv,Key为图书ID Value 为 (key为 OrderType 和 value 订购时间点)组成的Map
     private BookOrderList bookOrderPv = new BookOrderList();
     //各个渠道下的日购买费用 Key为日期。Value为用户日期下的 渠道和渠道下的购买费用。
