@@ -29,6 +29,7 @@ public class StormConf {
     // # Kafka参数
     public static final String ZKROOT = conf.get("zkRoot");
     public static final String ID = conf.get("id");
+    public static final String GROUPID = conf.get("groupid");
 
     // # 输出表名称
     public static final String channelCodesTable = conf.get("channelCodesTable");

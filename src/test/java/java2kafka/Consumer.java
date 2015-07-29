@@ -33,8 +33,7 @@ public class Consumer extends Thread {
     private final String topic;
 
     public Consumer(String topic) {
-        consumer = kafka.consumer.Consumer.createJavaConsumerConnector(
-                createConsumerConfig());
+        consumer = kafka.consumer.Consumer.createJavaConsumerConnector(createConsumerConfig());
         this.topic = topic;
     }
 
@@ -45,9 +44,7 @@ public class Consumer extends Thread {
         props.put("zookeeper.session.timeout.ms", "400");
         props.put("zookeeper.sync.time.ms", "200");
         props.put("auto.commit.interval.ms", "1000");
-
         return new ConsumerConfig(props);
-
     }
 
     public void run() {

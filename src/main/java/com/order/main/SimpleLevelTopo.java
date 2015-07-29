@@ -2,74 +2,54 @@ package com.order.main;
 
 import backtype.storm.Config;
 import backtype.storm.StormSubmitter;
-import backtype.storm.spout.SchemeAsMultiScheme;
 import backtype.storm.topology.TopologyBuilder;
 import backtype.storm.tuple.Fields;
 import com.order.bolt.*;
+import com.order.spout.KafkaSpout;
 import com.order.util.FName;
 import com.order.util.StormConf;
 import com.order.util.StreamId;
 import org.apache.log4j.Logger;
-import storm.kafka.*;
 
 /**
- * Created by LiMingji on 2015/6/5.
+ * Created by LiMingji on 2015/7/29.
  */
 /**
-////////////////////////////////////////////////////////////////////
-//							_ooOoo_								  //
-//						   o8888888o							  //
-//						   88" . "88							  //
-//						   (| ^_^ |)							  //
-//						   O\  =  /O							  //
-//						____/`---'\____							  //
-//					  .'  \\|     |//  `.						  //
-//					 /  \\|||  :  |||//  \						  //
-//				    /  _||||| -:- |||||-  \						  //
-//				    |   | \\\  -  /// |   |						  //
-//					| \_|  ''\---/''  |   |						  //
-//					\  .-\__  `-`  ___/-. /						  //
-//				  ___`. .'  /--.--\  `. . ___					  //
-//				."" '<  `.___\_<|>_/___.'  >'"".				  //
-//			  | | :  `- \`.;`\ _ /`;.`/ - ` : | |				  //
-//			  \  \ `-.   \_ __\ /__ _/   .-` /  /                 //
-//		========`-.____`-.___\_____/___.-`____.-'========		  //
-//				             `=---='                              //
-//		^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^        //
-//         佛祖保佑           永无BUG		         永不修改			  //
-////////////////////////////////////////////////////////////////////
+ ////////////////////////////////////////////////////////////////////
+ //							_ooOoo_								  //
+ //						   o8888888o							  //
+ //						   88" . "88							  //
+ //						   (| ^_^ |)							  //
+ //						   O\  =  /O							  //
+ //						____/`---'\____							  //
+ //					  .'  \\|     |//  `.						  //
+ //					 /  \\|||  :  |||//  \						  //
+ //				    /  _||||| -:- |||||-  \						  //
+ //				    |   | \\\  -  /// |   |						  //
+ //					| \_|  ''\---/''  |   |						  //
+ //					\  .-\__  `-`  ___/-. /						  //
+ //				  ___`. .'  /--.--\  `. . ___					  //
+ //				."" '<  `.___\_<|>_/___.'  >'"".				  //
+ //			  | | :  `- \`.;`\ _ /`;.`/ - ` : | |				  //
+ //			  \  \ `-.   \_ __\ /__ _/   .-` /  /                 //
+ //		========`-.____`-.___\_____/___.-`____.-'========		  //
+ //				             `=---='                              //
+ //		^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^        //
+ //         佛祖保佑           永无BUG		         永不修改			  //
+ ////////////////////////////////////////////////////////////////////
  */
 
-public class ExceptOrderTopo {
+public class SimpleLevelTopo {
 
     static Logger log = Logger.getLogger(ExceptOrderTopo.class);
 
     public static void main(String[] args) throws Exception {
         log.info("Start topology.");
-
-        String zkCfg = StormConf.ZKCFG;
         String[] topics = StormConf.TOPIC;
-        String zkRoot = StormConf.ZKROOT;
-        String kafkaZkId = StormConf.ID;
         if (topics.length < 2) {
             log.error("Kafka's topic is less than 2.");
             System.exit(1);
         }
-        BrokerHosts brokerHosts = new ZkHosts(zkCfg);
-
-        //浏览话单
-        SpoutConfig pageViewSpoutConfigTopic = new SpoutConfig(brokerHosts, topics[0], zkRoot, "pageview");
-//        SpoutConfig pageViewSpoutConfigTopic = new SpoutConfig(brokerHosts, viewTopic, zkRoot, "pageview");
-        pageViewSpoutConfigTopic.scheme = new SchemeAsMultiScheme(new StringScheme());
-        pageViewSpoutConfigTopic.forceFromStart = false;
-        pageViewSpoutConfigTopic.socketTimeoutMs = 60000;
-
-        //订购话单
-        SpoutConfig orderSpoutConfigTopic = new SpoutConfig(brokerHosts, topics[1], zkRoot, "order");
-//        SpoutConfig orderSpoutConfigTopic = new SpoutConfig(brokerHosts, orderTopic, zkRoot, "order");
-        orderSpoutConfigTopic.scheme = new SchemeAsMultiScheme(new StringScheme());
-        orderSpoutConfigTopic.forceFromStart = false;
-        orderSpoutConfigTopic.socketTimeoutMs = 60000;
 
         Config conf = new Config();
         TopologyBuilder builder = new TopologyBuilder();
@@ -82,15 +62,15 @@ public class ExceptOrderTopo {
          *
          */
         //浏览话单发射、分词bolt
-        builder.setSpout(StreamId.Portal_Pageview.name(), new KafkaSpout(pageViewSpoutConfigTopic), 16);
+        builder.setSpout(StreamId.Portal_Pageview.name(), new KafkaSpout(topics[0]), 16);
         builder.setBolt(StreamId.PageViewSplit.name(), new PageviewSplit(), 50)
                 .shuffleGrouping(StreamId.Portal_Pageview.name());
 
         //订购话单发射、分词bolt
-        builder.setSpout(StreamId.report_cdr.name(), new KafkaSpout(orderSpoutConfigTopic), 8);
+        builder.setSpout(StreamId.report_cdr.name(), new KafkaSpout(topics[1]), 8);
         builder.setBolt(StreamId.OrderSplit.name(), new OrderSplit(), 5)
                 .shuffleGrouping(StreamId.report_cdr.name());
-        
+
         //缓存bolt
         builder.setBolt(StreamId.MessageBufferBolt.name(), new MessageBufferBolt(), 50)
                 .fieldsGrouping(StreamId.PageViewSplit.name(), StreamId.BROWSEDATA.name(), new Fields(FName.MSISDN.name()))
@@ -121,6 +101,6 @@ public class ExceptOrderTopo {
         conf.put(Config.TOPOLOGY_TRANSFER_BUFFER_SIZE,            32);
         conf.put(Config.TOPOLOGY_EXECUTOR_RECEIVE_BUFFER_SIZE, 16384);
         conf.put(Config.TOPOLOGY_EXECUTOR_SEND_BUFFER_SIZE,    16384);
-        StormSubmitter.submitTopology(StormConf.TOPONAME, conf, builder.createTopology());
+        StormSubmitter.submitTopology("SimpleLevelSpout", conf, builder.createTopology());
     }
 }
