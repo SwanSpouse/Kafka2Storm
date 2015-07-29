@@ -49,15 +49,8 @@ public class KafkaSpout extends BaseRichSpout {
             @Override
             public void run() {
                 while (true) {
-                    if (queue.isEmpty()) {
-                        try {
-                            Thread.sleep(1000l);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    while (!queue.isEmpty()) {
-                        String message = queue.pop();
+                    String message = queue.pop();
+                    if (message != null) {
                         collector.emit(streamId, new Values(message));
                     }
                 }
