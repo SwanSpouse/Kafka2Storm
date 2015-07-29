@@ -102,7 +102,7 @@ public class RealTimeCacheList<T> implements Serializable {
             while (itTime.hasNext()) {
                 long clickTime = itTime.next();
                 if (clickTime < timeThreashold) {
-                    list.remove(clickTime);
+                    itTime.remove();
                 } else {
                     continue;
                 }

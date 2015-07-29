@@ -97,10 +97,12 @@ public class CachedList<T> implements Serializable {
      */
     public void removeTimeOutData(long lastUpdateTime) {
         long timeThreshold = lastUpdateTime - expirationSecs * 1000L;
-        for (T key : list.keySet()) {
+        Iterator<T> itKey = list.keySet().iterator();
+        while (itKey.hasNext()) {
+            T key = itKey.next();
             ArrayList<Long> clickTimes = list.get(key);
             if (clickTimes == null || clickTimes.size() == 0) {
-                list.remove(key);
+                itKey.remove();
                 continue;
             }
             //锁住
@@ -114,7 +116,7 @@ public class CachedList<T> implements Serializable {
                 }
             }
             if (clickTimes.size() == 0) {
-                list.remove(key);
+                itKey.remove();
             }
         }
     }
