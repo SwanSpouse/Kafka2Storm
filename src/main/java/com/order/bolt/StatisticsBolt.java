@@ -216,6 +216,12 @@ public class StatisticsBolt extends BaseBasicBolt {
                     new Values(msisdn, sessionId, recordTime, realInfoFee, channelCode, productId,
                             provinceId, orderType, bookId, Rules.ELEVEN.name()));
         }
+
+        int size = sessionInfos.keySet().size();
+        int sizePv = userInfos.keySet().size();
+        if (size % 10000 == 0 || sizePv % 10000 == 0) {
+            log.info("当前时间sessionInfos : " + size + " userInfos为:  " + sizePv);
+        }
     }
 
     @Override

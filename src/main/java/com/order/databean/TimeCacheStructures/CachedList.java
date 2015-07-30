@@ -121,6 +121,7 @@ public class CachedList<T> implements Serializable {
                 }
             }
             if (clickTimes.size() == 0) {
+                clickTimes.clear();
                 itKey.remove();
             }
         }

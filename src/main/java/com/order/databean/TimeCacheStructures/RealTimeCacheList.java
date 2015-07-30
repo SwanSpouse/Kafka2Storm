@@ -58,13 +58,13 @@ public class RealTimeCacheList<T> implements Serializable {
                 while (true) {
                     try {
                         cleaner.sleep(sleepTime);
-                        if (timeOutCallback != null) {
-                            Iterator<T> iterator = oldList.keySet().iterator();
-                            while (iterator.hasNext()) {
-                                T key = iterator.next();
-                                timeOutCallback.expire(key, oldList.get(key));
-                            }
-                        }
+//                        if (timeOutCallback != null) {
+//                            Iterator<T> iterator = oldList.keySet().iterator();
+//                            while (iterator.hasNext()) {
+//                                T key = iterator.next();
+//                                timeOutCallback.expire(key, oldList.get(key));
+//                            }
+//                        }
                         oldList.clear();
                         oldList.putAll(currentList);
                         currentList.clear();
@@ -76,39 +76,6 @@ public class RealTimeCacheList<T> implements Serializable {
         });
         cleaner.setDaemon(true);
         cleaner.start();
-    }
-
-    /**
-     * 在获取size之前对oldlist 和 currentlist中的过期数据进行清除
-     */
-    public int size(long currentTime) {
-        long timeThreashold = currentTime - expiratonSecs * 1000L;
-        this.removeTimeOutData(oldList, timeThreashold);
-        this.removeTimeOutData(currentList, timeThreashold);
-        return oldList.size() + currentList.size();
-    }
-
-    //对某个map下的过期数据进行清楚。
-    private void removeTimeOutData(ConcurrentHashMap<T, LinkedList<Long>> map, long timeThreashold) {
-        Iterator<T> it = map.keySet().iterator();
-        while (it.hasNext()) {
-            T key = it.next();
-            LinkedList<Long> list = map.get(key);
-            if (list == null || list.size() == 0) {
-                it.remove();
-                continue;
-            }
-            Iterator<Long> itTime = list.iterator();
-            while (itTime.hasNext()) {
-                long clickTime = itTime.next();
-                if (clickTime < timeThreashold) {
-                    itTime.remove();
-                }
-            }
-            if (list.size() == 0) {
-                it.remove();
-            }
-        }
     }
 
     public void put(T value) {
