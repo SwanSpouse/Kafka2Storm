@@ -88,7 +88,7 @@ public class MessageBufferBolt extends BaseBasicBolt {
                     orderMap.put(recordTime, list);
                 }
                 // 不管收到订购消息还是浏览消息，都检查一下是否需要将缓存发送（后续可改为收到订购消息检查）。
-                emitCachedOrderData(collector, lastViewTime - FIVEMINUTES * 2);
+                emitCachedOrderData(collector, lastViewTime - FIVEMINUTES);
             }
 		 }
     	this.createCleanThread();

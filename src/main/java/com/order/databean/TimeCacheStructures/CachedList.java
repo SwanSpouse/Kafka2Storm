@@ -31,10 +31,11 @@ public class CachedList<T> implements Serializable {
      * @return
      */
     public int size(long currentTime, int timeOutSeconds) {
+        //第一步清除过期数据
+        this.removeTimeOutData(currentTime);
         if (timeOutSeconds == -1) {
             timeOutSeconds = expirationSecs;
         }
-        this.removeTimeOutData(currentTime);
         int count = 0;
         for (T key : list.keySet()) {
             count += sizeById(key, currentTime, timeOutSeconds) == 0 ? 0 : 1;
@@ -50,6 +51,8 @@ public class CachedList<T> implements Serializable {
      * @return
      */
     public int sizeById(T key, long endTime, int timeOutSeconds) {
+        //第一步清除过期数据
+        this.removeTimeOutData(endTime);
         if (!list.containsKey(key)) {
             return 0;
         }
@@ -76,6 +79,8 @@ public class CachedList<T> implements Serializable {
      * @return
      */
     public int sizeWithTimeThreshold(T key, Long endTime, int thresholdInSeconds) {
+        //第一步清除过期数据
+        this.removeTimeOutData(endTime);
         long startTime = endTime - thresholdInSeconds * 1000L;
         if (!list.containsKey(key) || list.get(key) == null) {
             return 0;
@@ -95,7 +100,7 @@ public class CachedList<T> implements Serializable {
      * 对list中过期的数据进行清理。
      * @param lastUpdateTime 过期时间阈值
      */
-    public void removeTimeOutData(long lastUpdateTime) {
+    private void removeTimeOutData(long lastUpdateTime) {
         long timeThreshold = lastUpdateTime - expirationSecs * 1000L;
         Iterator<T> itKey = list.keySet().iterator();
         while (itKey.hasNext()) {

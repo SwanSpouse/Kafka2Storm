@@ -95,7 +95,7 @@ public class RealTimeCacheList<T> implements Serializable {
             T key = it.next();
             LinkedList<Long> list = map.get(key);
             if (list == null || list.size() == 0) {
-                map.remove(key);
+                it.remove();
                 continue;
             }
             Iterator<Long> itTime = list.iterator();
@@ -103,43 +103,12 @@ public class RealTimeCacheList<T> implements Serializable {
                 long clickTime = itTime.next();
                 if (clickTime < timeThreashold) {
                     itTime.remove();
-                } else {
-                    continue;
                 }
             }
-        }
-    }
-
-    public int sizeById(T id) {
-        int countSize = 0;
-        if (oldList.containsKey(id)) {
-            countSize += oldList.get(id).size();
-        }
-        if (currentList.containsKey(id)) {
-            countSize += currentList.get(id).size();
-        }
-        return countSize;
-    }
-
-    public int sizeWithTimeThreshold(String id, Long currentTime, int thresholdInSeconds) {
-        Long timeThreshold = currentTime - thresholdInSeconds * 1000L;
-        return getSizeWithTimeThreshold(id, timeThreshold, oldList) +
-                getSizeWithTimeThreshold(id, timeThreshold, currentList);
-    }
-
-    private int getSizeWithTimeThreshold(String id, Long timeThreshold, ConcurrentHashMap<T, LinkedList<Long>> map) {
-        int countSize = 0;
-        if (map.containsKey(id)) {
-            LinkedList<Long> clickTimes = map.get(id);
-            for (int i = clickTimes.size() - 1; i >= 0; i--) {
-                if (clickTimes.get(i) > timeThreshold) {
-                    countSize++;
-                } else {
-                    break;
-                }
+            if (list.size() == 0) {
+                it.remove();
             }
         }
-        return countSize;
     }
 
     public void put(T value) {
