@@ -38,21 +38,27 @@ public class KafkaSpout extends BaseRichSpout {
     private String topic = null;
     private String streamId = null;
 
-    public KafkaSpout(String topic) {
+    public KafkaSpout(final String topic) {
         this.topic = topic;
         //根据topi名称来判断streamId 的名称。
         streamId = this.topic.equals("Portal.Pageview") ? StreamId.Portal_Pageview.name() : StreamId.report_cdr.name();
 
         consumer = Consumer.createJavaConsumerConnector(createConsumerConfig());
-        queue = new LinkedBlockingDeque<String>();
+        queue = new LinkedBlockingDeque<String>(1024 * 10);
+
         msgEmitter = new Thread(new Runnable() {
             @Override
             public void run() {
-                while (true) {
-                    String message = queue.pop();
-                    if (message != null) {
-                        collector.emit(streamId, new Values(message));
-                    }
+
+                Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
+                topicCountMap.put(topic, new Integer(1));
+
+                Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap = consumer.createMessageStreams(topicCountMap);
+                KafkaStream<byte[], byte[]> stream = consumerMap.get(topic).get(0);
+                ConsumerIterator<byte[], byte[]> it = stream.iterator();
+
+                while (it.hasNext()) {
+                    queue.push(new String(it.next().message()));
                 }
             }
         });
@@ -77,17 +83,9 @@ public class KafkaSpout extends BaseRichSpout {
 
     @Override
     public void nextTuple() {
-        consumer = consumer == null ? Consumer.createJavaConsumerConnector(createConsumerConfig()) : consumer;
-
-        Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
-        topicCountMap.put(topic, new Integer(1));
-
-        Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap = consumer.createMessageStreams(topicCountMap);
-        KafkaStream<byte[], byte[]> stream = consumerMap.get(topic).get(0);
-        ConsumerIterator<byte[], byte[]> it = stream.iterator();
-
-        while (it.hasNext()) {
-            queue.push(new String(it.next().message()));
+        String message = queue.pop();
+        if (message != null) {
+            collector.emit(streamId, new Values(message));
         }
     }
 
