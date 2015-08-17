@@ -39,7 +39,7 @@ public class StatisticsBolt extends BaseBasicBolt {
 
     //存储字段为msisdn 和 SessionInfo
     public  RealTimeCacheList<Pair<String, SessionInfo>> sessionInfos =
-            new RealTimeCacheList<Pair<String, SessionInfo>>(Constant.ONE_DAY);
+            new RealTimeCacheList<Pair<String, SessionInfo>>(Constant.ONE_HOUR); //ONE_DAY
     private SessionInfoCleaner sessionInfoCleaner = null;
 
     //负责每天导入维表的数据

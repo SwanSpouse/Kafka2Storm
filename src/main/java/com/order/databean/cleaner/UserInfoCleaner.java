@@ -23,9 +23,12 @@ public class UserInfoCleaner extends Thread {
     @Override
     public void run() {
         super.run();
+        log.info("UserInfoCleaner Clean Thread created, id: " + this.getId());
         while (true) {
             try {
                 Thread.sleep(Constant.ONE_MINUTE * 1000L);
+                log.info("UserInfoCleaner Clean Thread begin clean data, id: " + this.getId()
+                		+ ", userInfos.size: " + bolt.userInfos.keySet().size());
                 Iterator<Pair<String, UserInfo>> it = bolt.userInfos.keySet().iterator();
                 while (it.hasNext()) {
                     Pair<String,UserInfo> currentPair = it.next();
@@ -38,6 +41,8 @@ public class UserInfoCleaner extends Thread {
                         it.remove();
                     }
                 }
+                log.info("SessionInfoCleaner Clean Thread end clean data, id: " + this.getId()
+                		+ ", sessionInfos.size: " + bolt.sessionInfos.keySet().size());
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

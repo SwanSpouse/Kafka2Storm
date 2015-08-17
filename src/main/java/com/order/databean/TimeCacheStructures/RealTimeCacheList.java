@@ -27,7 +27,7 @@ public class RealTimeCacheList<T> implements Serializable {
     private static final long serialVersionUID = 1L;
     private static Logger log = Logger.getLogger(RealTimeCacheList.class);
 
-    private static int mapSize = 30000;
+    private static int mapSize = 300; // 30000
 
     public static interface TimeOutCallback<T> {
         public void expire(T value, LinkedList<Long> pvTimes);
@@ -50,35 +50,44 @@ public class RealTimeCacheList<T> implements Serializable {
 
         this.timeOutCallback = timeOutCallback;
         this.expiratonSecs = expirationSecs;
-        final long sleepTime = expirationSecs * 1000L;
-
-        cleaner = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                while (true) {
-                    try {
-                        cleaner.sleep(sleepTime);
-//                        if (timeOutCallback != null) {
-//                            Iterator<T> iterator = oldList.keySet().iterator();
-//                            while (iterator.hasNext()) {
-//                                T key = iterator.next();
-//                                timeOutCallback.expire(key, oldList.get(key));
-//                            }
-//                        }
-                        oldList.clear();
-                        oldList.putAll(currentList);
-                        currentList.clear();
-                    } catch (InterruptedException e) {
-                        log.error(e);
-                    }
-                }
-            }
-        });
-        cleaner.setDaemon(true);
-        cleaner.start();
+        createCleanThread();
     }
 
+    private void createCleanThread() {	
+		if (cleaner == null) {
+	        final long sleepTime = expiratonSecs * 1000L;
+	        cleaner = new Thread(new Runnable() {
+	            @Override
+	            public void run() {
+	            	log.info("RealTimeCacheList Clean Thread created, id: " + cleaner.getId());
+	                while (true) {
+	                    try {
+	                        cleaner.sleep(sleepTime);
+//	                        if (timeOutCallback != null) {
+//	                            Iterator<T> iterator = oldList.keySet().iterator();
+//	                            while (iterator.hasNext()) {
+//	                                T key = iterator.next();
+//	                                timeOutCallback.expire(key, oldList.get(key));
+//	                            }
+//	                        }
+	                    	log.info("RealTimeCacheList Clean Thread begin clean data, id: " + cleaner.getId()
+	                    			+ ", oldList.size: " + oldList.size() + ", currentList.size():" + currentList.size());
+	                        oldList.clear();
+	                        oldList.putAll(currentList);
+	                        currentList.clear();
+	                    } catch (InterruptedException e) {
+	                        log.error(e);
+	                    }
+	                }
+	            }
+	        });
+	        cleaner.setDaemon(true);
+	        cleaner.start();
+		}
+    }
+    
     public void put(T value) {
+    	createCleanThread();
         this.put(value, (new Date()).getTime());
     }
 

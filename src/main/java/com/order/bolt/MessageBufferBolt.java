@@ -99,13 +99,15 @@ public class MessageBufferBolt extends BaseBasicBolt {
 			cleaner = new Thread(new Runnable() {
 				@Override
 				public void run() {
+                	log.info("MessageBufferBolt Clean Thread " + cleaner.getId() + " created");
 					while (true) {
 						try {
                             // 每隔一个一段时间清理一次。
                             cleaner.sleep(FIVEMINUTES * 3);
                             LOCK = LOCK == null ? new Object() : LOCK;
                             synchronized (LOCK) {
-                                //如果lastViewTime在这10分钟内无变化，说明已无消息，清理入库
+                            	log.info("MessageBufferBolt Clean Thread " + cleaner.getId() 
+                            			+ "  treeMap size is " + orderMap.size());                                //如果lastViewTime在这10分钟内无变化，说明已无消息，清理入库
                                 if (lastViewTime == preViewTime) {
                                     log.info("Begin Clean Order Message Buffer ...");
                                     emitCachedOrderData(collector, System.currentTimeMillis());

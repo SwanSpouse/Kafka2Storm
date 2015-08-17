@@ -3,6 +3,7 @@ package com.order.databean.TimeCacheStructures;
 import com.order.constant.Constant;
 
 import java.io.Serializable;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -57,13 +58,23 @@ public class BookOrderList implements Serializable {
      * @param currentTime 当前时间
      */
     public void removeTimeOutData(long currentTime) {
-        for (String key : map.keySet()) {
+        Iterator<String> itKey = map.keySet().iterator();
+        while (itKey.hasNext()) {
+            String key = itKey.next();
             CachedList<Integer> list = map.get(key);
             //这个size()方法自带清理功能。
             if (list.size(currentTime, -1) == 0) {
-                map.remove(key);
+                itKey.remove();
             }
         }
+        
+        //for (String key : map.keySet()) {
+        //    CachedList<Integer> list = map.get(key);
+        //    //这个size()方法自带清理功能。
+        //    if (list.size(currentTime, -1) == 0) {
+        //        map.remove(key);
+        //    }
+        //}
     }
 
     /**
