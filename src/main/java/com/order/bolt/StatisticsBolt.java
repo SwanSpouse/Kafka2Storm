@@ -39,7 +39,7 @@ public class StatisticsBolt extends BaseBasicBolt {
 
     //存储字段为msisdn 和 SessionInfo
     public  RealTimeCacheList<Pair<String, SessionInfo>> sessionInfos =
-            new RealTimeCacheList<Pair<String, SessionInfo>>(Constant.ONE_HOUR); //ONE_DAY
+            new RealTimeCacheList<Pair<String, SessionInfo>>(Constant.ONE_DAY);
     private SessionInfoCleaner sessionInfoCleaner = null;
 
     //负责每天导入维表的数据
@@ -157,10 +157,10 @@ public class StatisticsBolt extends BaseBasicBolt {
         if (sessionId == null || sessionId.trim().equals("")) {
             sessionId = "NULL";
         }
-
         //所有订单数据先统一发送正常数据流。用作数据统计。
         collector.emit(StreamId.DATASTREAM.name(), new Values(msisdn, sessionId, recordTime,
                 realInfoFee, channelCode, productId, provinceId, orderType, bookId));
+
         //更新订购话单的SessionInfos信息
         Pair<String, SessionInfo> sessionInfoPair = new Pair<String, SessionInfo>(msisdn, null);
         SessionInfo currentSessionInfo;

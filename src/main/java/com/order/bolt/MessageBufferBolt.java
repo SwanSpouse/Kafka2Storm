@@ -56,6 +56,7 @@ public class MessageBufferBolt extends BaseBasicBolt {
 	            String channelCode = input.getStringByField(FName.CHANNELCODE.name());
 	            String bookId = input.getStringByField(FName.BOOKID.name());
 	            String chapterId = input.getStringByField(FName.CHAPTERID.name());
+
 	            collector.emit(StreamId.BROWSEDATA.name(), new Values(
 	                    recordTime, sessionId, pageType, msisdn,
 	                    channelCode, bookId, chapterId));
@@ -88,7 +89,7 @@ public class MessageBufferBolt extends BaseBasicBolt {
                     orderMap.put(recordTime, list);
                 }
                 // 不管收到订购消息还是浏览消息，都检查一下是否需要将缓存发送（后续可改为收到订购消息检查）。
-                emitCachedOrderData(collector, lastViewTime - FIVEMINUTES);
+                emitCachedOrderData(collector, lastViewTime - FIVEMINUTES * 2);
             }
 		 }
     	this.createCleanThread();
